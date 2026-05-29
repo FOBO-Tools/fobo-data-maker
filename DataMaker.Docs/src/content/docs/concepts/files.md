@@ -8,20 +8,17 @@ bytes. So `image` and `attachment` fields aren't submitted inline — you upload
 the bytes to FOBO Cloud first, then put a small **reference** (a URL + hash)
 into the field's value.
 
-This is what every official renderer does on submit (web, WordPress, terminal,
-Zapier). The SDKs don't run it for you — they pass the ref you build straight
-through — so if you're submitting a form with a file field, build the ref with
-the three steps below first.
+Every official renderer runs this on submit (web, WordPress, terminal, Zapier).
+The SDKs don't — they pass the ref you build straight through. Build the ref
+with the three steps below, then submit it as the field's value.
 
-## Why a separate upload
+## Separate upload path
 
-The submission envelope is end-to-end encrypted and routed through the API as
-JSON. Stuffing a 5 MB photo into it as base64 would bloat the ciphertext and
-push past the size cap. Instead the bytes go **straight to storage** over a
-pre-signed PUT URL — the API never sees them — and the encrypted payload only
-carries the URL + a content hash. Same trust model as a submission: the
-endpoint is anonymous, and the `(recipientUserId, hash)` pair is the
-capability.
+Files are large, so they take a separate path from the rest of the values. The
+bytes go **straight to storage** over a pre-signed PUT URL — the API never sees
+them — and the sealed payload carries only the URL and a content hash. The
+endpoint is anonymous, the same trust model as a submission; the
+`(recipientUserId, hash)` pair is the capability.
 
 ## The three steps
 
@@ -140,8 +137,8 @@ inline; attachment shows a download chip).
 
 ## Reading the bytes back
 
-That's the receiver's job (the DataMaker app), not a sender's — but for
-completeness: the owned URL in a stored ref is transient. The app re-derives a
-fresh pre-signed **GET** with
-`GET /submissions/blob/{recipientUserId}/{hash}` → `{ url, expiresAtUtc }`. So
-keep the `hash` accurate; it's what the bytes are addressed by.
+Reading the bytes is the receiver's job (the DataMaker app), not a sender's.
+The owned URL in a stored ref is transient; the app re-derives a fresh
+pre-signed **GET** with `GET /submissions/blob/{recipientUserId}/{hash}` →
+`{ url, expiresAtUtc }`. Keep the `hash` accurate — it's what the bytes are
+addressed by.

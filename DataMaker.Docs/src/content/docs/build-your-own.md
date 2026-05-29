@@ -4,8 +4,8 @@ description: Implement a DataMaker submit client or form renderer in any languag
 ---
 
 Everything a client needs is documented and standard-crypto based, so you can
-build one in any stack. There are two things you might build: a **submit
-client** (no UI) or a **renderer** (UI + submit).
+build one in any stack. There are two things to build: a **submit client**
+(no UI) or a **renderer** (UI + submit).
 
 ## A submit client
 
@@ -73,9 +73,8 @@ A renderer additionally turns `form.json` into UI and collects values.
    above.
 
 :::tip
-Don't want to write a web renderer from scratch? The JS renderer is ready to
-host — see [Web embed](/fobo-data-maker/renderers/web-embed/). It reads the `.dmf v3` bundle,
-renders, validates, and submits.
+The JS renderer is ready to host — it reads the `.dmf v3` bundle, renders,
+validates, and submits. See [Web embed](/fobo-data-maker/renderers/web-embed/).
 :::
 
 ## Trust & safety checklist
