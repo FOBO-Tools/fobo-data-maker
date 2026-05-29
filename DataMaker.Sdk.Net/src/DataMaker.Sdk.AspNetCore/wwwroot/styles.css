@@ -918,11 +918,12 @@ h3.section-title { margin: var(--spacing-section) 0 6px; font-size: var(--sectio
 .dm-submit {
   padding: 8px 20px;
   min-width: 120px;
-  /* Solid FOBO cyan button; text matches the form sheet (white in light,
-     dark surface in dark) so it contrasts with the cyan + reads as
-     anchored to the form's paper colour. */
+  /* Solid FOBO cyan button. Dark on-accent text in BOTH themes — cyan is a
+     bright fill in light and dark alike, so dark text keeps ~9:1 contrast.
+     (Paper-coloured text went white in light mode → ~2:1 on cyan, unreadable.)
+     A custom palette can override --dm-on-accent for a dark author accent. */
   background: #04c8ff;
-  color: var(--dm-paper);
+  color: var(--dm-on-accent, #0e1520);
   border: 0;
   border-radius: 6px;
   font-size: 14px;
@@ -949,7 +950,7 @@ h3.section-title { margin: var(--spacing-section) 0 6px; font-size: var(--sectio
 }
 .dm-btn-primary {
   background: var(--dm-accent, #04c8ff);
-  color: var(--dm-paper, #fff);
+  color: var(--dm-on-accent, #0e1520);
   border-color: var(--dm-accent, #04c8ff);
 }
 .dm-btn-primary:hover  { filter: brightness(1.08); }
