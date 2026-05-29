@@ -76,5 +76,5 @@ explicit rules:
 
 Built-in rule types include `required`, `pattern`, `minLength`, `maxLength`,
 `min`, `max`, and `expression` (a DSL expression — see
-[expressions](/schema/expressions/)). Custom messages live in
+[expressions](/fobo-data-maker/schema/expressions/)). Custom messages live in
 `FieldDefinition.messages` keyed by check id.

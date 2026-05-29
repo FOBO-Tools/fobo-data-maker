@@ -52,7 +52,7 @@ app.MapDataMakerSubmit("/datamaker/submit",
 Both modes host the JS renderer (full styling, conditional logic, validation),
 reading the bundle straight from the `.dmf v3`. `apply-form-style="false"`
 renders structure-only so your site's CSS applies. See
-[Web embed](/renderers/web-embed/) for the encryption-mode trade-offs.
+[Web embed](/fobo-data-maker/renderers/web-embed/) for the encryption-mode trade-offs.
 
 ## Install
 

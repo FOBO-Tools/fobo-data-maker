@@ -1,0 +1,24 @@
+/* FOBO brand accent — FOBO cyan (#04c8ff). Dark theme uses the brand cyan
+   directly; light theme uses a deeper cyan so links stay AA-contrast on white. */
+:root {
+  --sl-color-accent-low: #002a3b;
+  --sl-color-accent: #04c8ff;
+  --sl-color-accent-high: #b6ecff;
+}
+
+:root[data-theme='light'] {
+  --sl-color-accent-low: #b6ecff;
+  --sl-color-accent: #0277a8;
+  --sl-color-accent-high: #00374d;
+}
+
+/* Brand-tinted hero gradient on the landing splash. */
+.hero > .stack .copy {
+  --sl-hero-glow: color-mix(in srgb, #04c8ff 18%, transparent);
+}
+.hero h1 {
+  background: linear-gradient(90deg, var(--sl-color-white), #04c8ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}

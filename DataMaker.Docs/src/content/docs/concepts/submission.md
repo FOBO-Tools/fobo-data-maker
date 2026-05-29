@@ -12,7 +12,7 @@ ciphertext. The server routes it to the owner, who alone can decrypt it.
 1. Read + verify the `.dmf` → get `recipientPublicKey`, `recipientUserId`,
    `formId`, `schemaVersion`, and the field schema.
 2. **Validate + coerce** the values against the schema (see
-   [field kinds](/schema/field-kinds/)).
+   [field kinds](/fobo-data-maker/schema/field-kinds/)).
 3. Build a **SubmissionPayload**, JSON-encode it, and **sealed-box encrypt**
    the bytes against `recipientPublicKey`.
 4. Wrap the ciphertext in a **SubmissionEnvelope** and `POST /submissions`.
@@ -43,7 +43,7 @@ the holder of the recipient private key can open it.
 
 | Field | Type | Notes |
 |---|---|---|
-| `values` | object | Field **name** → value. Shapes per [field kind](/schema/field-kinds/). |
+| `values` | object | Field **name** → value. Shapes per [field kind](/fobo-data-maker/schema/field-kinds/). |
 | `submittedAt` | string | ISO-8601 UTC. |
 | `formVersion` | int | The form's `schemaVersion`. The receiver looks up the archived schema by `(formId, formVersion)`; a mismatch quarantines the row. |
 | `formSchema` | string | Legacy; leave `""`. |
@@ -92,5 +92,5 @@ submitter amend their submission later (not covered by the v1 SDKs).
 :::tip
 This contract is identical across every sender — the SDKs, the web renderer,
 and the WordPress plugin all produce the same bytes. To implement it yourself,
-see [Build your own](/build-your-own/).
+see [Build your own](/fobo-data-maker/build-your-own/).
 :::

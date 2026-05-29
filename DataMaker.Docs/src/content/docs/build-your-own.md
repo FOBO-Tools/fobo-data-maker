@@ -11,20 +11,20 @@ client** (no UI) or a **renderer** (UI + submit).
 
 Goal: take a `.dmf` + a values map → a sealed submission.
 
-1. **Read + verify the `.dmf`** ([format](/concepts/dmf/)):
+1. **Read + verify the `.dmf`** ([format](/fobo-data-maker/concepts/dmf/)):
    - Unzip; read `manifest.json`, `signature.bin`, `form.json`.
    - Ed25519 `verify_detached(signature.bin, manifest.json bytes,
      signer.publicKey)`.
    - SHA-256 of `form.json` must equal its `files[]` entry.
    - Read `recipient.publicKey`, `recipient.userId`, and from `form.json` the
      `id` + `schemaVersion` + `fields`.
-2. **Validate + coerce** values against the [field kinds](/schema/field-kinds/):
+2. **Validate + coerce** values against the [field kinds](/fobo-data-maker/schema/field-kinds/):
    required present, unknown keys rejected, choice membership, per-kind value
    shapes.
-3. **Build the [SubmissionPayload](/concepts/submission/)**, JSON-encode (UTF-8).
+3. **Build the [SubmissionPayload](/fobo-data-maker/concepts/submission/)**, JSON-encode (UTF-8).
 4. **Sealed-box encrypt** the bytes against `recipient.publicKey`
    (`crypto_box_seal`), base64 the ciphertext.
-5. **POST** the [SubmissionEnvelope](/concepts/submission/) to
+5. **POST** the [SubmissionEnvelope](/fobo-data-maker/concepts/submission/) to
    `{apiBaseUrl}/submissions`.
 
 You need a libsodium binding (sealed box + Ed25519 verify), a ZIP reader,
@@ -37,8 +37,8 @@ crypto you need:
   SHA-256                                        → .dmf hash check
 ```
 
-The official SDKs ([JS](/sdks/javascript/), [Python](/sdks/python/),
-[.NET](/sdks/dotnet/)) are reference implementations — read their source if you
+The official SDKs ([JS](/fobo-data-maker/sdks/javascript/), [Python](/fobo-data-maker/sdks/python/),
+[.NET](/fobo-data-maker/sdks/dotnet/)) are reference implementations — read their source if you
 get stuck.
 
 ## A renderer
@@ -46,20 +46,20 @@ get stuck.
 A renderer additionally turns `form.json` into UI and collects values.
 
 1. **Read the form** (as above) — you also want the `fields` + `steps` layout
-   ([form model](/schema/form-model/)) and, from a `.dmf v3`, the styling
+   ([form model](/fobo-data-maker/schema/form-model/)) and, from a `.dmf v3`, the styling
    entries (`elementCss.json`, `palette.css`, `fonts.css`).
 2. **Render** the layout: walk `steps → sections → rows → columns`; render each
-   `field` column with the editor for its [kind](/schema/field-kinds/); render
+   `field` column with the editor for its [kind](/fobo-data-maker/schema/field-kinds/); render
    decorative columns (richtext/image/divider/heading/button/group).
 3. **Evaluate expressions** for `visibleWhen` / `calculatedExpression` /
    validation — either run the bundle's compiled JS or implement the
-   [DSL + Fn library](/schema/expressions/). Fail open when you can't.
+   [DSL + Fn library](/fobo-data-maker/schema/expressions/). Fail open when you can't.
 4. **Validate on submit**, then hand the values to the submit-client steps
    above.
 
 :::tip
 Don't want to write a web renderer from scratch? The JS renderer is ready to
-host — see [Web embed](/renderers/web-embed/). It reads the `.dmf v3` bundle,
+host — see [Web embed](/fobo-data-maker/renderers/web-embed/). It reads the `.dmf v3` bundle,
 renders, validates, and submits.
 :::
 

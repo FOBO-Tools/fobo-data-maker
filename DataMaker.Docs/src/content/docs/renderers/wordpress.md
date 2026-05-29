@@ -30,7 +30,7 @@ submissions seal against the form's recipient public key.
 
 ## How submission works
 
-The plugin ships the same JS renderer as the [web embed](/renderers/web-embed/).
+The plugin ships the same JS renderer as the [web embed](/fobo-data-maker/renderers/web-embed/).
 Values are sealed in the browser (libsodium) and posted to the DataMaker API at
 `https://datamaker-api.fobo-tools.com/` (overridable via the
 `DM_RENDERER_SYNC_API_URL` constant). A built-in submit proxy + upload-slot flow

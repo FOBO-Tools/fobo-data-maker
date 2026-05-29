@@ -14,7 +14,7 @@ detectable.
 |---|---|---|
 | `manifest.json` | yes | The signed payload: signer + recipient keys, and a SHA-256 of every other entry. |
 | `signature.bin` | yes | 64 raw bytes — a detached **Ed25519** signature over the exact bytes of `manifest.json`. |
-| `form.json` | yes | UTF-8 JSON of the [Form](/schema/form-model/). |
+| `form.json` | yes | UTF-8 JSON of the [Form](/fobo-data-maker/schema/form-model/). |
 | `compiled.json` | v3+ | Expression-key → compiled JS string (VisibleWhen / Calculated / rules). |
 | `elementCss.json` | v3+ | Element-key → resolved CSS string. |
 | `palette.css` | v3+ | Theme palette CSS (`:root` light/dark variables). |
@@ -73,7 +73,7 @@ are encrypted to. A tampered key would let an attacker read submissions.
 :::
 
 Every SDK does this for you (`readForm` / `read_form` / `ReadForm`). To do it
-yourself, see [Build your own](/build-your-own/).
+yourself, see [Build your own](/fobo-data-maker/build-your-own/).
 
 ## FOBO attestation (optional trust)
 

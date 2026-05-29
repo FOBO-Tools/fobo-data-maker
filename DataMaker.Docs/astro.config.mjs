@@ -12,8 +12,10 @@ export default defineConfig({
       title: 'FOBO Data Maker',
       description:
         'Build clients and renderers for Data Maker forms: submit records, render .dmf bundles, and read the form schema.',
+      logo: { src: './src/assets/fobo-logo.svg', alt: 'FOBO' },
+      customCss: ['./src/styles/fobo.css'],
       social: {
-        github: 'https://github.com/ChivanCOM/fobo-data-maker', // TODO: confirm owner/org before publishing
+        github: 'https://github.com/FOBO-Tools/fobo-data-maker',
       },
       sidebar: [
         { label: 'Start here', items: [

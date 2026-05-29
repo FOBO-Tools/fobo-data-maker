@@ -3,7 +3,7 @@ title: Form model
 description: The JSON shape of form.json — fields, layout (steps/sections/rows/columns), style, and submit policy.
 ---
 
-`form.json` (inside the [`.dmf`](/concepts/dmf/)) is the canonical form
+`form.json` (inside the [`.dmf`](/fobo-data-maker/concepts/dmf/)) is the canonical form
 definition. It separates **fields** (the data model) from **layout** (how
 they're arranged). A minimal renderer only needs `fields`; a full one walks
 `steps`.
@@ -31,7 +31,7 @@ they're arranged). A minimal renderer only needs `fields`; a full one walks
 | `description` | string? | Optional. |
 | `schemaVersion` | int | Bumped on breaking changes. Goes into the submission `formVersion`. |
 | `submitPolicy` | string | `"Anonymous"` or `"Authenticated"`. |
-| `fields` | array | The data model — see [field kinds](/schema/field-kinds/). |
+| `fields` | array | The data model — see [field kinds](/fobo-data-maker/schema/field-kinds/). |
 | `steps` | array | Layout tree (below). |
 | `style` | object? | Form-level theme/style (see palette/elementCss in the bundle). |
 
@@ -66,11 +66,11 @@ Each entry in `fields[]`:
 ```
 
 - `name` is the **storage key** used in submission `values` and expressions.
-- `kind` selects the editor + value shape — see [field kinds](/schema/field-kinds/).
+- `kind` selects the editor + value shape — see [field kinds](/fobo-data-maker/schema/field-kinds/).
 - Exactly one kind-specific option block (`choice`/`number`/`money`/…) is
   populated, matching `kind`.
 - `calculatedExpression` / `visibleWhen` are DSL strings — see
-  [expressions](/schema/expressions/).
+  [expressions](/fobo-data-maker/schema/expressions/).
 - `isPrimaryDisplay` marks the record's title field; `indexed` requests a DB
   index (receiver-side hint).
 
@@ -115,4 +115,4 @@ A renderer applies these on top of a structural layout layer. Rendering
 structure-only (ignoring the author's design) is a valid mode — drop the
 palette + elementCss and your host's CSS applies.
 
-See [Build your own](/build-your-own/) for a minimal renderer walkthrough.
+See [Build your own](/fobo-data-maker/build-your-own/) for a minimal renderer walkthrough.

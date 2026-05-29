@@ -21,14 +21,14 @@ work with three things: the **`.dmf` bundle**, the **submission API**, and the
 
 1. **The `.dmf` bundle** is a signed ZIP carrying the form definition, the
    publisher's signature, and the recipient's **public** key. You verify the
-   signature and read what you need from it. See [The .dmf bundle](/concepts/dmf/).
+   signature and read what you need from it. See [The .dmf bundle](/fobo-data-maker/concepts/dmf/).
 2. **Submitting** means: validate values against the schema, **sealed-box
    encrypt** them against the recipient public key, and POST the ciphertext to
    the public submissions endpoint. The server never sees plaintext. See
-   [Submission & encryption](/concepts/submission/).
+   [Submission & encryption](/fobo-data-maker/concepts/submission/).
 3. **The schema** inside the bundle describes the fields, layout, validation,
    and expressions — enough to render the form or build your own tooling. See
-   [the schema reference](/schema/form-model/).
+   [the schema reference](/fobo-data-maker/schema/form-model/).
 
 ## Fastest path: an SDK
 
@@ -60,13 +60,13 @@ await new DataMakerClient().SubmitAsync(form,
     new Dictionary<string, object?> { ["email"] = "ada@example.com", ["name"] = "Ada" });
 ```
 
-Full guides: [JavaScript](/sdks/javascript/) · [Python](/sdks/python/) ·
-[.NET](/sdks/dotnet/).
+Full guides: [JavaScript](/fobo-data-maker/sdks/javascript/) · [Python](/fobo-data-maker/sdks/python/) ·
+[.NET](/fobo-data-maker/sdks/dotnet/).
 
 ## Want to render a form?
 
 - **Web** — drop in the JS renderer + a `<script>` of config. See
-  [Web embed](/renderers/web-embed/).
+  [Web embed](/fobo-data-maker/renderers/web-embed/).
 - **WordPress** — install the plugin, upload a `.dmf`, use a shortcode/block.
-  See [WordPress](/renderers/wordpress/).
-- **Terminal** — fill a form in the TUI. See [Terminal](/renderers/terminal/).
+  See [WordPress](/fobo-data-maker/renderers/wordpress/).
+- **Terminal** — fill a form in the TUI. See [Terminal](/fobo-data-maker/renderers/terminal/).

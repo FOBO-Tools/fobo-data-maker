@@ -33,7 +33,7 @@ On launch it:
 | `--trust` | trust handling for the TOFU prompt |
 | `--template` | terminal color template |
 
-The submit path uses the [.NET SDK](/sdks/dotnet/) (`DataMakerClient`) under the
+The submit path uses the [.NET SDK](/fobo-data-maker/sdks/dotnet/) (`DataMakerClient`) under the
 hood, so the terminal ships only the client subset — no signing/keygen code.
 
 ## Build

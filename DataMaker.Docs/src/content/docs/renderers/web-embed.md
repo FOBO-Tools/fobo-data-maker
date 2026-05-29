@@ -46,7 +46,7 @@ structural layout layer still works.
 ## ASP.NET Core (TagHelper)
 
 If you host on .NET, the `DataMaker.Sdk.AspNetCore` TagHelper does all of the
-above from a `.dmf` path — see the [.NET SDK](/sdks/dotnet/).
+above from a `.dmf` path — see the [.NET SDK](/fobo-data-maker/sdks/dotnet/).
 
 ```cshtml
 <datamaker-form dmf-path="forms/contact.dmf" encrypt="client" />

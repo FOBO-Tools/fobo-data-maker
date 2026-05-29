@@ -59,5 +59,5 @@ datamaker submit contact.dmf --data-file answers.json --dry-run
 ## Browser
 
 A bundled build (`dist/datamaker.browser.js`, global `DataMaker`) powers the
-[web embed](/renderers/web-embed/). `createSubmitHandler(config)` adapts the web
+[web embed](/fobo-data-maker/renderers/web-embed/). `createSubmitHandler(config)` adapts the web
 renderer's `onSubmit` to a sealed POST.
