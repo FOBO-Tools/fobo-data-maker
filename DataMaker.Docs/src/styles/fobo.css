@@ -1,9 +1,11 @@
 /* FOBO brand accent — FOBO cyan (#04c8ff). Dark theme uses the brand cyan
-   directly; light theme uses a deeper cyan so links stay AA-contrast on white. */
+   directly; light theme uses a deeper cyan so text/links stay AA-contrast. */
 :root {
   --sl-color-accent-low: #002a3b;
   --sl-color-accent: #04c8ff;
   --sl-color-accent-high: #b6ecff;
+  /* Starlight's links + primary button read --sl-color-text-accent. */
+  --sl-color-text-accent: #04c8ff;
   --fobo-cyan: #04c8ff;
   --fobo-green: #00f15e;
 }
@@ -12,6 +14,7 @@
   --sl-color-accent-low: #b6ecff;
   --sl-color-accent: #0277a8;
   --sl-color-accent-high: #00374d;
+  --sl-color-text-accent: #0277a8;
 }
 
 /* ── Header brand title: white on dark, dark-blue on light ───────── */
@@ -23,20 +26,32 @@
   color: #0e1520;
 }
 
-/* ── Hero title: cyan → green brand gradient ─────────────────────── */
+/* ── Hero call-to-action buttons → solid FOBO cyan, dark text (~9:1),
+   in BOTH themes (cyan is a bright fill in light + dark alike). ─────── */
+.sl-link-button.primary {
+  background: var(--fobo-cyan);
+  color: #0e1520;
+  border-color: var(--fobo-cyan);
+}
+.sl-link-button.primary:hover { background: #03b4e6; }
+.sl-link-button.secondary {
+  color: var(--sl-color-text-accent);
+  border-color: var(--sl-color-text-accent);
+}
+
+/* ── Hero title: FOBO cyan → green gradient (green fills the right half) ── */
 .hero h1 {
-  background-image: linear-gradient(90deg, #ffffff 0%, var(--fobo-cyan) 55%, var(--fobo-green) 100%);
+  background-image: linear-gradient(90deg, var(--fobo-cyan) 0%, var(--fobo-green) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
-/* Light theme: start dark + use deeper cyan/green so the big title stays
-   readable on the near-white background. */
+/* Light theme: deeper cyan/green so the big title stays readable on white. */
 :root[data-theme='light'] .hero h1 {
-  background-image: linear-gradient(90deg, #0e1520 0%, #0277a8 55%, #0a8f4f 100%);
+  background-image: linear-gradient(90deg, #0277a8 0%, #0a8f4f 100%);
 }
 
-/* ── Feature cards (Font Awesome icons, brand colours) ───────────── */
+/* ── Feature cards (Font Awesome icons, all FOBO cyan) ───────────── */
 .fobo-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
@@ -54,10 +69,7 @@
   color: var(--fobo-cyan);
   margin-bottom: 0.5rem;
 }
-/* Alternate every other card's icon to FOBO green for a little brand pop. */
-.fobo-card:nth-child(even) i { color: var(--fobo-green); }
 :root[data-theme='light'] .fobo-card i { color: #0277a8; }
-:root[data-theme='light'] .fobo-card:nth-child(even) i { color: #0a8f4f; }
 .fobo-card h3 {
   margin: 0 0 0.4rem;
   font-size: 1.05rem;
