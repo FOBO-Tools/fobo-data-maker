@@ -68,6 +68,7 @@
   grid-template-columns: 1fr;
   gap: 1rem;
   margin-top: 1.5rem;
+  align-items: stretch; /* cards in a row match the tallest */
 }
 @media (min-width: 40rem) {
   .fobo-grid { grid-template-columns: repeat(2, 1fr); }
@@ -76,7 +77,6 @@
   .fobo-grid { grid-template-columns: repeat(4, 1fr); }
 }
 .fobo-card {
-  height: 100%;
   border: 1px solid var(--sl-color-gray-5);
   border-radius: 0.75rem;
   padding: 1.25rem;
