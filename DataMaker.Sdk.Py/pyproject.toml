@@ -1,0 +1,26 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "datamaker-forms"
+version = "0.1.0"
+description = "Submit records to a Data Maker form: read a signed .dmf bundle, validate values, sealed-box encrypt, and post to the public submissions endpoint."
+readme = "README.md"
+license = "BSD-3-Clause"
+authors = [{ name = "FOBO Tools", email = "hello@fobo-tools.com" }]
+keywords = ["datamaker", "forms", "dmf", "libsodium", "sealed-box", "end-to-end-encryption"]
+requires-python = ">=3.9"
+dependencies = ["pynacl>=1.5"]
+
+[project.urls]
+Homepage = "https://datamaker.fobo-tools.com/"
+
+[project.scripts]
+datamaker = "datamaker.cli:main"
+
+[project.optional-dependencies]
+test = ["pytest>=7"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/datamaker"]

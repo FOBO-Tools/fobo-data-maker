@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <RootNamespace>DataMaker.Forms.Runtime</RootNamespace>
+
+    <!-- Client-subset SDK package: the storage-free form expression evaluator
+         (VisibleWhen / Calculated / validation). No store interfaces, no MVVM —
+         pure Schema + Expressions, safe to ship to clients. -->
+    <IsPackable>true</IsPackable>
+    <PackageId>DataMaker.Forms.Evaluation</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>FOBO Tools</Authors>
+    <Description>Storage-free runtime evaluator for Data Maker forms: compiles and evaluates VisibleWhen / CalculatedExpression / validation expressions against a value snapshot. Used by client renderers.</Description>
+    <PackageLicenseExpression>BSD-3-Clause</PackageLicenseExpression>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DataMaker.Schema\DataMaker.Schema.csproj" />
+    <ProjectReference Include="..\DataMaker.Expressions\DataMaker.Expressions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="DataMaker.Tests" />
+  </ItemGroup>
+
+</Project>

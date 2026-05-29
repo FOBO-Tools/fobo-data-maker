@@ -1,0 +1,52 @@
+---
+title: DataMaker for developers
+description: Submit records, render forms, and read the schema — build your own DataMaker clients and renderers.
+template: splash
+hero:
+  tagline: Submit records, render forms, and read the schema. Everything you need to build your own DataMaker client or renderer.
+  actions:
+    - text: Getting started
+      link: /getting-started/
+      icon: right-arrow
+      variant: primary
+    - text: Schema reference
+      link: /schema/form-model/
+      icon: open-book
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+## What this is
+
+A DataMaker form is distributed as a signed **`.dmf`** bundle. Anyone can build
+tooling around it: submit records to a form, render a form for people to fill
+in, or read its schema to do something entirely new. Submissions are
+**end-to-end encrypted** — only the form owner can read them.
+
+<CardGrid>
+  <Card title="Submit from any language" icon="rocket">
+    Official SDKs for **JavaScript/Node**, **Python**, and **.NET** read a
+    `.dmf`, validate values, sealed-box encrypt, and post — no DataMaker app
+    required.
+  </Card>
+  <Card title="Render anywhere" icon="laptop">
+    Drop a form on the web with the JS renderer, the **WordPress** plugin, or
+    fill it in a **terminal**. Client-side or server-side encryption.
+  </Card>
+  <Card title="Build your own" icon="puzzle">
+    The `.dmf` format, the submission wire contract, and the full form schema
+    are documented so you can write a client or renderer in any stack.
+  </Card>
+  <Card title="End-to-end encrypted" icon="approve-check">
+    Values are sealed against the recipient's public key (libsodium sealed
+    box). The server only routes ciphertext — it never sees your data.
+  </Card>
+</CardGrid>
+
+## Pick your path
+
+- **I have a `.dmf` and want to submit records** → an [SDK](/sdks/javascript/).
+- **I want to show a form on my site** → the [web embed](/renderers/web-embed/)
+  or [WordPress plugin](/renderers/wordpress/).
+- **I want to build something new** → [the schema reference](/schema/form-model/)
+  and [build your own](/build-your-own/).

@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/libs/">
+    <Project Path="DataMaker.Schema/DataMaker.Schema.csproj" />
+    <Project Path="DataMaker.Expressions/DataMaker.Expressions.csproj" />
+    <Project Path="DataMaker.Forms.Signing.Verify/DataMaker.Forms.Signing.Verify.csproj" />
+    <Project Path="DataMaker.Forms.Evaluation/DataMaker.Forms.Evaluation.csproj" />
+    <Project Path="FOBO.Auth/FOBO.Auth.csproj" />
+  </Folder>
+  <Folder Name="/clients/">
+    <Project Path="DataMaker.Forms.Renderer.Terminal/DataMaker.Forms.Renderer.Terminal.csproj" />
+  </Folder>
+</Solution>

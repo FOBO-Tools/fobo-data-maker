@@ -1,0 +1,7 @@
+dist/
+assets/dist/
+vendor/
+.phpunit.cache/
+node_modules/
+*.original.md
+.DS_Store

@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="__LOCALE__" data-date-pattern="__DATE_PATTERN__" data-time-pattern="__TIME_PATTERN__" class="dm-preview dm-dark" style="background-color:#0e1520">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0e1520">
+  <title>__TITLE__</title>
+  <!-- Inline html/body background paint before the main stylesheet parses,
+       so the WebView2 doesn't flash its default white between document load
+       and `--page-bg` resolution. The full theme system (light/dark token
+       overrides via :root.dark) still drives the final colour from <style>
+       below; this is only the boot-frame fallback. -->
+  <!-- Layout layer (always) — structural rules; works without the brand
+       layer below, so unthemed embedders (WordPress with theme toggled
+       off) still get rows / columns / fields aligned correctly. -->
+  <style>__LAYOUT_CSS__</style>
+  <!-- Brand layer (FOBO palette + button variants + FA glyphs + dark
+       mode). Hosts that want to inherit their own visual identity skip
+       this stylesheet and only ship the layout layer. -->
+  <style>__CSS__</style>
+  <!-- Designer-selected fonts — every face referenced anywhere in the
+       form's Style cascade, embedded as data: URIs by FormFontEmbedder
+       at .dmf save time. Empty when the form uses no catalog fonts. -->
+  <style>__FONTS_CSS__</style>
+</head>
+<body style="background-color:#0e1520">
+  <header class="dm-page-chrome">
+    <!-- The DataMaker app is always Dark, so the WebForm preview boots in
+         Dark too. The toggle (sun → switch to light) lets the designer
+         simulate the alternate recipient view. -->
+    <button id="theme-toggle" type="button" aria-label="Toggle theme">&#xf185;</button>
+  </header>
+
+  <main id="form-root" class="dm-sheet">
+    <p class="dm-boot-fallback" style="color:#888">Loading form…</p>
+  </main>
+  <pre id="boot-error" hidden style="margin:16px;padding:12px;background:#ffe5e5;color:#8b0000;border:1px solid #c92a2a;border-radius:6px;white-space:pre-wrap;font:12px ui-monospace,Menlo,monospace;"></pre>
+
+  <!--
+    Form bundle — schema + compiled VisibleWhen/Calculated expressions +
+    resolved per-element styles. Injected by WebRenderer at bundle time.
+  -->
+  <script>window.__dmDatePattern='__DATE_PATTERN__';window.__dmTimePattern='__TIME_PATTERN__';</script>
+  <script type="application/json" id="form-bundle">__BUNDLE__</script>
+
+  <!-- Fn library (JS port) — kept tiny on purpose; expand as JsCompiler
+       graduates more Fn.* calls into the portable subset. -->
+  <script>__FN_JS__</script>
+
+  <!-- Renderer — DOM construction, value tracking, eval application. -->
+  <script>__RENDERER_JS__</script>
+</body>
+</html>

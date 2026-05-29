@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/DataMaker.Sdk.AspNetCore/DataMaker.Sdk.AspNetCore.csproj" />
+    <Project Path="src/DataMaker.Sdk/DataMaker.Sdk.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/DataMaker.Sdk.Tests/DataMaker.Sdk.Tests.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,7 @@
+<Project>
+  <!-- Opt out of the app's Central Package Management so these standalone SDK
+       projects declare their own package versions inline. -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+</Project>

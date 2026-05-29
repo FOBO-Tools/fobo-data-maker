@@ -1,0 +1,53 @@
+# Local WordPress harness for developing the DataMaker Renderer plugin.
+#
+#   docker compose up -d         # WP at http://localhost:8089
+#   docker compose down          # stop containers, keep volumes
+#   docker compose down -v       # nuke everything (DB + uploads)
+#
+# The plugin folder is bind-mounted into wp-content/plugins, so edits to
+# .php/.js/.css files appear without rebuilds. Activate the plugin once
+# from wp-admin/plugins.php — the wp_dm_forms table is provisioned on
+# activation.
+services:
+  db:
+    image: mariadb:11
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: root
+      MARIADB_DATABASE:      datamaker
+      MARIADB_USER:          datamaker
+      MARIADB_PASSWORD:      datamaker
+    volumes:
+      - dm_wp_db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  wordpress:
+    image: wordpress:6.7-php8.2-apache
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8089:80"
+    environment:
+      WORDPRESS_DB_HOST:     db:3306
+      WORDPRESS_DB_USER:     datamaker
+      WORDPRESS_DB_PASSWORD: datamaker
+      WORDPRESS_DB_NAME:     datamaker
+      WORDPRESS_DEBUG:       "0"
+      WORDPRESS_CONFIG_EXTRA: |
+        define('WP_DEBUG_LOG', true);
+        define('WP_DEBUG_DISPLAY', false);
+        @ini_set('display_errors', 0);
+    volumes:
+      - dm_wp_core:/var/www/html
+      # Bind-mount the plugin source into the standard plugins dir.
+      - ./:/var/www/html/wp-content/plugins/datamaker-renderer:rw
+
+volumes:
+  dm_wp_db:
+  dm_wp_core:

@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+
+    <!-- Shared client-subset SDK package: the form model. Pure POCO, no secrets
+         — the same shapes the JS renderer already ships to browsers. -->
+    <IsPackable>true</IsPackable>
+    <PackageId>DataMaker.Schema</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>FOBO Tools</Authors>
+    <Description>Data Maker form schema model: Form, fields, layout, validation, styling. The shared contract used by the app, the renderers, and the client SDKs.</Description>
+    <PackageLicenseExpression>BSD-3-Clause</PackageLicenseExpression>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="DataMaker.Tests" />
+  </ItemGroup>
+
+</Project>

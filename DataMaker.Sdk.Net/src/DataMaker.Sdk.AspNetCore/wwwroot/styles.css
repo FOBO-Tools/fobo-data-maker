@@ -1,0 +1,992 @@
+/* ─── Tokens ──────────────────────────────────────────────────────
+   Light is canonical. The dark variant overrides via a class on the
+   ROOT element (:root.dm-dark / html.dm-dark), not body — so <html>'s own
+   background resolves the same vars and there's no light-gray leak
+   in areas where body doesn't fully fill the viewport. */
+:root {
+  color-scheme: light dark;
+  --dm-paper:        #ffffff;
+  --dm-ink:          #000000;
+  --dm-muted-ink:    #5c5c5c;
+  --dm-field-fill:   #ffffff;
+  --dm-field-border: #d0d0d0;
+  --dm-field-focus:  #04c8ff;       /* FOBO cyan — brand accent, same key in dark variant */
+  --dm-addon-bg:     #f1f3f5;          /* Bootstrap-style input-group addon tint */
+  --dm-divider:      #e5e5e5;
+  --dm-page-bg:      #f0f0f0;
+  --dm-error:        #c92a2a;
+  --shadow:       0 4px 20px rgba(0,0,0,.08);
+
+  /* ── Spacing + sizing tokens (worklist #21/#23/#28/#33/#40)
+       Tuned to match the Uno renderer's hard-coded values exactly so a form
+       rendered via FormRenderer.cs (Uno) and via this CSS look the same.
+       See FormRenderer.cs ResponsiveRow row/col gutter (12), step Spacing
+       (20), section Spacing (12), Wasm CanvasFrame MaxWidth (1600).
+       Sheet max-width is 1600 so the PreviewPage viewport slider's full
+       320–1600 range exercises the responsive grid; below 1600 the sheet
+       grows with the viewport, above it the sheet caps for readability. */
+  --sheet-max-width:      1600px;
+  --sheet-padding:        32px 32px 40px;
+  --spacing-step:         20px;   /* gap between steps                    */
+  --spacing-section:      12px;   /* gap inside a section, between rows   */
+  --spacing-row:          12px;   /* row top/bottom margin                */
+  --spacing-gutter:       12px;   /* row column gap                       */
+  --field-row-min-height: 32px;   /* baseline so NumberBox/<input>/select
+                                     align vertically with Uno's NumberBox
+                                     across the whole form                */
+
+  /* Heading sizes — match Uno: form 22, step 18, section 16. md-h1/2/3
+     follow the same scale so embedded markdown stays consistent. */
+  --form-title-size:      22px;
+  --step-title-size:      18px;
+  --section-title-size:   16px;
+  --description-size:     13px;
+}
+:root.dm-dark {
+  --dm-paper:        #1e1e1e;
+  --dm-ink:          #e6e6e6;
+  --dm-muted-ink:    #9a9a9a;
+  --dm-field-fill:   #2a2a2a;
+  --dm-field-border: #3d3d3d;
+  --dm-field-focus:  #04c8ff;       /* FOBO cyan — same as light, brand-consistent */
+  --dm-addon-bg:     #232323;          /* slightly recessed vs --field-fill in dark */
+  --dm-divider:      #2f2f2f;
+  --dm-page-bg:      #0e1520;
+  --dm-error:        #ff6b6b;
+  --shadow:       0 4px 20px rgba(0,0,0,.4);
+}
+
+/* ─── Page chrome ───────────────────────────────────────────────
+ * Scoped to `html.dm-preview` — only applies when the form owns the
+ * page (designer / WebView2 preview / public preview iframe). The
+ * WordPress plugin embeds the form into a host page that already paints
+ * its own background + sets its own typography, so leaving these
+ * unscoped would bleed the form's paper colour and font into the rest
+ * of the WP page. The form's own paper background lives on `.dm-sheet`
+ * below, which paints the card regardless of host. */
+html.dm-preview, html.dm-preview body {
+  height: 100%;
+  margin: 0;
+  background: var(--dm-page-bg);
+}
+html.dm-preview body {
+  font: 14px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  color: var(--dm-ink);
+  transition: background .15s ease, color .15s ease;
+}
+
+/* Floating top-right of the render canvas, taken out of flow so the form
+ * sheet starts at the same Y across every renderer (Uno / Wasm / Web).
+ * The toggle is allowed to float on top of the sheet's top-right corner —
+ * that overlap is intentional, not something the layout reserves room for. */
+.dm-page-chrome {
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 100;
+  padding: 12px 16px;
+  background: transparent;
+}
+/* Font Awesome 5 Pro Solid — same .ttf the desktop app and the WASM
+   renderer ship. Used today only for the theme-toggle glyph (sun / moon)
+   so the WebForm and WASM previews share an identical icon. Loaded with
+   font-display:block so the toggle button doesn't briefly show garbage
+   characters before the font arrives.
+   The src is a placeholder filled by WebRenderer.Render — the .ttf bytes
+   get base64-encoded into a data URI so this stylesheet stays self-
+   contained when fed to WebView2.NavigateToString (no base URL → no
+   relative path resolution). */
+@font-face {
+  font-family: "FontAwesome";
+  src: url("__FA_SOLID_DATA_URI__") format("truetype");
+  font-weight: 900;
+  font-style: normal;
+  font-display: block;
+}
+
+#theme-toggle {
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--dm-field-fill);
+  color: var(--dm-ink);
+  border: 1px solid var(--dm-field-border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-family: "FontAwesome", sans-serif;
+  font-size: 14px;
+  width: 36px;
+  height: 36px;
+  line-height: 1;
+  user-select: none;
+}
+#theme-toggle:hover { filter: brightness(1.05); }
+
+/* ─── Sheet ───────────────────────────────────────────────────── */
+.dm-sheet {
+  max-width: var(--sheet-max-width);
+  margin: 0 auto 32px;
+  background: var(--dm-paper);
+  color: var(--dm-ink);
+  border: 1px solid var(--dm-field-border);
+  border-radius: 8px;
+  padding: var(--sheet-padding);
+  box-shadow: var(--shadow);
+}
+
+h1.form-title { margin: 0 0 6px; font-size: var(--form-title-size); font-weight: 600; }
+/* Descriptions / hints use the inherited text colour at reduced opacity
+   instead of a fixed grey. The grey baseline is tuned for paper/sheet —
+   when a Form Style sets a custom text colour (or a custom background
+   like a gradient), opacity-based muting keeps hints legible against
+   whatever the user picked. */
+.dm-form-desc { margin: 0 0 18px; font-style: italic; font-size: var(--description-size); }
+h2.step-title { margin: var(--spacing-step) 0 6px; font-size: var(--step-title-size); }
+.dm-step-desc { margin: 0 0 12px; font-style: italic; font-size: var(--description-size); }
+h3.section-title { margin: var(--spacing-section) 0 6px; font-size: var(--section-title-size); font-weight: 600; }
+.dm-section-desc { margin: 0 0 10px; font-style: italic; font-size: var(--description-size); }
+
+/* ─── Layout grid ─────────────────────────────────────────────── */
+.dm-row {
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 12), 1fr);
+  gap: var(--spacing-gutter);
+  margin: var(--spacing-row) 0;
+}
+.dm-col { min-width: 0; }
+.dm-col[hidden] { display: none; }
+
+/* ─── Group card ──────────────────────────────────────────────── */
+.dm-group {
+  border: 1px solid var(--dm-divider);
+  border-radius: 6px;
+  padding: 12px;
+  margin: 4px 0;
+}
+.dm-group[hidden] { display: none; }
+.dm-group-title {
+  font-weight: 600;
+  margin: 0 0 8px;
+}
+/* Collapsible header — chevron + click target. The chevron char is set
+ * by the renderer (▼ expanded, ▶ collapsed); CSS just makes it feel
+ * interactive. Body is a sibling div toggled via [hidden]. */
+.dm-group-title.dm-collapsible {
+  cursor: pointer;
+  user-select: none;
+}
+.dm-group-title .dm-chevron {
+  font-size: 0.85em;
+  margin-right: 4px;
+  display: inline-block;
+}
+.dm-group-body[hidden] { display: none; }
+
+/* ─── Field ───────────────────────────────────────────────────── */
+.dm-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 8px 0;
+}
+.dm-field[hidden] { display: none; }
+.dm-field .dm-label {
+  font-weight: 500;
+}
+.dm-field .dm-req {
+  color: var(--dm-error);
+  margin-left: 2px;
+}
+.dm-field .dm-hint {
+  font-style: italic;
+  font-size: 12px;
+  /* Honour `\n` in the description string as a line break. Default
+     `white-space: normal` collapses newlines to a single space — which
+     is wrong for multi-line help text the schema author intends. */
+  white-space: pre-line;
+}
+.dm-field .dm-err {
+  color: var(--dm-error);
+  font-size: 12px;
+  min-height: 0;
+}
+
+.dm-field input[type="text"],
+.dm-field input[type="email"],
+.dm-field input[type="tel"],
+.dm-field input[type="url"],
+.dm-field input[type="number"],
+.dm-field input[type="date"],
+.dm-field input[type="datetime-local"],
+.dm-field select,
+.dm-field textarea {
+  background: var(--dm-field-fill);
+  color: var(--dm-ink);
+  border: 1px solid var(--dm-field-border);
+  border-radius: 4px;
+  padding: 7px 9px;
+  font-size: 14px;
+  font-family: inherit;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color .12s ease;
+}
+/* Single-line controls get an explicit row height. <input type="date"> /
+   datetime-local carry an intrinsic content height from their native
+   calendar-icon button, and <select> from its native dropdown arrow —
+   both override `min-height` and render a pixel taller / shorter than
+   plain text inputs respectively. With `box-sizing: border-box` an exact
+   `height` clamps every single-line widget to the same outer dimension
+   regardless of native chrome. Textarea opts out (auto-grow) below. */
+.dm-field input[type="text"],
+.dm-field input[type="email"],
+.dm-field input[type="tel"],
+.dm-field input[type="url"],
+.dm-field input[type="number"],
+.dm-field input[type="date"],
+.dm-field input[type="datetime-local"],
+.dm-field select {
+  height: var(--field-row-min-height);
+}
+.dm-field textarea { min-height: 80px; }
+.dm-field input:focus,
+.dm-field select:focus,
+.dm-field textarea:focus {
+  outline: none;
+  border-color: var(--dm-field-focus);
+}
+.dm-field textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.dm-field.dm-invalid input,
+.dm-field.dm-invalid select,
+.dm-field.dm-invalid textarea {
+  border-color: var(--dm-error);
+}
+
+/* ─── Money — currency-symbol prefix + input ─────────────────────
+ * Mirrors the Uno MoneyTemplate's prefix + NumberBox row. The prefix is
+ * baked into the field-bordered shell so it reads as part of the input
+ * affordance (no floating glyph next to a separate box). The inner input
+ * loses its own border + radius on the right side so the seam is invisible. */
+.dm-money {
+  display: flex;
+  align-items: stretch;
+  background: var(--dm-field-fill);
+  border: 1px solid var(--dm-field-border);
+  border-radius: 4px;
+  min-height: var(--field-row-min-height);
+  transition: border-color .12s ease;
+  box-sizing: border-box;
+}
+.dm-money:focus-within {
+  border-color: var(--dm-field-focus);
+}
+.dm-field.dm-invalid .dm-money {
+  border-color: var(--dm-error);
+}
+.dm-money-prefix {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 11px;
+  background: var(--dm-addon-bg);
+  color: var(--dm-muted-ink);
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  border-right: 1px solid var(--dm-field-border);
+  border-radius: 4px 0 0 4px;
+}
+.dm-money > input {
+  flex: 1 1 auto;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+}
+.dm-money > input:focus {
+  outline: none;
+  border: none;
+}
+
+/* ─── Rich-text editor (Markdown source + preview) ────────────── */
+.dm-rich-text-editor {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.dm-rich-text-toggle {
+  align-self: flex-end;
+  background: transparent;
+  color: var(--dm-ink);
+  border: 1px solid var(--dm-field-border);
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+}
+.dm-rich-text-toggle:hover { background: var(--dm-addon-bg); }
+.dm-rich-text-toggle:focus { outline: 2px solid var(--dm-field-focus); outline-offset: 1px; }
+.dm-rich-text-source {
+  background: var(--dm-field-fill);
+  color: var(--dm-ink);
+  border: 1px solid var(--dm-field-border);
+  border-radius: 4px;
+  padding: 7px 9px;
+  font-size: 13px;
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  width: 100%;
+  min-height: 120px;
+  box-sizing: border-box;
+  resize: vertical;
+}
+.dm-rich-text-source:focus {
+  outline: none;
+  border-color: var(--dm-field-focus);
+}
+.dm-rich-text-preview {
+  background: var(--dm-field-fill);
+  border: 1px solid var(--dm-field-border);
+  border-radius: 4px;
+  padding: 7px 9px;
+  min-height: 120px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+.dm-rich-text-preview > *:first-child { margin-top: 0; }
+.dm-rich-text-preview > *:last-child  { margin-bottom: 0; }
+
+/* Markdown rendering — applies to both the layout decorative column
+   (`.dm-richtext`) and the rich-text field-type's preview pane
+   (`.dm-rich-text-preview`). Sizes / weights / spacing mirror the Uno
+   `BuildMarkdownPanel` output (h1=22 / h2=18 / h3=16, body=14,
+   StackPanel Spacing=6, list-item gap=2) so the rendered Markdown
+   reads identically across all three renderers. */
+.dm-richtext, .dm-rich-text-preview { font-size: 14px; line-height: 1.4; }
+.dm-richtext > *, .dm-rich-text-preview > * { margin: 0 0 6px 0; }
+.dm-richtext > *:last-child, .dm-rich-text-preview > *:last-child { margin-bottom: 0; }
+.dm-richtext h1, .dm-rich-text-preview h1 { font-size: 22px; font-weight: 600; line-height: 1.2; margin: 0 0 6px 0; }
+.dm-richtext h2, .dm-rich-text-preview h2 { font-size: 18px; font-weight: 600; line-height: 1.2; margin: 0 0 6px 0; }
+.dm-richtext h3, .dm-rich-text-preview h3 { font-size: 16px; font-weight: 600; line-height: 1.2; margin: 0 0 6px 0; }
+.dm-richtext p,  .dm-rich-text-preview p  { margin: 0 0 6px 0; }
+.dm-richtext ul, .dm-rich-text-preview ul,
+.dm-richtext ol, .dm-rich-text-preview ol { margin: 0 0 6px 0; padding-left: 20px; }
+.dm-richtext li, .dm-rich-text-preview li { margin: 0 0 2px 0; }
+.dm-richtext li:last-child, .dm-rich-text-preview li:last-child { margin-bottom: 0; }
+.dm-richtext strong, .dm-rich-text-preview strong { font-weight: 600; }
+.dm-richtext code, .dm-rich-text-preview code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: inherit;
+}
+
+/* ─── Multi-choice ────────────────────────────────────────────── */
+.dm-multi {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.dm-multi .dm-opt {
+  font-weight: normal;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+  cursor: pointer;
+}
+/* Choice.Color dot + Choice.Icon glyph, used by both `multi-choice` and
+ * by future custom-dropdown choice renderers. <select> can't host
+ * markup, so the single-choice case still displays just the label. */
+.dm-choice-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  display: inline-block; flex-shrink: 0;
+}
+.dm-choice-icon {
+  display: inline-block; flex-shrink: 0;
+}
+/* Custom-painted multi-choice checkbox so unchecked state shows a clean
+ * paper bg + field-border (light: white box, dark: dark box) and checked
+ * state fills with FOBO cyan + a CSS-drawn checkmark. Native `accent-color`
+ * left the unchecked surface as the browser default (often a faint grey),
+ * which clashed with the form's white sheet. `appearance:none` strips
+ * that and we rebuild minimally. */
+.dm-multi .dm-opt input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  background: var(--dm-paper);
+  border: 1px solid var(--dm-field-border);
+  border-radius: 3px;
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+}
+.dm-multi .dm-opt input[type="checkbox"]:checked {
+  background: var(--dm-field-focus);
+  border-color: var(--dm-field-focus);
+}
+.dm-multi .dm-opt input[type="checkbox"]:checked::after {
+  /* CSS-drawn check via two rotated borders — universal, scales crisply,
+   * no font dependency. Tweaked to sit centred in the 16 px box. */
+  content: "";
+  position: absolute;
+  top: 1px;
+  left: 4px;
+  width: 4px;
+  height: 8px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+.dm-multi .dm-opt input[type="checkbox"]:focus-visible,
+.dm-multi .dm-opt input[type="checkbox"]:focus {
+  outline: 2px solid var(--dm-field-focus);
+  outline-offset: 2px;
+}
+
+/* ─── Boolean as toggle switch ────────────────────────────────
+ * The .dm-field > input[type=checkbox] selector matches ONLY the bare
+ * boolean editor's checkbox (multi-choice nests its boxes under .dm-multi
+ * .dm-opt, so they don't match this direct-child rule). Repaints the
+ * native checkbox into a sliding pill so the visual reads like Uno's
+ * ToggleSwitch — that's the parity bar set in worklist #17. */
+/* Box is sized to the standard row height so the toggle's flex slot in the
+ * field column matches a text input's slot. The visible pill (36×20) is
+ * painted by ::before and vertically centred inside the 32px box; the
+ * thumb (::after) is centred against the same axis so it tracks the pill
+ * regardless of row height. */
+.dm-field > input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 36px;
+  height: var(--field-row-min-height);
+  border: none;
+  background: transparent;
+  position: relative;
+  cursor: pointer;
+  flex-shrink: 0;
+  align-self: flex-start;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+.dm-field > input[type="checkbox"]::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 20px;
+  border-radius: 10px;
+  background: var(--dm-field-border);
+  transition: background 120ms ease;
+  pointer-events: none;
+}
+.dm-field > input[type="checkbox"]::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 2px;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--dm-paper);
+  transition: left 120ms ease;
+  pointer-events: none;
+}
+.dm-field > input[type="checkbox"]:checked::before {
+  background: var(--dm-field-focus);
+}
+.dm-field > input[type="checkbox"]:checked::after {
+  left: 18px;
+}
+.dm-field > input[type="checkbox"]:focus-visible,
+.dm-field > input[type="checkbox"]:focus {
+  outline: 2px solid var(--dm-field-focus);
+  outline-offset: 2px;
+}
+
+/* ─── Geo ─────────────────────────────────────────────────────── */
+.dm-geo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.dm-geo-addr-row { position: relative; }
+.dm-geo-addr {
+  width: 100%;
+  box-sizing: border-box;
+}
+.dm-geo-coords {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+/* Autocomplete dropdown floats over the page; absolute-positioned so it
+   doesn't push the lat/lng row down while the user is typing. */
+.dm-geo-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 5;
+  margin-top: 2px;
+  max-height: 220px;
+  overflow-y: auto;
+  background: var(--dm-paper);
+  border: 1px solid var(--dm-field-border);
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+.dm-geo-suggestion {
+  padding: 6px 10px;
+  font-size: 13px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--dm-field-border);
+}
+.dm-geo-suggestion:last-child { border-bottom: 0; }
+.dm-geo-suggestion:hover {
+  background: var(--dm-field-fill);
+}
+
+/* ─── Chips (list field) ──────────────────────────────────────── */
+.dm-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  min-height: 32px;
+  border: 1px solid var(--dm-field-border);
+  border-radius: 4px;
+  padding: 6px 8px;
+  background: var(--dm-field-fill);
+}
+.dm-chips:focus-within { border-color: var(--dm-field-focus); }
+.dm-chips-items {
+  display: contents;
+}
+.dm-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--dm-paper);
+  border: 1px solid var(--dm-field-border);
+  border-radius: 12px;
+  padding: 3px 4px 3px 10px;
+  font-size: 12px;
+}
+.dm-chip-x {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  color: var(--dm-muted-ink);
+  font-size: 14px;
+  line-height: 1;
+  padding: 0 4px;
+}
+.dm-chip-x:hover { color: var(--dm-error); }
+.dm-chip-input {
+  flex: 1;
+  min-width: 80px;
+  border: 0 !important;
+  background: transparent !important;
+  padding: 0 4px !important;
+  font-size: 13px !important;
+  outline: none;
+}
+.dm-chips-empty { color: var(--dm-muted-ink); font-size: 12px; }
+
+/* ─── Image control ───────────────────────────────────────────── */
+.dm-image-control {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.dm-image-slot {
+  /* WebKit / Blink apply default button rendering that paints the
+     system-default white face and ignores `background` in some
+     configurations. Reset appearance so our custom bg actually shows. */
+  -webkit-appearance: none;
+  appearance: none;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--dm-field-fill);
+  border: 1px dashed var(--dm-field-border);
+  border-radius: 6px;
+  width: 96px;
+  height: 96px;
+  overflow: hidden;
+  color: var(--dm-muted-ink);
+  font-size: 12px;
+  font-family: inherit;
+  padding: 0;
+  cursor: pointer;
+  transition: border-color .12s ease, background .12s ease;
+}
+.dm-image-slot:hover {
+  border-color: var(--dm-field-focus);
+  border-style: solid;
+}
+.dm-image-slot:focus {
+  outline: none;
+  border-color: var(--dm-field-focus);
+  border-style: solid;
+}
+.dm-image-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* When an image is loaded the empty hint is gone, leaving no visual cue
+   that the slot is still clickable. The overlay surfaces "Replace" on
+   hover so the user knows the image can be swapped. */
+.dm-image-slot:has(.dm-image-preview:not([hidden]))::after {
+  content: 'Replace';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,.55);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  opacity: 0;
+  transition: opacity .12s ease;
+  pointer-events: none;
+}
+.dm-image-slot:has(.dm-image-preview:not([hidden])):hover::after,
+.dm-image-slot:has(.dm-image-preview:not([hidden])):focus::after {
+  opacity: 1;
+}
+.dm-attach-browse {
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--dm-field-fill);
+  color: var(--dm-ink);
+  border: 1px solid var(--dm-field-border);
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.dm-attach-browse:hover { filter: brightness(1.05); }
+.dm-attach-browse:focus { outline: 2px solid var(--dm-field-focus); outline-offset: 1px; }
+
+/* ─── Attachment control ────────────────────────────────────────
+ * Mirrors the Uno AttachmentFieldEditor: file glyph + filename caption
+ * + Browse + Clear (visible only when filled). The slot is plain text —
+ * no bordered surface — so the icon + filename read as a tight cluster
+ * rather than a fake-input. Browse + Clear sit to the right. */
+.dm-attach-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.dm-attach-icon {
+  font-family: "FontAwesome", sans-serif;
+  font-weight: 900;
+  font-size: 18px;
+  color: var(--dm-muted-ink);
+  flex-shrink: 0;
+}
+.dm-attach-slot {
+  flex: 1;
+  font-size: 12px;
+  color: var(--dm-muted-ink);
+  background: transparent;
+  border: 0;
+  padding: 0;
+}
+.dm-attach-clear {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  color: var(--dm-ink);
+  border: 1px solid var(--dm-field-border);
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.dm-attach-clear:hover { filter: brightness(1.05); }
+.dm-attach-clear:focus { outline: 2px solid var(--dm-field-focus); outline-offset: 1px; }
+
+/* ─── Divider ─────────────────────────────────────────────────── */
+.dm-divider {
+  border: 0;
+  border-top: 1px solid var(--dm-field-border);
+  margin: 12px 0;
+}
+
+/* ─── Date / DateTime picker ─────────────────────────────────────
+ * Custom Tempus-Dominus-style composite picker: bordered field showing
+ * combined date+time, click → popup with calendar (with "Set time"
+ * footer) that slides up to a time-edit page. Mirrors the Uno
+ * DateTimePicker so the recipient web view and the desktop preview
+ * paint the same control. Uses the existing :root tokens, so light/dark
+ * theming is inherited for free. */
+.dm-dt-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 12px;
+  background: var(--dm-field-fill);
+  color: var(--dm-ink);
+  border: 1px solid var(--dm-field-border);
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: inherit;
+  box-sizing: border-box;
+  width: 100%;
+}
+.dm-dt-field:focus,
+.dm-dt-field:focus-within { outline: none; border-color: var(--dm-field-focus); }
+.dm-field.dm-invalid .dm-dt-field { border-color: var(--dm-error); }
+.dm-dt-field.disabled { opacity: 0.55; cursor: not-allowed; pointer-events: none; }
+.dm-dt-text { flex: 1; text-align: left; }
+.dm-dt-text.placeholder { color: var(--dm-muted-ink); }
+.dm-dt-input,
+.dm-dt-input:focus,
+.dm-dt-input:hover,
+.dm-dt-input:active {
+  flex: 1; text-align: left;
+  border: 0 !important; outline: 0 !important; box-shadow: none !important;
+  background: transparent !important; color: inherit; font: inherit;
+  padding: 0; margin: 0; min-width: 0;
+  -webkit-appearance: none; appearance: none;
+}
+.dm-dt-input::placeholder { color: var(--dm-muted-ink); }
+.dm-dt-icon {
+  margin-left: 8px;
+  color: var(--dm-muted-ink);
+  font-size: 13px;
+  cursor: pointer;
+  /* The @font-face above registers FA Solid under family=FontAwesome with
+     font-weight:900. Browsers match @font-face rules by *both* family AND
+     weight — without an explicit font-weight here, the body's inherited
+     400 weight triggers a fallback to the system font and `\f073` renders
+     as a missing-glyph tofu. Same applies to the toggle buttons below. */
+  font-family: "FontAwesome", sans-serif;
+  font-weight: 900;
+}
+
+.dm-dt-popup {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 100;
+  width: 240px;
+  background: var(--dm-paper);
+  color: var(--dm-ink);
+  border: 1px solid var(--dm-field-border);
+  border-radius: 6px;
+  box-shadow: var(--shadow);
+  display: none;
+  overflow: hidden;
+}
+.dm-dt-field.dm-open .dm-dt-popup { display: block; }
+
+/* Slide stage + page positioning live in layout.css now (grid-stack so
+ * height auto-fits the active theme's font scale). Theme-only chrome —
+ * if any — would belong here. */
+.dm-dt-cal-page  { transform: translateY(0); }
+.dm-dt-time-page { transform: translateY(100%); }
+.dm-dt-field.dm-show-time .dm-dt-cal-page  { transform: translateY(-100%); }
+.dm-dt-field.dm-show-time .dm-dt-time-page { transform: translateY(0); }
+
+/* Calendar */
+.dm-dt-cal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 6px; font-size: 12px;
+}
+.dm-dt-cal-nav, .dm-dt-go-time, .dm-dt-go-cal {
+  background: transparent; border: 0; cursor: pointer;
+  color: inherit; font-family: inherit; font-size: 12px;
+  padding: 4px 8px; border-radius: 4px;
+}
+.dm-dt-cal-nav:hover, .dm-dt-go-time:hover, .dm-dt-go-cal:hover { background: var(--dm-addon-bg); }
+.dm-dt-cal-weekdays {
+  display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px;
+  font-size: 10px; color: var(--dm-muted-ink); text-align: center; margin-bottom: 2px;
+}
+.dm-dt-cal-grid  { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+/* Zoom-out grids — 3 columns of bigger cells. data-mode is set in JS. */
+.dm-dt-cal-grid[data-mode="months"],
+.dm-dt-cal-grid[data-mode="years"] {
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+}
+.dm-dt-cal-grid[data-mode="months"] .dm-dt-day,
+.dm-dt-cal-grid[data-mode="years"]  .dm-dt-day {
+  min-height: 42px;
+  font-size: 12px;
+}
+/* Header label is clickable in days/months view (zooms out one level)
+   and inert in years view. cursor + hover state communicate that. */
+.dm-dt-cal-month {
+  background: transparent; border: 0; cursor: pointer;
+  font-weight: 600; font-size: 12px;
+  font-family: inherit; color: inherit;
+  padding: 4px 6px; border-radius: 4px;
+}
+.dm-dt-cal-month:hover { background: var(--dm-addon-bg); }
+.dm-dt-day {
+  background: transparent; border: 0; cursor: pointer;
+  font-size: 11px; color: inherit; font-family: inherit;
+  border-radius: 4px; min-height: 26px; padding: 2px;
+  /* min-height not fixed: with the slide stage now grid-auto-sized, the
+   * cells can grow with the active theme's font without pushing the
+   * "Set time" footer off-screen. */
+}
+.dm-dt-day:hover { background: var(--dm-addon-bg); }
+.dm-dt-day.dm-other-month { opacity: 0.35; }
+.dm-dt-day.dm-out-of-range { opacity: 0.25; cursor: not-allowed; }
+.dm-dt-day.dm-out-of-range:hover { background: transparent; }
+.dm-dt-day.dm-today       { font-weight: 700; color: var(--dm-field-focus); }
+.dm-dt-day.dm-selected    { background: var(--dm-field-focus); color: #fff; }
+.dm-dt-go-time {
+  margin-top: auto; border-top: 1px solid var(--dm-divider);
+  border-radius: 0; padding: 6px;
+}
+.dm-dt-go-time .icon, .dm-dt-go-cal .icon {
+  margin-right: 4px;
+  font-family: "FontAwesome", sans-serif;
+  font-weight: 900;
+}
+
+/* Time view */
+.dm-dt-go-cal {
+  margin-bottom: 8px; border-bottom: 1px solid var(--dm-divider);
+  border-radius: 0; padding: 6px;
+}
+.dm-dt-time-cluster {
+  display: flex; align-items: center; justify-content: center;
+  gap: 4px; margin: auto 0;
+}
+.dm-dt-time-col { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.dm-dt-spin-btn {
+  width: 56px; height: 18px; padding: 0;
+  background: transparent; border: 0; cursor: pointer;
+  color: var(--dm-muted-ink); font-size: 9px;
+}
+.dm-dt-spin-btn:hover { color: var(--dm-ink); }
+.dm-dt-time-input {
+  width: 56px; height: 32px; padding: 6px 4px;
+  font-size: 14px; text-align: center; box-sizing: border-box;
+  border: 1px solid var(--dm-field-border); border-radius: 4px;
+  background: var(--dm-field-fill); color: var(--dm-ink);
+  font-family: inherit;
+}
+.dm-dt-time-input:focus { outline: none; border-color: var(--dm-field-focus); }
+.dm-dt-colon { font-size: 14px; font-weight: 600; padding: 0 2px; }
+.dm-dt-ampm {
+  margin-left: 4px; padding: 6px 10px; font-size: 13px; font-weight: 600;
+  border: 1px solid var(--dm-field-border); border-radius: 4px;
+  background: var(--dm-field-fill); color: var(--dm-ink);
+  cursor: pointer; font-family: inherit; min-width: 48px;
+}
+.dm-dt-ampm:hover { background: var(--dm-addon-bg); }
+
+/* ─── Submit row ────────────────────────────────────────────────
+ * Mirrors the Wasm MainPage submit row + the desktop preview submit row.
+ * FOBO cyan button, white text, status text on the left. */
+.dm-submit-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+  gap: 12px;
+}
+.dm-submit-status {
+  flex: 1;
+  font-size: 13px;
+  color: var(--dm-muted-ink);
+}
+.dm-submit {
+  padding: 8px 20px;
+  min-width: 120px;
+  /* Solid FOBO cyan button; text matches the form sheet (white in light,
+     dark surface in dark) so it contrasts with the cyan + reads as
+     anchored to the form's paper colour. */
+  background: #04c8ff;
+  color: var(--dm-paper);
+  border: 0;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+}
+.dm-submit:hover { filter: brightness(1.05); }
+
+/* ─── Schema buttons (ButtonColumn) — brand layer ───────────────
+ * Structural .dm-btn flex/icon spacing lives in layout.css; this layer
+ * adds variant fills + hover/active behaviour. Per-instance overrides
+ * emitted by FormBundleBuilder land via `button/{id}` element-CSS +
+ * per-state <style> rules synthesised by renderer.js at bootstrap. */
+.dm-btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  border: 1px solid transparent;
+  background: transparent;
+  color: inherit;
+  transition: filter 120ms ease, background 120ms ease;
+}
+.dm-btn-primary {
+  background: var(--dm-accent, #04c8ff);
+  color: var(--dm-paper, #fff);
+  border-color: var(--dm-accent, #04c8ff);
+}
+.dm-btn-primary:hover  { filter: brightness(1.08); }
+.dm-btn-primary:active { filter: brightness(0.92); }
+.dm-btn-secondary {
+  background: transparent;
+  color: var(--dm-accent, #04c8ff);
+  border-color: var(--dm-accent, #04c8ff);
+}
+.dm-btn-secondary:hover  { background: rgba(4, 200, 255, 0.08); }
+.dm-btn-secondary:active { background: rgba(4, 200, 255, 0.16); }
+.dm-btn-subtle {
+  background: transparent;
+  color: var(--dm-accent, #04c8ff);
+  border-color: transparent;
+}
+.dm-btn-subtle:hover  { background: rgba(4, 200, 255, 0.10); }
+.dm-btn-subtle:active { background: rgba(4, 200, 255, 0.18); }
+.dm-btn-glyph { font-size: 14px; }
+
+/* ─── Heading column (themed sizes — without styles.css the browser
+ *      defaults h1-h4 take over). */
+.dm-heading   { margin: 12px 0 6px; line-height: 1.25; }
+.dm-heading-1 { font-size: 1.85rem; font-weight: 700; color: var(--dm-heading1, var(--dm-ink)); }
+.dm-heading-2 { font-size: 1.45rem; font-weight: 700; color: var(--dm-heading2, var(--dm-ink)); }
+.dm-heading-3 { font-size: 1.2rem;  font-weight: 600; color: var(--dm-heading3, var(--dm-ink)); }
+.dm-heading-4 { font-size: 1rem;    font-weight: 600; color: var(--dm-heading4, var(--dm-ink)); }
+
+/* ─── Conditional-rule chip (server-only fallback indicator) ──── */
+.dm-server-only-hint {
+  display: inline-block;
+  font-size: 10px;
+  color: var(--dm-muted-ink);
+  background: var(--dm-field-fill);
+  border: 1px dashed var(--dm-field-border);
+  padding: 1px 6px;
+  border-radius: 8px;
+  margin-left: 4px;
+  vertical-align: middle;
+}

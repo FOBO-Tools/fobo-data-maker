@@ -1,0 +1,28 @@
+{
+  "name": "datamaker-zapier",
+  "version": "1.0.0",
+  "description": "DataMaker Zapier integration — receive form submissions in any of 6000+ Zapier apps + create DataMaker records from any Zap.",
+  "homepage": "https://datamaker.fobo-tools.com/",
+  "author": "FOBO Tools <hello@fobo-tools.com>",
+  "license": "BSD-3-Clause",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha --recursive --timeout 30000",
+    "_zapier-build": "zapier-platform push"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@fobo-tools/datamaker": "file:../DataMaker.Sdk.Js",
+    "jszip": "^3.10.1",
+    "libsodium-wrappers-sumo": "^0.7.13",
+    "zapier-platform-core": "19.0.0"
+  },
+  "devDependencies": {
+    "mocha": "^10.2.0",
+    "should": "^13.2.3",
+    "zapier-platform-cli": "19.0.0"
+  },
+  "private": true
+}

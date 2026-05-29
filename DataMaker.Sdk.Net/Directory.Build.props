@@ -1,0 +1,5 @@
+<Project>
+  <!-- Intentionally empty. Stops MSBuild from walking up into the Data Maker
+       app's Directory.Build.props — the .NET SDK packages are standalone and
+       must not inherit the app's build config, analyzers, or signing. -->
+</Project>

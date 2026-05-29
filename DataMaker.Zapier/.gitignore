@@ -1,0 +1,6 @@
+node_modules/
+build/
+*.log
+.zapierapprc
+# .zapierapprc is per-developer (Zapier app id + key); each contributor
+# runs `zapier-platform link` after cloning. Don't commit.

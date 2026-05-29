@@ -1,0 +1,49 @@
+{
+  "name": "@fobo-tools/datamaker",
+  "version": "0.1.0",
+  "description": "Submit records to a Data Maker form from anywhere. Reads a signed .dmf form bundle, validates values against its schema, sealed-box encrypts them client-side, and posts to the public submissions endpoint.",
+  "keywords": [
+    "datamaker",
+    "forms",
+    "form-submission",
+    "dmf",
+    "libsodium",
+    "sealed-box",
+    "end-to-end-encryption"
+  ],
+  "homepage": "https://datamaker.fobo-tools.com/",
+  "bugs": "https://github.com/ChivanCOM/datamaker/issues",
+  "author": "FOBO Tools <hello@fobo-tools.com>",
+  "license": "BSD-3-Clause",
+  "type": "commonjs",
+  "main": "src/index.js",
+  "types": "index.d.ts",
+  "bin": {
+    "datamaker": "bin/datamaker.js"
+  },
+  "files": [
+    "src/",
+    "bin/",
+    "dist/",
+    "index.d.ts",
+    "README.md",
+    "LICENSE"
+  ],
+  "unpkg": "dist/datamaker.browser.js",
+  "jsdelivr": "dist/datamaker.browser.js",
+  "engines": {
+    "node": ">=18.20"
+  },
+  "scripts": {
+    "test": "node --test",
+    "build:browser": "esbuild src/index.js --bundle --format=iife --global-name=DataMaker --platform=browser --target=es2020 --outfile=dist/datamaker.browser.js",
+    "prepublishOnly": "npm run build:browser"
+  },
+  "dependencies": {
+    "jszip": "^3.10.1",
+    "libsodium-wrappers-sumo": "^0.7.13"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0"
+  }
+}

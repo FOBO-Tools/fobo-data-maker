@@ -1,0 +1,10 @@
+<Project>
+  <!-- Common C# props for the public client libraries + terminal. The
+       DataMaker.Sdk.Net subtree carries its own (empty) Directory.Build.props
+       and CPM-off Directory.Packages.props, so it stays self-contained. -->
+  <PropertyGroup>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+</Project>

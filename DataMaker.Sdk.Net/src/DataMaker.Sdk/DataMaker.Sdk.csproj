@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+
+    <PackageId>DataMaker.Sdk</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>FOBO Tools</Authors>
+    <Description>Submit records to a Data Maker form from .NET: read a signed .dmf bundle, validate values, sealed-box encrypt, and POST to the public submissions endpoint. Standalone — no dependency on the Data Maker app internals.</Description>
+    <PackageLicenseExpression>BSD-3-Clause</PackageLicenseExpression>
+    <PackageProjectUrl>https://datamaker.fobo-tools.com/</PackageProjectUrl>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- libsodium binding — same crypto_box_seal / Ed25519 the desktop app
+         uses, so ciphertext + signature verification are wire-identical. -->
+    <PackageReference Include="Sodium.Core" Version="1.4.1" />
+  </ItemGroup>
+
+</Project>

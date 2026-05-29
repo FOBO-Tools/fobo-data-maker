@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <RootNamespace>DataMaker.Forms.Signing</RootNamespace>
+
+    <!-- Client-subset SDK package: verify-only .dmf reader. No signing/keygen. -->
+    <IsPackable>true</IsPackable>
+    <PackageId>DataMaker.Forms.Signing.Verify</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>FOBO Tools</Authors>
+    <Description>Verify-only reader for Data Maker .dmf form bundles: signature + hash verification, FOBO attestation trust, recipient + form model. The signing/keygen half lives in the server-only DataMaker.Forms.Signing assembly.</Description>
+    <PackageLicenseExpression>BSD-3-Clause</PackageLicenseExpression>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Sodium.Core" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DataMaker.Schema\DataMaker.Schema.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="DataMaker.Tests" />
+  </ItemGroup>
+
+</Project>

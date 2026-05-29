@@ -1,0 +1,298 @@
+/*
+ * DataMaker form renderer — LAYOUT layer.
+ *
+ * Ships unconditionally on every host. Pure structural rules: grid,
+ * flex, dimensions, spacing, hidden-attribute handling, error
+ * placement, date-picker open/closed state, focusable resets. No
+ * brand colour, no font family choice, no decorative borders.
+ *
+ * `styles.css` is the brand layer (FOBO palette, FA glyphs, button
+ * variants, heading sizes, dark-mode tokens). It loads on top of this
+ * file when the host opts in. With styles.css absent the form still
+ * lays out correctly — fields aligned to columns, rows wrap, the
+ * date picker opens / closes — just unbranded so the surrounding
+ * theme (WordPress, Squarespace, plain HTML page) drives the look.
+ *
+ * Order of precedence at runtime:
+ *   layout.css → styles.css (brand) → palette CSS-vars block → per-element
+ *   inline style="…" attributes from FormBundleBuilder.
+ */
+
+/* ── Sheet ─────────────────────────────────────────────────────── */
+.dm-sheet {
+  max-width: 1600px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  /* No padding here on purpose — embedders (WordPress, etc.) sit the
+   * form inside their own content container which already supplies page
+   * padding. styles.css adds breathing room when the brand layer ships
+   * (designer preview / WebView2 host); without it the form butts up
+   * against whatever wraps it. */
+}
+
+/* ── Layout grid (Bootstrap-style 12-column) ───────────────────── */
+.dm-row {
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 12), 1fr);
+  column-gap: 12px;
+  row-gap: 12px;
+  margin: 12px 0;
+}
+.dm-col            { min-width: 0; }
+.dm-col[hidden]    { display: none; }
+
+/* Responsive collapse. Below 768 px the 12-column grid becomes a single
+ * column — designer-set `--cols` (and per-column `grid-column: span N`)
+ * are ignored so every column stacks full-width. Without this rule a
+ * 12-column form on a 375 px iPhone gives 30 px columns. The override
+ * is structural — no brand styling depends on it. */
+@media (max-width: 768px) {
+  .dm-row {
+    grid-template-columns: 1fr;
+  }
+  .dm-col {
+    grid-column: 1 / -1 !important;
+  }
+}
+
+/* ── Group card ────────────────────────────────────────────────── */
+.dm-group {
+  display: block;
+  margin: 0;
+  padding: 12px;
+  border: 0;
+  min-width: 0;
+}
+.dm-group[hidden]      { display: none; }
+.dm-group-title        { display: block; margin: 0 0 8px; padding: 0; font-size: inherit; }
+.dm-group-title.dm-collapsible { cursor: pointer; user-select: none; }
+.dm-group-body[hidden] { display: none; }
+
+/* ── Field ─────────────────────────────────────────────────────── */
+.dm-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.dm-field[hidden] { display: none; }
+.dm-field .dm-label  { display: block; }
+.dm-field .dm-req    { margin-left: 2px; }
+.dm-field .dm-hint   { margin: 0; font-size: 12px; }
+.dm-field .dm-err    { margin: 0; font-size: 12px; min-height: 1em; color: var(--dm-error, #c92a2a); }
+
+/* Validation affordances — kept in the structural layer (not in
+ * styles.css's brand block) so submitters still see the field outlined
+ * red and the message rendered when the host suppresses the form's
+ * DataMaker theme (WP "Use form theme" off). styles.css redefines
+ * --error in light/dark, which wins when the brand layer is loaded. */
+.dm-field.dm-invalid input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="image"]):not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="range"]):not([type="color"]),
+.dm-field.dm-invalid select,
+.dm-field.dm-invalid textarea,
+.dm-field.dm-invalid .dm-money,
+.dm-field.dm-invalid .dm-dt-field {
+  border-color: var(--dm-error, #c92a2a);
+}
+
+/* Form-level "issues" banner — appears above the submit row whenever any
+ * touched field is invalid. Text comes from form.messages.validationBanner
+ * with an engine default fallback. Same --error fallback story as
+ * .dm-field.dm-invalid so it surfaces with the theme off too. */
+.dm-form-issues {
+  margin: 12px 0;
+  padding: 10px 14px;
+  border: 1px solid var(--dm-error, #c92a2a);
+  border-radius: 4px;
+  color: var(--dm-error, #c92a2a);
+  background: rgba(201, 42, 42, 0.06);
+  font-size: 13px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.dm-form-issues[hidden] { display: none; }
+
+/* GDPR consent block — rendered just above the submit row when the
+ * per-form admin requires it. Inherits its red error state from the
+ * same --error fallback as the field-invalid affordances. */
+.dm-consent {
+  margin: 12px 0;
+  font-size: 13px;
+}
+.dm-consent-label {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  cursor: pointer;
+}
+.dm-consent-checkbox {
+  margin-top: 2px;
+  flex: 0 0 auto;
+}
+.dm-consent a { color: inherit; text-decoration: underline; }
+.dm-consent-invalid .dm-consent-checkbox { outline: 2px solid var(--dm-error, #c92a2a); outline-offset: 2px; border-radius: 2px; }
+.dm-consent-hint {
+  margin-top: 6px;
+  color: var(--dm-error, #c92a2a);
+  font-size: 12px;
+}
+.dm-form-issues-icon {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--dm-error, #c92a2a);
+  color: #fff;
+  font-weight: bold;
+  font-size: 12px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Inputs fill their column; baseline padding + box-sizing so label /
+ * hint / error stack align across kinds. No colour or border-radius —
+ * brand layer adds those when present. Excludes checkbox / radio /
+ * file / image / button / range / colour — those are intrinsically
+ * sized and stretching them looks broken (huge centered checkmark, etc.). */
+.dm-field input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="image"]):not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="range"]):not([type="color"]),
+.dm-field select,
+.dm-field textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 6px 8px;
+  font: inherit;
+  min-height: 32px;
+}
+.dm-field textarea { min-height: 80px; resize: vertical; }
+/* Checkboxes / radios sit at their intrinsic size. Scope `align-self`
+ * to DIRECT children of `.dm-field` only — otherwise the boolean rule
+ * leaks into `.dm-multi .dm-opt > input` and pulls the multi-choice tick to
+ * the top of its row, breaking vertical-center alignment with the
+ * adjacent label text. Nested checkboxes inherit their parent's
+ * align-items (set on `.dm-multi .dm-opt` etc.) so they sit on the label
+ * baseline. */
+.dm-field > input[type="checkbox"],
+.dm-field > input[type="radio"] {
+  align-self: flex-start;
+  margin: 4px 0;
+}
+.dm-field input[type="checkbox"],
+.dm-field input[type="radio"] {
+  width: auto;
+}
+
+/* ── Money — currency-symbol prefix + input ───────────────────── */
+.dm-money              { display: flex; align-items: stretch; min-width: 0; box-sizing: border-box; border: 1px solid; border-radius: 4px; overflow: hidden; }
+.dm-money-prefix       { display: inline-flex; align-items: center; padding: 0 10px; flex: 0 0 auto; }
+.dm-money > input      { flex: 1 1 auto; min-width: 0; border: 0 !important; outline: 0 !important; background: transparent !important; box-shadow: none !important; }
+
+/* ── Multi-choice / chips (list field) ────────────────────────── */
+.dm-multi              { display: flex; flex-wrap: wrap; gap: 8px; }
+.dm-multi .dm-opt         { display: inline-flex; align-items: center; gap: 4px; }
+
+.dm-chips              { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; min-height: 32px; padding: 6px 8px; border: 1px solid; border-radius: 4px; box-sizing: border-box; }
+.dm-chips-items        { display: contents; }
+.dm-chip               { display: inline-flex; align-items: center; gap: 4px; padding: 3px 4px 3px 10px; border: 1px solid; border-radius: 12px; font-size: .9em; }
+.dm-chip-x             { -webkit-appearance: none; appearance: none; background: transparent; border: 0; cursor: pointer; padding: 0 4px; line-height: 1; font: inherit; color: inherit; }
+.dm-chip-input         { flex: 1 1 80px; min-width: 80px; border: 0 !important; outline: none; padding: 0 4px !important; background: transparent !important; font: inherit; color: inherit; }
+
+/* ── Image picker ────────────────────────────────────────────── */
+.dm-image-control      { display: flex; align-items: flex-start; gap: 8px; }
+.dm-image-slot         { -webkit-appearance: none; appearance: none; position: relative; display: flex; align-items: center; justify-content: center; width: 96px; height: 96px; padding: 0; border: 1px dashed; border-radius: 6px; box-sizing: border-box; cursor: pointer; overflow: hidden; background: transparent; font: inherit; color: inherit; }
+.dm-image-preview      { width: 100%; height: 100%; object-fit: cover; }
+
+/* ── Attachment picker ───────────────────────────────────────── */
+.dm-attach-control     { display: flex; align-items: center; gap: 10px; }
+.dm-attach-icon        { flex-shrink: 0; }
+.dm-attach-slot        { flex: 1; padding: 0; background: transparent; border: 0; }
+.dm-attach-browse,
+.dm-attach-clear       { -webkit-appearance: none; appearance: none; padding: 6px 12px; border: 1px solid; border-radius: 4px; cursor: pointer; font: inherit; color: inherit; background: transparent; }
+
+/* Hidden native file inputs the picker buttons proxy clicks to. */
+.dm-field input[type="file"] { display: none; }
+
+/* ── Decorative columns ───────────────────────────────────────── */
+.dm-layout-img         { display: block; max-width: 100%; height: auto; }
+.dm-divider            { border: 0; border-top: 1px solid currentColor; margin: 8px 0; opacity: 0.4; }
+.dm-spacer             { display: block; }
+
+/* Rich-text decorative column — block flow, no chrome. */
+.dm-richtext           { display: block; }
+.dm-richtext > *       { margin: 0 0 6px 0; }
+.dm-richtext > *:last-child { margin-bottom: 0; }
+.dm-richtext ul, .dm-richtext ol { padding-left: 20px; }
+
+/* ── Date / datetime picker ───────────────────────────────────── */
+.dm-dt-field {
+  position: relative;
+  display: flex; align-items: center;
+  width: 100%; min-width: 0; box-sizing: border-box;
+  min-height: 32px; padding: 0 8px;
+  border: 1px solid; border-radius: 4px;
+  font: inherit; color: inherit;
+  cursor: pointer;
+}
+.dm-dt-text   { flex: 1; text-align: left; }
+.dm-dt-input  { flex: 1; min-width: 0; padding: 0; margin: 0; border: 0; outline: 0; background: transparent; color: inherit; font: inherit; -webkit-appearance: none; appearance: none; }
+.dm-dt-icon   { margin-left: 8px; cursor: pointer; flex-shrink: 0; }
+.dm-dt-field.disabled { opacity: .55; cursor: not-allowed; pointer-events: none; }
+
+/* Popup must be opaque (page background bleeds through transparent),
+ * stacked above page nav, and absolute-positioned under the field. */
+.dm-dt-popup {
+  display: none;
+  position: absolute; top: calc(100% + 4px); right: 0; z-index: 100;
+  width: 240px; box-sizing: border-box;
+  background: Canvas; color: CanvasText;
+  border: 1px solid; border-radius: 6px;
+  overflow: hidden;
+}
+.dm-dt-field.dm-open .dm-dt-popup { display: block; }
+
+/* Slide stage between calendar + time pages. Both pages share the same
+ * grid cell so the stage's height = max(calendar height, time height) —
+ * grows automatically with the active theme's font / spacing. The slide
+ * animation keeps working because translateY(100%) is relative to each
+ * page's own height, and overflow:hidden on the stage clips off-screen
+ * pages out of view. */
+.dm-dt-pages { position: relative; width: 100%; display: grid; overflow: hidden; }
+.dm-dt-page  { grid-area: 1 / 1; display: flex; flex-direction: column; padding: 8px; box-sizing: border-box; transition: transform 220ms ease-in-out; }
+.dm-dt-cal-page  { transform: translateY(0); }
+.dm-dt-time-page { transform: translateY(100%); }
+.dm-dt-field.dm-show-time .dm-dt-cal-page  { transform: translateY(-100%); }
+.dm-dt-field.dm-show-time .dm-dt-time-page { transform: translateY(0); }
+
+.dm-dt-cal-header   { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.dm-dt-cal-nav,
+.dm-dt-cal-month,
+.dm-dt-go-time,
+.dm-dt-go-cal       { background: transparent; border: 0; cursor: pointer; padding: 4px 8px; font: inherit; color: inherit; border-radius: 4px; }
+.dm-dt-cal-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; margin-bottom: 2px; }
+.dm-dt-cal-grid     { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+.dm-dt-cal-grid[data-mode="months"],
+.dm-dt-cal-grid[data-mode="years"]               { grid-template-columns: repeat(3, 1fr); gap: 4px; }
+.dm-dt-cal-grid[data-mode="months"] .dm-dt-day,
+.dm-dt-cal-grid[data-mode="years"]  .dm-dt-day  { min-height: 42px; }
+.dm-dt-day          { background: transparent; border: 0; cursor: pointer; padding: 2px; min-height: 26px; border-radius: 4px; font: inherit; color: inherit; }
+.dm-dt-day.dm-other-month   { opacity: .35; }
+.dm-dt-day.dm-out-of-range  { opacity: .25; cursor: not-allowed; }
+
+.dm-dt-go-time      { margin-top: auto; border-top: 1px solid; border-radius: 0; padding: 6px; }
+.dm-dt-go-cal       { margin-bottom: 8px; border-bottom: 1px solid; border-radius: 0; padding: 6px; }
+
+.dm-dt-time-cluster { display: flex; align-items: center; justify-content: center; gap: 4px; margin: auto 0; }
+.dm-dt-time-col     { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.dm-dt-spin-btn     { width: 56px; height: 18px; padding: 0; background: transparent; border: 0; cursor: pointer; font: inherit; color: inherit; }
+.dm-dt-time-input   { width: 56px; height: 32px; padding: 6px 4px; text-align: center; box-sizing: border-box; border: 1px solid; border-radius: 4px; font: inherit; color: inherit; background: transparent; }
+.dm-dt-colon        { padding: 0 2px; font-weight: 600; }
+.dm-dt-ampm         { margin-left: 4px; padding: 6px 10px; min-width: 48px; cursor: pointer; border: 1px solid; border-radius: 4px; font: inherit; color: inherit; background: transparent; }
+
+/* ── Schema button structural slots ───────────────────────────── */
+.dm-btn             { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font: inherit; }
+.dm-btn-img         { height: 16px; width: auto; }
+
+/* ── Submit row alignment (auto-injected when no schema button) ─ */
+.dm-submit-row      { display: flex; align-items: center; justify-content: space-between; margin-top: 16px; gap: 12px; }
+.dm-submit-status   { flex: 1 1 auto; }
