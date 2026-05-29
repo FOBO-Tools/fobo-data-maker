@@ -17,6 +17,15 @@
   --sl-color-text-accent: #0277a8;
 }
 
+/* ── Centre the main content ─────────────────────────────────────
+   On pages with both the nav sidebar and the right-hand "On this page" TOC,
+   Starlight sets --sl-content-margin-inline: auto 0, which right-aligns the
+   content beside the TOC and leaves a larger gap on the left. Reset to auto so
+   the content is centred (equal left/right margin). */
+[data-has-sidebar][data-has-toc] .main-pane {
+  --sl-content-margin-inline: auto;
+}
+
 /* ── Header brand title: white on dark, dark-blue on light ───────── */
 .site-title {
   color: #ffffff;
