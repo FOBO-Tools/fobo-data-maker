@@ -52,13 +52,22 @@
 }
 
 /* ── Feature cards (Font Awesome icons, all FOBO cyan) ───────────── */
+/* Fixed even columns (4 cards → 4 / 2 / 1 across) so no card stretches to fill
+   a partial auto-fit row, and every card is the same width + height. */
 .fobo-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  grid-template-columns: 1fr;
   gap: 1rem;
   margin-top: 1.5rem;
 }
+@media (min-width: 40rem) {
+  .fobo-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (min-width: 64rem) {
+  .fobo-grid { grid-template-columns: repeat(4, 1fr); }
+}
 .fobo-card {
+  height: 100%;
   border: 1px solid var(--sl-color-gray-5);
   border-radius: 0.75rem;
   padding: 1.25rem;
