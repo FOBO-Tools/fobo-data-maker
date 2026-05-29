@@ -60,6 +60,9 @@ var values = new Dictionary<string, object?>
 await client.SubmitAsync(form, values);
 ```
 
+For `image` / `attachment` fields, upload the bytes first and pass the returned
+ref as the value — see [Files & attachments](/fobo-data-maker/concepts/files/).
+
 Full value type per kind: the
 [field kinds reference](/fobo-data-maker/schema/field-kinds/). By default
 `SubmitAsync` coerces (`"37"` → `37`, `"yes"` → `true`) and validates — catch

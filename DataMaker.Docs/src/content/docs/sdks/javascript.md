@@ -66,6 +66,9 @@ const values = {
 await dm.submit({ form, values });
 ```
 
+For `image` / `attachment` fields, upload the bytes first and pass the returned
+ref as the value — see [Files & attachments](/fobo-data-maker/concepts/files/).
+
 The full value type for every kind is in the
 [field kinds reference](/fobo-data-maker/schema/field-kinds/).
 

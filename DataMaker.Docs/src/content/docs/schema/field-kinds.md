@@ -49,9 +49,11 @@ When building a submission, coerce per kind so the wire shape is consistent:
 - **choice** — a string. If the field has `choices` and **not** `allowCustom`,
   the value must be one of the `choices[].value`.
 - **text family / date / datetime / email / phone / url** — a string.
-- **image / attachment / geo / relation / list** — the structured value above
-  (the SDKs pass these through as-is; file upload is out of scope for the v1
-  SDKs).
+- **image / attachment** — a ref object `{ url, hash, owned, ... }`. The bytes
+  are uploaded separately, **before** you submit; see
+  [Files & attachments](/fobo-data-maker/concepts/files/) for the upload-slot
+  flow and a full example. The SDKs pass the ref through as-is.
+- **geo / relation / list** — the structured value above, passed through as-is.
 
 The SDKs do this coercion for you and reject: missing required fields, unknown
 keys, values for read-only kinds, and out-of-list choices.

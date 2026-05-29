@@ -31,6 +31,7 @@ export default defineConfig({
         { label: 'Concepts', items: [
           { label: 'The .dmf bundle', link: '/concepts/dmf/' },
           { label: 'Submission & encryption', link: '/concepts/submission/' },
+          { label: 'Files & attachments', link: '/concepts/files/' },
         ] },
         { label: 'SDKs', items: [
           { label: 'JavaScript / Node', link: '/sdks/javascript/' },

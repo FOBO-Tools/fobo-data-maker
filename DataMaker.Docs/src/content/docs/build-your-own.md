@@ -37,6 +37,11 @@ Goal: take a `.dmf` + a values map → a sealed submission.
    large. See [Submission & encryption](/fobo-data-maker/concepts/submission/)
    for the exact envelope + payload shapes.
 
+If the form has `image` / `attachment` fields, upload the bytes **before**
+step 3 and put the resulting ref into `values` — see
+[Files & attachments](/fobo-data-maker/concepts/files/). Bytes never go in the
+sealed payload.
+
 You need a libsodium binding (sealed box + Ed25519 verify), a ZIP reader,
 SHA-256, and JSON. That's it.
 
