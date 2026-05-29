@@ -7,6 +7,7 @@
   "license": "BSD-3-Clause",
   "main": "index.js",
   "scripts": {
+    "pack-sdk": "cd ../DataMaker.Sdk.Js && npm pack --pack-destination ../DataMaker.Zapier && cd ../DataMaker.Zapier && mv -f fobo-tools-datamaker-*.tgz datamaker-sdk.tgz",
     "test": "mocha --recursive --timeout 30000",
     "_zapier-build": "zapier-platform push"
   },
@@ -14,7 +15,7 @@
     "node": ">=22"
   },
   "dependencies": {
-    "@fobo-tools/datamaker": "file:../DataMaker.Sdk.Js",
+    "@fobo-tools/datamaker": "file:datamaker-sdk.tgz",
     "jszip": "^3.10.1",
     "libsodium-wrappers-sumo": "^0.7.13",
     "zapier-platform-core": "19.0.0"

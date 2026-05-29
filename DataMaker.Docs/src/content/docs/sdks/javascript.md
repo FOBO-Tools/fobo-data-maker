@@ -30,6 +30,64 @@ const result = await dm.submit({
 
 Or pass the bundle straight in: `await dm.submit({ dmf, values })`.
 
+## Building the `values` object
+
+`values` is keyed by each field's **`name`** (its storage key — *not* the
+label). Inspect the form to see the names + kinds you need to fill:
+
+```js
+for (const f of form.fields) {
+  console.log(f.key, '·', f.kind, f.required ? '(required)' : '');
+}
+// email · email (required)
+// full_name · text
+// age · number
+// subscribed · boolean
+// plan · choice
+// interests · multi-choice
+// signup_date · date
+// budget · money
+```
+
+Then map your data to those names, using the value type each kind expects:
+
+```js
+const values = {
+  email:       'ada@example.com',  // email        → string
+  full_name:   'Ada Lovelace',     // text         → string
+  age:          37,                // number        → number  (37, not "37")
+  subscribed:   true,              // boolean       → boolean
+  plan:        'pro',              // choice        → string (one of the choice values)
+  interests:   ['news', 'beta'],   // multi-choice  → string[]
+  signup_date: '2026-05-29',       // date          → "YYYY-MM-DD"
+  budget:       1999.99,           // money         → number
+};
+
+await dm.submit({ form, values });
+```
+
+The full value type for every kind is in the
+[field kinds reference](/fobo-data-maker/schema/field-kinds/).
+
+:::tip[The SDK is forgiving — but be intentional]
+By default `submit` **coerces** (`"37"` → `37`, `"yes"` → `true`, a single
+choice → `["x"]` for multi-choice) and **validates**: it throws a
+`ValidationError` (with `.issues`) for a missing required field, an unknown key
+(typo protection), a value for a read-only kind, or a choice that isn't in the
+list. Pass `validate: false` to skip, or `allowUnknown: true` to ignore extra
+keys.
+:::
+
+```js
+try {
+  await dm.submit({ form, values });
+} catch (err) {
+  if (err.code === 'VALIDATION_FAILED') {
+    for (const i of err.issues) console.error(`${i.field}: ${i.message}`);
+  } else throw err;
+}
+```
+
 ## API
 
 - **`readForm(dmfBytes, { verify = true })`** → form descriptor (`formId`,

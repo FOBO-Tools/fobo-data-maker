@@ -30,6 +30,43 @@ var result = await client.SubmitAsync(form, new Dictionary<string, object?>
 - Validation throws `ValidationException` (`.Issues`); a non-2xx throws
   `SubmissionException` (`.Status`). Inject an `HttpClient` for auth/proxy.
 
+### Building the values dictionary
+
+`values` is `Dictionary<string, object?>` keyed by each field's **`Key`** (its
+storage name — *not* the label). Inspect the form to see names + kinds:
+
+```csharp
+foreach (var f in form.Fields)
+    Console.WriteLine($"{f.Key} · {f.Kind} {(f.Required ? "(required)" : "")}");
+// email · email (required)
+// age · number   ·   subscribed · boolean   ·   plan · choice   ·   interests · multi-choice
+```
+
+Then map your data, using the CLR type each kind expects:
+
+```csharp
+var values = new Dictionary<string, object?>
+{
+    ["email"]       = "ada@example.com",          // email        → string
+    ["full_name"]   = "Ada Lovelace",             // text         → string
+    ["age"]         = 37,                         // number        → long/int
+    ["subscribed"]  = true,                       // boolean       → bool
+    ["plan"]        = "pro",                       // choice        → string (a choice value)
+    ["interests"]   = new[] { "news", "beta" },   // multi-choice  → string[]
+    ["signup_date"] = "2026-05-29",               // date          → "yyyy-MM-dd"
+    ["budget"]      = 1999.99,                     // money         → double/decimal
+};
+
+await client.SubmitAsync(form, values);
+```
+
+Full value type per kind: the
+[field kinds reference](/fobo-data-maker/schema/field-kinds/). By default
+`SubmitAsync` coerces (`"37"` → `37`, `"yes"` → `true`) and validates — catch
+`ValidationException` and read `.Issues` (`Field` + `Message`); pass
+`new SubmitOptions { Validate = false }` to skip or `AllowUnknown = true` to
+ignore extra keys.
+
 ## DataMaker.Sdk.AspNetCore — render
 
 ```cshtml

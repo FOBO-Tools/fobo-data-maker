@@ -31,6 +31,60 @@ result = dm.submit(
 
 Or pass the bytes: `dm.submit(dmf=open("contact.dmf","rb").read(), values=...)`.
 
+## Building the `values` dict
+
+`values` is keyed by each field's **`key`** (its storage name — *not* the
+label). Inspect the form to see the names + kinds you need:
+
+```python
+for f in form.fields:
+    print(f["key"], "·", f["kind"], "(required)" if f["required"] else "")
+# email · email (required)
+# full_name · text
+# age · number
+# subscribed · boolean
+# plan · choice
+# interests · multi-choice
+# signup_date · date
+# budget · money
+```
+
+Then map your data, using the value type each kind expects:
+
+```python
+values = {
+    "email":       "ada@example.com",  # email        -> str
+    "full_name":   "Ada Lovelace",     # text         -> str
+    "age":          37,                # number        -> int  (37, not "37")
+    "subscribed":   True,              # boolean       -> bool
+    "plan":        "pro",              # choice        -> str (one of the choice values)
+    "interests":   ["news", "beta"],   # multi-choice  -> list[str]
+    "signup_date": "2026-05-29",       # date          -> "YYYY-MM-DD"
+    "budget":       1999.99,           # money         -> float
+}
+
+dm.submit(form=form, values=values)
+```
+
+The full value type for every kind is in the
+[field kinds reference](/fobo-data-maker/schema/field-kinds/).
+
+:::tip[Forgiving, but be intentional]
+By default `submit` **coerces** (`"37"` → `37`, `"yes"` → `True`, a single
+choice → `["x"]` for multi-choice) and **validates**: it raises
+`ValidationError` (with `.issues`) for a missing required field, an unknown key,
+a value for a read-only kind, or an out-of-list choice. Pass `validate=False` to
+skip, or `allow_unknown=True` to ignore extra keys.
+:::
+
+```python
+try:
+    dm.submit(form=form, values=values)
+except dm.ValidationError as e:
+    for i in e.issues:
+        print(f"{i['field']}: {i['message']}")
+```
+
 ## API
 
 - **`read_form(dmf_bytes, verify=True) -> FormDescriptor`** — verifies the
