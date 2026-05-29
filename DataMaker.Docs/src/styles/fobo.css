@@ -61,22 +61,20 @@
 }
 
 /* ── Feature cards (Font Awesome icons, all FOBO cyan) ───────────── */
-/* Fixed even columns (4 cards → 4 / 2 / 1 across) so no card stretches to fill
-   a partial auto-fit row, and every card is the same width + height. */
+/* Flexbox for rock-solid equal-height cards: flex items in a row stretch to
+   the tallest by default, regardless of content length. flex: 1 1 14rem grows
+   them equally (4 across on wide, wrapping to 2 / 1 as it narrows). */
 .fobo-grid {
-  display: grid;
-  grid-template-columns: 1fr;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
   gap: 1rem;
   margin-top: 1.5rem;
-  align-items: stretch; /* cards in a row match the tallest */
-}
-@media (min-width: 40rem) {
-  .fobo-grid { grid-template-columns: repeat(2, 1fr); }
-}
-@media (min-width: 64rem) {
-  .fobo-grid { grid-template-columns: repeat(4, 1fr); }
 }
 .fobo-card {
+  flex: 1 1 14rem;
+  display: flex;
+  flex-direction: column;
   border: 1px solid var(--sl-color-gray-5);
   border-radius: 0.75rem;
   padding: 1.25rem;
