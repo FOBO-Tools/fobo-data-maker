@@ -24,8 +24,18 @@ Goal: take a `.dmf` + a values map → a sealed submission.
 3. **Build the [SubmissionPayload](/fobo-data-maker/concepts/submission/)**, JSON-encode (UTF-8).
 4. **Sealed-box encrypt** the bytes against `recipient.publicKey`
    (`crypto_box_seal`), base64 the ciphertext.
-5. **POST** the [SubmissionEnvelope](/fobo-data-maker/concepts/submission/) to
-   `{apiBaseUrl}/submissions`.
+5. **POST** the [SubmissionEnvelope](/fobo-data-maker/concepts/submission/) as JSON to
+   the public submissions endpoint:
+
+   ```http
+   POST https://datamaker-api.fobo-tools.com/submissions
+   Content-Type: application/json
+   ```
+
+   It's anonymous (no auth) for public forms. **200** → `{ submissionId,
+   editToken }`; **400** → bad/missing envelope fields; **413** → ciphertext too
+   large. See [Submission & encryption](/fobo-data-maker/concepts/submission/)
+   for the exact envelope + payload shapes.
 
 You need a libsodium binding (sealed box + Ed25519 verify), a ZIP reader,
 SHA-256, and JSON. That's it.
