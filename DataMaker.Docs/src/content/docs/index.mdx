@@ -7,14 +7,11 @@ hero:
   actions:
     - text: Getting started
       link: /fobo-data-maker/getting-started/
-      icon: right-arrow
       variant: primary
     - text: Schema reference
       link: /fobo-data-maker/schema/form-model/
-      icon: open-book
+      variant: minimal
 ---
-
-import { Card, CardGrid } from '@astrojs/starlight/components';
 
 ## What this is
 
@@ -23,25 +20,28 @@ tooling around it: submit records to a form, render a form for people to fill
 in, or read its schema to do something entirely new. Submissions are
 **end-to-end encrypted** — only the form owner can read them.
 
-<CardGrid>
-  <Card title="Submit from any language" icon="rocket">
-    Official SDKs for **JavaScript/Node**, **Python**, and **.NET** read a
-    `.dmf`, validate values, sealed-box encrypt, and post — no DataMaker app
-    required.
-  </Card>
-  <Card title="Render anywhere" icon="laptop">
-    Drop a form on the web with the JS renderer, the **WordPress** plugin, or
-    fill it in a **terminal**. Client-side or server-side encryption.
-  </Card>
-  <Card title="Build your own" icon="puzzle">
-    The `.dmf` format, the submission wire contract, and the full form schema
-    are documented so you can write a client or renderer in any stack.
-  </Card>
-  <Card title="End-to-end encrypted" icon="approve-check">
-    Values are sealed against the recipient's public key (libsodium sealed
-    box). The server only routes ciphertext — it never sees your data.
-  </Card>
-</CardGrid>
+<div class="fobo-grid">
+  <div class="fobo-card">
+    <i class="fa-solid fa-paper-plane"></i>
+    <h3>Submit from any language</h3>
+    <p>Official SDKs for <strong>JavaScript/Node</strong>, <strong>Python</strong>, and <strong>.NET</strong> read a <code>.dmf</code>, validate values, sealed-box encrypt, and post — no DataMaker app required.</p>
+  </div>
+  <div class="fobo-card">
+    <i class="fa-solid fa-display"></i>
+    <h3>Render anywhere</h3>
+    <p>Drop a form on the web with the JS renderer, the <strong>WordPress</strong> plugin, or fill it in a <strong>terminal</strong>. Client-side or server-side encryption.</p>
+  </div>
+  <div class="fobo-card">
+    <i class="fa-solid fa-puzzle-piece"></i>
+    <h3>Build your own</h3>
+    <p>The <code>.dmf</code> format, the submission wire contract, and the full form schema are documented so you can write a client or renderer in any stack.</p>
+  </div>
+  <div class="fobo-card">
+    <i class="fa-solid fa-lock"></i>
+    <h3>End-to-end encrypted</h3>
+    <p>Values are sealed against the recipient's public key (libsodium sealed box). The server only routes ciphertext — it never sees your data.</p>
+  </div>
+</div>
 
 ## Pick your path
 

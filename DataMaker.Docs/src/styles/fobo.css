@@ -4,6 +4,8 @@
   --sl-color-accent-low: #002a3b;
   --sl-color-accent: #04c8ff;
   --sl-color-accent-high: #b6ecff;
+  --fobo-cyan: #04c8ff;
+  --fobo-green: #00f15e;
 }
 
 :root[data-theme='light'] {
@@ -12,13 +14,52 @@
   --sl-color-accent-high: #00374d;
 }
 
-/* Brand-tinted hero gradient on the landing splash. */
-.hero > .stack .copy {
-  --sl-hero-glow: color-mix(in srgb, #04c8ff 18%, transparent);
+/* ── Header brand title: white on dark, dark-blue on light ───────── */
+.site-title {
+  color: #ffffff;
+  font-weight: 600;
 }
+:root[data-theme='light'] .site-title {
+  color: #0e1520;
+}
+
+/* ── Hero title: cyan → green brand gradient ─────────────────────── */
 .hero h1 {
-  background: linear-gradient(90deg, var(--sl-color-white), #04c8ff);
+  background-image: linear-gradient(90deg, #ffffff 0%, var(--fobo-cyan) 55%, var(--fobo-green) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
+/* Light theme: start dark + use deeper cyan/green so the big title stays
+   readable on the near-white background. */
+:root[data-theme='light'] .hero h1 {
+  background-image: linear-gradient(90deg, #0e1520 0%, #0277a8 55%, #0a8f4f 100%);
+}
+
+/* ── Feature cards (Font Awesome icons, brand colours) ───────────── */
+.fobo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+.fobo-card {
+  border: 1px solid var(--sl-color-gray-5);
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  background: var(--sl-color-bg-nav);
+}
+.fobo-card i {
+  font-size: 1.5rem;
+  color: var(--fobo-cyan);
+  margin-bottom: 0.5rem;
+}
+/* Alternate every other card's icon to FOBO green for a little brand pop. */
+.fobo-card:nth-child(even) i { color: var(--fobo-green); }
+:root[data-theme='light'] .fobo-card i { color: #0277a8; }
+:root[data-theme='light'] .fobo-card:nth-child(even) i { color: #0a8f4f; }
+.fobo-card h3 {
+  margin: 0 0 0.4rem;
+  font-size: 1.05rem;
+}
+.fobo-card p { margin: 0; color: var(--sl-color-gray-2); font-size: 0.95rem; }

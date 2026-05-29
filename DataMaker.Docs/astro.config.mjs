@@ -9,11 +9,17 @@ export default defineConfig({
   base: '/fobo-data-maker',
   integrations: [
     starlight({
-      title: 'FOBO Data Maker',
+      title: 'Data Maker',
       description:
         'Build clients and renderers for Data Maker forms: submit records, render .dmf bundles, and read the form schema.',
       logo: { src: './src/assets/fobo-logo.svg', alt: 'FOBO' },
       customCss: ['./src/styles/fobo.css'],
+      head: [
+        // Font Awesome 6 (free, solid) — matches the FOBO tool family's icon set.
+        { tag: 'link', attrs: { rel: 'stylesheet', href: 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css' } },
+        // Default to the light theme on first visit (user can still toggle).
+        { tag: 'script', content: "try{if(!localStorage.getItem('starlight-theme')){localStorage.setItem('starlight-theme','light');document.documentElement.dataset.theme='light';}}catch(e){}" },
+      ],
       social: {
         github: 'https://github.com/FOBO-Tools/fobo-data-maker',
       },
