@@ -82,6 +82,7 @@ async function resolveFromDmf(z, bundle, dmfUrl, hasFanOut) {
     schema:          parsed.schema,
     recipientPubkey: parsed.recipientPubkey,
     userId:          parsed.publisherUserId,
+    fobo:            parsed.fobo || null,
     source:          'dmf',
   };
 }

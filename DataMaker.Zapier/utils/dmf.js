@@ -31,6 +31,9 @@ async function parseDmf(bytes) {
     recipientPubkey: form.recipientPublicKey,
     publisherUserId: form.recipientUserId,
     envelopeVersion: form.envelopeVersion || 0,
+    // Verified FOBO attestation (or null) — who the submission is delivered to.
+    // Surfaced so a Zap can show / branch on the verified publisher.
+    fobo: form.foboVerification || null,
   };
 }
 

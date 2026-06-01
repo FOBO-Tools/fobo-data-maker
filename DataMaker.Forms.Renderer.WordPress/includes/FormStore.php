@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) exit;
 final class FormStore
 {
     /** Bump on schema changes; maybe_upgrade re-runs dbDelta when current option is stale. */
-    private const DB_VERSION = 10;
+    private const DB_VERSION = 11;
 
     public static function table(): string
     {
@@ -56,6 +56,9 @@ final class FormStore
             signer_pubkey VARCHAR(80) NULL,
             recipient_user_id VARCHAR(120) NULL,
             recipient_pubkey VARCHAR(80) NULL,
+            fobo_verified TINYINT(1) NOT NULL DEFAULT 0,
+            fobo_email VARCHAR(255) NULL,
+            fobo_company VARCHAR(255) NULL,
             uploaded_at DATETIME NOT NULL,
             uploaded_by BIGINT UNSIGNED NULL,
             PRIMARY KEY  (id),
@@ -83,6 +86,7 @@ final class FormStore
         $table     = self::table();
         $slug      = sanitize_title($slug);
         $recipient = $bundle['recipient'] ?? null;
+        $fobo      = $bundle['fobo'] ?? null; // verified FOBO attestation, or null
 
         $row = [
             'slug'               => $slug,
@@ -98,6 +102,9 @@ final class FormStore
             'signer_pubkey'      => (string)$bundle['signer_pubkey'],
             'recipient_user_id'  => is_array($recipient) ? (string)($recipient['userId']    ?? '') : null,
             'recipient_pubkey'   => is_array($recipient) ? (string)($recipient['publicKey'] ?? '') : null,
+            'fobo_verified'      => is_array($fobo) ? 1 : 0,
+            'fobo_email'         => is_array($fobo) ? ($fobo['email']   ?? null) : null,
+            'fobo_company'       => is_array($fobo) ? ($fobo['company'] ?? null) : null,
             'uploaded_at'        => current_time('mysql', true),
             'uploaded_by'        => $user_id,
         ];
