@@ -25,6 +25,29 @@ public static class SealedBox
         return Convert.ToBase64String(SealedPublicKeyBox.Create(plaintext, pk));
     }
 
+    /// <summary>
+    /// 8-byte magic prepended to E2E-sealed submission blob bytes (#45).
+    /// Mirrors DataMaker.Sync.Shared.SubmissionBlobCrypto.Magic ("DMSBLOB1").
+    /// </summary>
+    public static readonly byte[] BlobMagic = "DMSBLOB1"u8.ToArray();
+
+    /// <summary>
+    /// E2E-seal raw image/attachment bytes for the direct-to-S3 PUT: returns
+    /// <see cref="BlobMagic"/> followed by <c>crypto_box_seal(plaintext, pk)</c>.
+    /// The S3 key still uses SHA-256(plaintext); the receiver verifies that
+    /// hash after opening. Wire-identical to SubmissionBlobCrypto.Wrap.
+    /// </summary>
+    public static byte[] SealBlob(byte[] plaintext, byte[] recipientPublicKey)
+    {
+        if (recipientPublicKey.Length != PublicKeyBytes)
+            throw new ArgumentException($"recipient pubkey must be {PublicKeyBytes} bytes, got {recipientPublicKey.Length}");
+        var sealedBytes = SealedPublicKeyBox.Create(plaintext, recipientPublicKey);
+        var blob = new byte[BlobMagic.Length + sealedBytes.Length];
+        Buffer.BlockCopy(BlobMagic, 0, blob, 0, BlobMagic.Length);
+        Buffer.BlockCopy(sealedBytes, 0, blob, BlobMagic.Length, sealedBytes.Length);
+        return blob;
+    }
+
     /// <summary>Verify a detached Ed25519 signature over <paramref name="message"/>.</summary>
     public static bool VerifyEd25519(byte[] message, byte[] signature, string signerPublicKeyBase64)
     {

@@ -6,6 +6,14 @@ public sealed record ChoiceOption(string Value, string Label);
 /// <summary>Publisher identity from the .dmf manifest signer block.</summary>
 public sealed record SignerInfo(string PublicKey, string? Email, string? Name, string? Company);
 
+/// <summary>
+/// A verified FOBO attestation: the publisher's signing key chained to a
+/// FOBO-verified email (and, when present, an admin-verified company). Only
+/// returned when the signature, version, key match and expiry all check out —
+/// so <c>IsVerified</c> is always true on a non-null instance.
+/// </summary>
+public sealed record FoboAttestation(bool IsVerified, string? Email, string? Company, string? Sub, DateTimeOffset? ExpiresAt);
+
 /// <summary>One submittable field, flattened from form.json.</summary>
 public sealed class FieldDescriptor
 {
@@ -48,6 +56,10 @@ public sealed class FormDescriptor
     public string? RecipientUserId { get; init; }
     public string? RecipientPublicKey { get; init; }
     public SignerInfo? Signer { get; init; }
+    /// <summary>The FOBO attestation when present + valid; null = self-signed (no FOBO chain).</summary>
+    public FoboAttestation? FoboVerification { get; init; }
+    /// <summary>True when a valid FOBO attestation chains the signer's key to a verified email.</summary>
+    public bool IsFoboVerified => FoboVerification is not null;
     public int EnvelopeVersion { get; init; }
     public required IReadOnlyList<FieldDescriptor> Fields { get; init; }
     public bool Verified { get; init; }

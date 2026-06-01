@@ -13,6 +13,7 @@
 
 const { extractFields } = require('./dmf');
 const { buildSubmission, postSubmission, DEFAULT_API_BASE_URL } = require('./submit');
+const { sealBlob } = require('./encrypt');
 const { ValidationError } = require('./errors');
 
 // Push render-time options onto the renderer's global namespace before mount.
@@ -49,6 +50,17 @@ function createSubmitHandler(config = {}) {
   }
 
   setRenderOptions({ applyFormStyle: config.applyFormStyle });
+
+  // E2E-encrypt image/attachment blob bytes in the browser before the
+  // direct-to-S3 PUT (#45). renderer.js's uploadFileToSlot calls
+  // hooks.encryptBlob (= DataMakerRenderer.encryptBlob) just before the PUT;
+  // we seal against the same recipient pubkey used for the Values payload.
+  // Browser-only — a no-op under Node (the submit-only SDK path uploads
+  // blobs via its own helper, not the renderer hook).
+  if (typeof window !== 'undefined') {
+    const ns = (window.DataMakerRenderer = window.DataMakerRenderer || {});
+    ns.encryptBlob = (bytes) => sealBlob(bytes, config.recipientPublicKey);
+  }
 
   return async function onSubmit(payload) {
     const form = (payload && payload.form) || {};

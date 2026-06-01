@@ -17,6 +17,7 @@
 const JSZip = require('jszip');
 const { initSodium, sha256Hex } = require('./encrypt');
 const { DmfError } = require('./errors');
+const { verifyFoboAttestation } = require('./fobo');
 
 const MANIFEST_ENTRY = 'manifest.json';
 const SIGNATURE_ENTRY = 'signature.bin';
@@ -57,6 +58,13 @@ async function parseDmf(bytes, opts = {}) {
   const form = parseJson(formBytes, 'form.json');
   const recipient = manifest.recipient || null;
 
+  // FOBO attestation (optional) — its own chain, verified against the root
+  // pubkey regardless of `verify`. null when absent or it fails to verify.
+  const fobo =
+    manifest.signer && manifest.signer.publicKey && manifest.signer.foboAttestation
+      ? verifyFoboAttestation(sodium, manifest.signer.foboAttestation, manifest.signer.publicKey)
+      : null;
+
   return {
     formId: form.id,
     name: form.name,
@@ -71,6 +79,8 @@ async function parseDmf(bytes, opts = {}) {
     envelopeVersion: manifest.envelopeVersion ?? 0,
     fields: extractFields(form),
     verified: verify,
+    foboVerification: fobo,
+    isFoboVerified: !!fobo,
   };
 }
 

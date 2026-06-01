@@ -92,7 +92,12 @@ public static class FoboTrustRoot
             return null;
         }
 
-        if (payload.AttestationVersion != FoboAttestationPayload.CurrentVersion) return null;
+        // Accept any known version in [MinSupported, Current]. A v1 payload
+        // simply carries no company; a version above what we understand is
+        // rejected rather than trusted blind.
+        if (payload.AttestationVersion is < FoboAttestationPayload.MinSupportedVersion
+                                        or > FoboAttestationPayload.CurrentVersion)
+            return null;
 
         // Subject pubkey in the attestation must match the publisher
         // we're verifying — otherwise FOBO is vouching for a different

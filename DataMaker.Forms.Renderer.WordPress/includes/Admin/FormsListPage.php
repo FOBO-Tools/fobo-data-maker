@@ -31,22 +31,22 @@ final class FormsListPage
         $rows = FormStore::list_all();
         ?>
         <div class="wrap">
-            <?php PageHeader::render('Data Maker Forms'); ?>
-            <p><a href="<?php echo esc_url(admin_url('admin.php?page=datamaker-renderer')); ?>" class="button button-primary">Upload .dmf</a></p>
+            <?php PageHeader::render(__('Data Maker Forms', 'datamaker-renderer')); ?>
+            <p><a href="<?php echo esc_url(admin_url('admin.php?page=datamaker-renderer')); ?>" class="button button-primary"><?php esc_html_e('Upload .dmf', 'datamaker-renderer'); ?></a></p>
             <table class="widefat fixed striped">
                 <thead>
                     <tr>
-                        <th>Slug (shortcode id)</th>
-                        <th>Form id</th>
-                        <th>Schema</th>
-                        <th>Signed</th>
-                        <th>Uploaded</th>
+                        <th><?php esc_html_e('Slug (shortcode id)', 'datamaker-renderer'); ?></th>
+                        <th><?php esc_html_e('Form id', 'datamaker-renderer'); ?></th>
+                        <th><?php esc_html_e('Schema', 'datamaker-renderer'); ?></th>
+                        <th><?php esc_html_e('Signed', 'datamaker-renderer'); ?></th>
+                        <th><?php esc_html_e('Uploaded', 'datamaker-renderer'); ?></th>
                         <th></th>
                     </tr>
                 </thead>
                 <tbody>
                 <?php if (!$rows): ?>
-                    <tr><td colspan="6">No forms uploaded yet.</td></tr>
+                    <tr><td colspan="6"><?php esc_html_e('No forms uploaded yet.', 'datamaker-renderer'); ?></td></tr>
                 <?php else: foreach ($rows as $row):
                     $settings_url = admin_url('admin.php?page=datamaker-renderer-form&form_id=' . (int)$row['id']);
                     $preview_url  = admin_url('admin.php?page=datamaker-renderer-preview&form_id=' . (int)$row['id']);
@@ -55,7 +55,7 @@ final class FormsListPage
                         <td><code>[datamaker_form id="<?php echo esc_html($row['slug']); ?>"]</code></td>
                         <td><?php echo esc_html($row['form_id']); ?></td>
                         <td>v<?php echo (int)$row['schema_version']; ?></td>
-                        <td><?php echo $row['signature_verified'] ? 'yes' : 'no'; ?></td>
+                        <td><?php echo $row['signature_verified'] ? esc_html__('yes', 'datamaker-renderer') : esc_html__('no', 'datamaker-renderer'); ?></td>
                         <td><?php echo esc_html($row['uploaded_at']); ?></td>
                         <td>
                             <a href="<?php echo esc_url($preview_url); ?>" class="button button-secondary"><?php esc_html_e('Preview', 'datamaker-renderer'); ?></a>

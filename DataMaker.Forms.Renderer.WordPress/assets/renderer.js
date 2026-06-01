@@ -25,6 +25,22 @@ function showBootError(msg) {
   el.textContent = (el.textContent ? el.textContent + '\n\n' : '') + msg;
 }
 
+// Normalize a button's iconGlyph for DOM text content. Canonical wire format
+// is the FA hex codepoint string ("f0c7"); older form data may carry an
+// already-rendered unicode char (length 1-2). Hex strings are parsed and
+// expanded to the matching unicode character; anything else passes through
+// unchanged so author input is never silently dropped.
+function resolveIconGlyph(raw) {
+  if (raw == null) return '';
+  const s = String(raw).trim();
+  if (s.length === 0) return '';
+  if (/^[0-9a-fA-F]{1,6}$/.test(s)) {
+    const cp = parseInt(s, 16);
+    if (cp > 0 && cp <= 0x10FFFF) return String.fromCodePoint(cp);
+  }
+  return s;
+}
+
 (function () {
   'use strict';
   // Expose mount() for hosts that bootstrap multiple forms on one page
@@ -74,8 +90,17 @@ function mount(rootArg, bundleArg, hooksArg) {
   const bundle    = JSON.parse(bundleEl.textContent);
   const form      = bundle.form;
   const compiled  = bundle.compiled  || {};   // expression key → js source string or null
-  const elementCss = bundle.elementCss || {}; // element key → resolved-style CSS string
-  const paletteCss = bundle.paletteCss || ''; // :root.light{...}:root.dm-dark{...}
+
+  // The form author's design cascade lives in the .dmf: per-element resolved
+  // CSS (elementCss) + the palette (paletteCss). A host can render the form
+  // *structure-only* — inheriting its own site's look instead of the author's
+  // — by setting DataMakerRenderer.applyFormStyle = false before mount. The
+  // structural layout layer still applies; only the .dmf's visual design is
+  // dropped. Exposed through the SDK (DataMakerConfig.applyFormStyle).
+  const _applyFormStyle = (hooksArg || window.DataMakerRenderer || {}).applyFormStyle !== false;
+  const elementCss = _applyFormStyle ? (bundle.elementCss || {}) : {}; // element key → resolved-style CSS string
+  const paletteCss = _applyFormStyle ? (bundle.paletteCss || '') : ''; // :root.light{...}:root.dm-dark{...}
+  if (!_applyFormStyle && rootArg && rootArg.classList) rootArg.classList.add('dm-unstyled');
 
   // Per-mount hooks. Falls back to the legacy global namespace for hosts
   // that didn't supply a per-mount object (designer preview, WebView2).
@@ -87,6 +112,13 @@ function mount(rootArg, bundleArg, hooksArg) {
   hooks.onSave   ||= function (_)  { /* no-op preview */ };
   hooks.onReset  ||= function (_)  { /* no-op preview */ };
   hooks.onAction ||= function (_)  { /* no-op preview */ };
+  // hooks.uploadSlot({ hash, mime, sizeBytes, fileName }) → Promise of
+  // { url, key } or null. The host (WP plugin, WebView2 embed, etc.)
+  // proxies to POST /submissions/upload-slot on the Lambda. Returning
+  // null falls the field back to the legacy inline data-URI path so a
+  // host that hasn't wired the storage-v2 endpoint yet still works.
+  // See docs/PLAN-STORAGE-V2.md.
+  hooks.uploadSlot ||= async function (_) { return null; };
   // Expose the renderer's own Markdown → HTML helper so wp-bridge (and
   // any future host) can render a success message without duplicating
   // the parser. Set lazily so multiple mounts on a page agree on the
@@ -525,6 +557,21 @@ function mount(rootArg, bundleArg, hooksArg) {
     colEl.className = 'dm-col';
     colEl.style.gridColumn = 'span ' + Math.min(col.span || totalCols, totalCols);
 
+    // Per-column responsive stacking — honor Column.StackBelowPx (schema
+    // default 640). At/below that viewport width the column goes full-row
+    // (via the .dm-stack class); above it keeps its span. Each column tracks
+    // its own breakpoint, so a wide column can stack earlier than a narrow
+    // sibling. Viewport-based (matches the old global rule's granularity);
+    // container queries would be the next refinement.
+    const stackPx = (typeof col.stackBelowPx === 'number' && col.stackBelowPx > 0) ? col.stackBelowPx : 640;
+    if (typeof window.matchMedia === 'function') {
+      const mq = window.matchMedia('(max-width: ' + stackPx + 'px)');
+      const applyStack = () => colEl.classList.toggle('dm-stack', mq.matches);
+      applyStack();
+      if (mq.addEventListener) mq.addEventListener('change', applyStack);
+      else if (mq.addListener) mq.addListener(applyStack);
+    }
+
     if (kind === 'field' && col.fieldId && fieldDefs[col.fieldId]) {
       renderField(colEl, fieldDefs[col.fieldId]);
     } else if (kind === 'group') {
@@ -607,7 +654,7 @@ function mount(rootArg, bundleArg, hooksArg) {
       if (col.iconGlyph) {
         const i = document.createElement('i');
         i.className = 'fa-solid dm-btn-glyph';
-        i.textContent = col.iconGlyph;
+        i.textContent = resolveIconGlyph(col.iconGlyph);
         parts.push({ side: iconPos, el: i });
       }
       if (col.inlineImageSrc) {
@@ -675,6 +722,71 @@ function mount(rootArg, bundleArg, hooksArg) {
     groupEl.appendChild(body);
     host.appendChild(groupEl);
     if (col.id) columnEls['group/' + col.id] = groupEl;
+  }
+
+  // Storage v2: hash + upload-to-slot helper used by image + attachment
+  // field pickers. Returns the URL-shape value on success, or null when
+  // the host hasn't wired hooks.uploadSlot (preview / legacy bridge).
+  // Caller falls back to inline data URI on null so older hosts keep
+  // working. See docs/PLAN-STORAGE-V2.md §#18a phase 3.
+  async function uploadFileToSlot(f0) {
+    const buf  = await f0.arrayBuffer();
+    const bytes = new Uint8Array(buf);
+    // SHA-256 hex of the bytes. crypto.subtle is universally available
+    // on https + localhost; on plain http the slot request fails and we
+    // fall back to inline.
+    let hash;
+    try {
+      const digest = await crypto.subtle.digest('SHA-256', bytes);
+      hash = Array.from(new Uint8Array(digest))
+        .map(b => b.toString(16).padStart(2, '0')).join('');
+    } catch (_) {
+      return null;
+    }
+    // E2E-encrypt the bytes before they leave the browser when the host
+    // wired a sealer (hooks.encryptBlob — libsodium in the SDK embed,
+    // tweetnacl-sealedbox in the WP bridge). The hash above stays over the
+    // PLAINTEXT (S3 key + dedup + integrity), but the bytes PUT to S3 are
+    // ciphertext (magic + crypto_box_seal). No sealer wired (preview /
+    // legacy host) → plaintext PUT, exactly as before. See #45 / PLAN-BLOB-E2E.
+    let body = bytes;
+    if (typeof hooks.encryptBlob === 'function') {
+      try {
+        const sealed = await hooks.encryptBlob(bytes);
+        if (sealed && sealed.length) body = sealed;
+        else return null; // sealer present but failed → don't ship plaintext
+      } catch (_) {
+        return null;       // never silently fall back to plaintext once E2E is on
+      }
+    }
+
+    const slot = await hooks.uploadSlot({
+      // sizeBytes is the ciphertext length (what's actually PUT — the 50 MB
+      // slot cap is on the upload), not the plaintext file size.
+      hash, mime: f0.type || null, sizeBytes: body.length, fileName: f0.name,
+    });
+    if (!slot || !slot.url) return null;
+
+    const resp = await fetch(slot.url, {
+      method: 'PUT',
+      body: body,
+      headers: f0.type ? { 'Content-Type': f0.type } : undefined,
+    });
+    if (!resp.ok) return null;
+
+    // Store the canonical URL (without the pre-signed query string) so
+    // the eventual submission references the underlying object, not the
+    // 5-minute write capability. The receiver mints a fresh pre-signed
+    // GET when displaying.
+    const canonicalUrl = slot.url.split('?')[0];
+    return {
+      url:       canonicalUrl,
+      hash,
+      owned:     true,
+      fileName:  f0.name,
+      mime:      f0.type || null,
+      sizeBytes: f0.size,
+    };
   }
 
   function renderField(host, f) {
@@ -755,11 +867,6 @@ function mount(rootArg, bundleArg, hooksArg) {
       // Seed initial value into the values bag.
       values[f.name] = readValue(input, f);
     }
-
-    // Field description rendering temporarily suppressed — see
-    // docs/BACKLOG.md "Field descriptions in web renderer". Original
-    // intent was a `.dm-hint` span beneath the input, but cross-renderer
-    // alignment + theme-off legibility need a fresh design pass.
 
     const err = document.createElement('span');
     err.className = 'dm-err';
@@ -956,12 +1063,45 @@ function mount(rootArg, bundleArg, hooksArg) {
         return i;
       }
       case 'choice': {
+        const choices = f.choice?.choices || [];
+        // ChoiceOptions.AllowCustom — the schema permits a value outside the
+        // listed options. A fixed <select> can't express that, so render an
+        // editable input backed by a <datalist> of the options: the user can
+        // pick a suggestion or type any custom value. The wrapper exposes
+        // `.value` (and re-dispatches input/change) so the value pipeline +
+        // readValue treat it exactly like the <select> path.
+        if (f.choice?.allowCustom) {
+          const wrap = document.createElement('span');
+          wrap.className = 'dm-choice-custom';
+          const i = document.createElement('input');
+          i.type = 'text';
+          if (ph) i.placeholder = ph;
+          const dl = document.createElement('datalist');
+          dl.id = 'dm-dl-' + f.id;
+          for (const opt of choices) {
+            const o = document.createElement('option');
+            o.value = opt.value;
+            if (opt.label && opt.label !== opt.value) o.label = opt.label;
+            dl.appendChild(o);
+          }
+          i.setAttribute('list', dl.id);
+          if (f.defaultValue != null) i.value = String(f.defaultValue);
+          wrap.appendChild(i);
+          wrap.appendChild(dl);
+          Object.defineProperty(wrap, 'value', {
+            get: () => i.value,
+            set: v => { i.value = v ?? ''; },
+          });
+          i.addEventListener('input',  () => wrap.dispatchEvent(new Event('input',  { bubbles: false })));
+          i.addEventListener('change', () => wrap.dispatchEvent(new Event('change', { bubbles: false })));
+          return wrap;
+        }
         const s = document.createElement('select');
         const blank = document.createElement('option');
         blank.value = '';
         blank.textContent = '—';
         s.appendChild(blank);
-        for (const opt of (f.choice?.choices || [])) {
+        for (const opt of choices) {
           const o = document.createElement('option');
           o.value = opt.value;
           o.textContent = opt.label;
@@ -1073,21 +1213,122 @@ function mount(rootArg, bundleArg, hooksArg) {
         return wrap;
       }
       case 'geo': {
+        // Geo control: address-search input with a Nominatim (OSM)
+        // autocomplete dropdown, plus collapsible Lat / Lng inputs for
+        // manual fine-tune. Mirrors the desktop records-grid inline
+        // editor (DataMaker/Presentation/RecordList/InlineEditors/
+        // GeoCellColumn.cs). Picking a suggestion fills both lat/lng
+        // AND formattedAddress so the storage round-trip keeps the
+        // address. Free-text in the search box that didn't match a
+        // suggestion still wins as the formattedAddress, paired with
+        // whatever lat/lng the user typed.
         const wrap = document.createElement('div');
         wrap.className = 'dm-geo';
+
+        // Address row: input + suggestion list (absolute-positioned).
+        const addrRow = document.createElement('div');
+        addrRow.className = 'dm-geo-addr-row';
+        const addr = document.createElement('input');
+        addr.type = 'text';
+        addr.placeholder = t('geo_address_placeholder', 'Type an address…');
+        addr.className = 'dm-geo-addr';
+        addrRow.appendChild(addr);
+        const suggList = document.createElement('div');
+        suggList.className = 'dm-geo-suggestions';
+        suggList.hidden = true;
+        addrRow.appendChild(suggList);
+        wrap.appendChild(addrRow);
+
+        // Lat / Lng row.
+        const coords = document.createElement('div');
+        coords.className = 'dm-geo-coords';
         const lat = document.createElement('input');
         lat.type = 'number';  lat.step = 'any';  lat.placeholder = 'Latitude';
         const lng = document.createElement('input');
         lng.type = 'number';  lng.step = 'any';  lng.placeholder = 'Longitude';
-        wrap.appendChild(lat); wrap.appendChild(lng);
-        // FormattedAddress is renderer-populated (e.g. by reverse-geocoding)
-        // — none today, so we just round-trip it from defaultValue if set,
-        // and emit it back via _dmFormattedAddress so it survives readValue.
+        coords.appendChild(lat);
+        coords.appendChild(lng);
+        wrap.appendChild(coords);
+
+        // Hydrate from defaultValue (also the edit-flow seed path).
         if (f.defaultValue && typeof f.defaultValue === 'object') {
           if (Number.isFinite(f.defaultValue.lat)) lat.value = String(f.defaultValue.lat);
           if (Number.isFinite(f.defaultValue.lng)) lng.value = String(f.defaultValue.lng);
-          if (f.defaultValue.formattedAddress) wrap._dmFormattedAddress = f.defaultValue.formattedAddress;
+          if (f.defaultValue.formattedAddress) {
+            wrap._dmFormattedAddress = f.defaultValue.formattedAddress;
+            addr.value = f.defaultValue.formattedAddress;
+          }
         }
+
+        // Manual edit of the address box (without picking a suggestion)
+        // counts as the user setting a free-text label — keep it.
+        addr.addEventListener('change', () => {
+          wrap._dmFormattedAddress = addr.value.trim() || null;
+        });
+
+        // Debounced Nominatim autocomplete. 350ms debounce + min 3 chars.
+        // Browser can't set User-Agent (forbidden header) — Nominatim
+        // policy accepts a Referer-identified browser caller for low
+        // volume, which this is. No API key, no auth.
+        let debounce = null;
+        let lastQuery = '';
+        addr.addEventListener('input', () => {
+          const q = addr.value.trim();
+          if (q === lastQuery) return;
+          lastQuery = q;
+          if (debounce) { clearTimeout(debounce); debounce = null; }
+          if (q.length < 3) {
+            suggList.hidden = true;
+            suggList.innerHTML = '';
+            return;
+          }
+          debounce = setTimeout(() => fetchSuggestions(q), 350);
+        });
+
+        async function fetchSuggestions(q) {
+          try {
+            const url = 'https://nominatim.openstreetmap.org/search?q='
+                      + encodeURIComponent(q) + '&format=json&limit=6&addressdetails=0';
+            const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+            if (!res.ok) return;
+            const list = await res.json();
+            renderSuggestions(Array.isArray(list) ? list : []);
+          } catch {
+            // Network / rate-limit / quota — silently swallow, the user
+            // can still fall back to manual lat/lng entry.
+          }
+        }
+
+        function renderSuggestions(list) {
+          suggList.innerHTML = '';
+          if (list.length === 0) { suggList.hidden = true; return; }
+          for (const r of list) {
+            const item = document.createElement('div');
+            item.className = 'dm-geo-suggestion';
+            item.textContent = r.display_name || '';
+            item.addEventListener('mousedown', (ev) => {
+              ev.preventDefault();   // keep focus on input through the pick
+              const la = parseFloat(r.lat);
+              const ln = parseFloat(r.lon);
+              if (Number.isFinite(la)) lat.value = String(la);
+              if (Number.isFinite(ln)) lng.value = String(ln);
+              addr.value = r.display_name || '';
+              wrap._dmFormattedAddress = r.display_name || null;
+              suggList.hidden = true;
+              suggList.innerHTML = '';
+            });
+            suggList.appendChild(item);
+          }
+          suggList.hidden = false;
+        }
+
+        // Click outside the row closes the dropdown.
+        document.addEventListener('mousedown', (ev) => {
+          if (!addrRow.contains(ev.target)) {
+            suggList.hidden = true;
+          }
+        });
+
         return wrap;
       }
       case 'image': {
@@ -1120,37 +1361,80 @@ function mount(rootArg, bundleArg, hooksArg) {
           : 'image/*';
         file.hidden = true;
         slot.addEventListener('click', () => file.click());
-        file.addEventListener('change', () => {
+        file.addEventListener('change', async () => {
           const f0 = file.files && file.files[0];
           if (!f0) return;
-          const reader = new FileReader();
-          reader.onload = () => {
-            preview.src = reader.result;
-            preview.hidden = false;
-            empty.hidden = true;
-            wrap._dmValue = {
-              dataUri:   reader.result,
-              fileName:  f0.name,
-              mime:      f0.type || null,
-              sizeBytes: f0.size,
-            };
+
+          // Show local preview immediately for UX — independent of the
+          // upload round-trip below. createObjectURL is cheap and lets
+          // the user see what they picked while bytes are in flight.
+          const localPreviewUrl = URL.createObjectURL(f0);
+          preview.src = localPreviewUrl;
+          preview.hidden = false;
+          empty.hidden = true;
+
+          // Submit gating: form-level runSchemaAction checks this flag.
+          wrap._dmUploading = true;
+          empty.textContent = t('uploading', 'Uploading…');
+          empty.hidden = false;  // restore for status, sits over the preview
+
+          try {
+            const urlRef = await uploadFileToSlot(f0);
+            if (urlRef) {
+              wrap._dmValue = urlRef;
+              empty.hidden = true;
+            } else {
+              // Host doesn't support upload-slot (designer preview, legacy
+              // bridge) — fall back to the legacy inline data-URI path so
+              // the form still has a value at submit-time.
+              const reader = new FileReader();
+              await new Promise((resolve, reject) => {
+                reader.onload  = resolve;
+                reader.onerror = reject;
+                reader.readAsDataURL(f0);
+              });
+              wrap._dmValue = {
+                dataUri:   reader.result,
+                fileName:  f0.name,
+                mime:      f0.type || null,
+                sizeBytes: f0.size,
+              };
+              empty.hidden = true;
+            }
+          } catch (err) {
+            // Upload failed mid-flight (network blip, expired URL, etc.).
+            // Surface a retryable error in the slot affordance + leave
+            // _dmValue null so submit stays blocked until the user picks
+            // again. Clear local preview URL on failure so retry shows
+            // empty state again.
+            empty.hidden = false;
+            empty.textContent = t('upload_failed', 'Upload failed — try again');
+            preview.hidden = true;
+            URL.revokeObjectURL(localPreviewUrl);
+            wrap._dmValue = null;
+          } finally {
+            wrap._dmUploading = false;
             wrap.dispatchEvent(new Event('change', { bubbles: false }));
-          };
-          reader.readAsDataURL(f0);
+          }
         });
         wrap.append(slot, file);
-        // Seed default — schema may carry an ImageRef object, or (legacy) a
-        // bare data-URI string that the schema's converter still accepts.
+        // Seed default — schema may carry an ImageRef object (URL or
+        // legacy data-URI shape), or (legacy) a bare data-URI string
+        // that the schema's converter still accepts.
         if (f.defaultValue) {
           const dv = typeof f.defaultValue === 'string'
             ? { dataUri: f.defaultValue }
             : f.defaultValue;
-          if (dv.dataUri) {
-            preview.src = dv.dataUri;
+          const src = dv.url || dv.dataUri;
+          if (src) {
+            preview.src = src;
             preview.hidden = false;
             empty.hidden = true;
             wrap._dmValue = {
-              dataUri:   dv.dataUri,
+              dataUri:   dv.dataUri  ?? null,
+              url:       dv.url      ?? null,
+              hash:      dv.hash     ?? null,
+              owned:     !!dv.owned,
               fileName:  dv.fileName  ?? null,
               mime:      dv.mime      ?? null,
               sizeBytes: dv.sizeBytes ?? null,
@@ -1216,7 +1500,7 @@ function mount(rootArg, bundleArg, hooksArg) {
           if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); doClear(); }
         });
 
-        file.addEventListener('change', () => {
+        file.addEventListener('change', async () => {
           const f0 = file.files && file.files[0];
           if (!f0) {
             slot.textContent = t('no_file_selected', 'No file selected');
@@ -1225,30 +1509,55 @@ function mount(rootArg, bundleArg, hooksArg) {
             wrap.dispatchEvent(new Event('change', { bubbles: false }));
             return;
           }
-          const reader = new FileReader();
-          reader.onload = () => {
-            slot.textContent = f0.name;
+          slot.textContent = t('uploading', 'Uploading…') + ' ' + f0.name;
+          clear.hidden = true;
+          wrap._dmUploading = true;
+          try {
+            const urlRef = await uploadFileToSlot(f0);
+            if (urlRef) {
+              wrap._dmValue = urlRef;
+              slot.textContent = f0.name;
+              clear.hidden = false;
+            } else {
+              // Host doesn't support upload-slot — fall back to inline so
+              // the legacy bridge / designer-preview keeps working.
+              const reader = new FileReader();
+              await new Promise((resolve, reject) => {
+                reader.onload  = resolve;
+                reader.onerror = reject;
+                reader.readAsDataURL(f0);
+              });
+              wrap._dmValue = {
+                dataUri:   reader.result,
+                fileName:  f0.name,
+                mime:      f0.type || null,
+                sizeBytes: f0.size,
+              };
+              slot.textContent = f0.name;
+              clear.hidden = false;
+            }
+          } catch (_) {
+            slot.textContent = t('upload_failed', 'Upload failed — try again');
             clear.hidden = false;
-            wrap._dmValue = {
-              dataUri:   reader.result,
-              fileName:  f0.name,
-              mime:      f0.type || null,
-              sizeBytes: f0.size,
-            };
+            wrap._dmValue = null;
+          } finally {
+            wrap._dmUploading = false;
             wrap.dispatchEvent(new Event('change', { bubbles: false }));
-          };
-          reader.readAsDataURL(f0);
+          }
         });
         wrap.append(icon, slot, browse, clear, file);
         if (f.defaultValue) {
           const dv = typeof f.defaultValue === 'string'
             ? { dataUri: f.defaultValue }
             : f.defaultValue;
-          if (dv.dataUri) {
+          if (dv.dataUri || dv.url) {
             slot.textContent = dv.fileName || 'Attached file';
             clear.hidden = false;
             wrap._dmValue = {
-              dataUri:   dv.dataUri,
+              dataUri:   dv.dataUri  ?? null,
+              url:       dv.url      ?? null,
+              hash:      dv.hash     ?? null,
+              owned:     !!dv.owned,
               fileName:  dv.fileName  ?? null,
               mime:      dv.mime      ?? null,
               sizeBytes: dv.sizeBytes ?? null,
@@ -1909,7 +2218,10 @@ function mount(rootArg, bundleArg, hooksArg) {
         .map(c => c.dataset.optValue);
     }
     if (k === 'geo') {
-      const [lat, lng] = el.querySelectorAll('input');
+      // Scoped to .dm-geo-coords so the new address-search <input> in
+      // .dm-geo-addr-row doesn't shift the indices (would otherwise
+      // grab [addr, lat] instead of [lat, lng]).
+      const [lat, lng] = el.querySelectorAll('.dm-geo-coords input');
       const la = parseFloat(lat.value);
       const ln = parseFloat(lng.value);
       // Schema's GeoJsonConverter requires both lat AND lng — partial entries
@@ -1972,11 +2284,16 @@ function mount(rootArg, bundleArg, hooksArg) {
       return;
     }
     if (k === 'geo' && typeof value === 'object') {
-      const inputs = el.querySelectorAll('input');
+      // Scoped — see readValue note above.
+      const inputs = el.querySelectorAll('.dm-geo-coords input');
       if (inputs.length >= 2) {
         inputs[0].value = (value.lat  != null) ? String(value.lat)  : '';
         inputs[1].value = (value.lng  != null) ? String(value.lng)  : '';
-        if (value.formattedAddress) el._dmFormattedAddress = value.formattedAddress;
+      }
+      const addr = el.querySelector('.dm-geo-addr');
+      if (value.formattedAddress) {
+        el._dmFormattedAddress = value.formattedAddress;
+        if (addr) addr.value = value.formattedAddress;
       }
       return;
     }
@@ -2107,6 +2424,23 @@ function mount(rootArg, bundleArg, hooksArg) {
   /// is optional — if present, a one-line status string is written to it.
   function runSchemaAction(action, col, statusSink) {
     const a = (action || 'none').toLowerCase();
+    // Storage v2: block submit/save while any image/attachment field is
+    // still uploading bytes to its pre-signed S3 slot. Without this the
+    // submission would carry a half-populated value (or null) and the
+    // receiver would store an invalid record. Reset is allowed during
+    // upload — clearing the field implicitly cancels the in-flight PUT
+    // (the orphan blob gets cleaned by the bucket's pending/* lifecycle
+    // rule).
+    if (a === 'submit' || a === 'save') {
+      const fields = (form.fields || []);
+      for (const f of fields) {
+        const el = fieldInputEls[f.id];
+        if (el && el._dmUploading) {
+          if (statusSink) statusSink.textContent = t('still_uploading', 'Still uploading attachments — try again in a moment.');
+          return;
+        }
+      }
+    }
     if (a === 'reset') {
       for (const f of (form.fields || [])) {
         const def = f.defaultValue;
@@ -2379,6 +2713,19 @@ function mount(rootArg, bundleArg, hooksArg) {
     return (typeof m === 'string' && m.trim().length > 0) ? m : defaultMsg;
   }
 
+  // NumberOptions.Min/Max bounds for number/decimal. Runs on the already-
+  // parsed numeric value, so it enforces the same on both input paths — the
+  // native type=number input AND the format-on-blur text input (which the
+  // browser's min/max attributes never covered). `f.number` is absent for
+  // money (it uses MoneyOptions, which has no bounds), so money is unaffected.
+  function numberBoundError(f, val) {
+    const n = f && f.number;
+    if (!n) return null;
+    if (typeof n.min === 'number' && val < n.min) return msg(f, 'number.min', `Must be at least ${n.min}.`);
+    if (typeof n.max === 'number' && val > n.max) return msg(f, 'number.max', `Must be at most ${n.max}.`);
+    return null;
+  }
+
   function intrinsicError(f, val) {
     if (val == null || val === '') return null;
 
@@ -2417,11 +2764,14 @@ function mount(rootArg, bundleArg, hooksArg) {
         } catch (e) { return msg(f, 'url', 'Not a valid URL.'); }
       }
       case 'number':
-        return Number.isFinite(val) && Number.isInteger(val) ? null : msg(f, 'number', 'Not a whole number.');
+        if (!(Number.isFinite(val) && Number.isInteger(val))) return msg(f, 'number', 'Not a whole number.');
+        return numberBoundError(f, val);
       case 'decimal':
-        return Number.isFinite(val) ? null : msg(f, 'decimal', 'Not a valid decimal number.');
+        if (!Number.isFinite(val)) return msg(f, 'decimal', 'Not a valid decimal number.');
+        return numberBoundError(f, val);
       case 'money':
-        return Number.isFinite(val) ? null : msg(f, 'money', 'Not a valid monetary amount.');
+        if (!Number.isFinite(val)) return msg(f, 'money', 'Not a valid monetary amount.');
+        return numberBoundError(f, val);
       case 'date':
         return typeof val === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(val) ? null : msg(f, 'date', 'Not a valid date.');
       case 'datetime':

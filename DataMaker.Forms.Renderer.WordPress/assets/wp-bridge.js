@@ -74,6 +74,7 @@
     const honeypotOn      = mount.getAttribute('data-honeypot')         === '1';
     const consentRequired = mount.getAttribute('data-consent-required') === '1';
     const turnstileOn     = mount.getAttribute('data-turnstile')        === '1';
+    const recipientPubkey = mount.getAttribute('data-recipient-pubkey') || '';
 
     // When the host opts out of the form's DataMaker theme, strip the brand
     // bits from the bundle BEFORE renderer.js parses it. Layout, fields,
@@ -95,6 +96,21 @@
     // error echo, and edit-flow contexts. renderer.js stamps applyFieldErrors
     // and __pendingHydrate onto this same object so the bridge can reach them.
     const hooks = {};
+
+    // E2E-encrypt image/attachment bytes in the browser before renderer.js's
+    // direct-to-S3 PUT (#45). Blob bytes skip the PHP proxy (pre-signed PUT),
+    // so the seal must run client-side against the form's recipient pubkey.
+    // dm-blob-crypto.min.js (tweetnacl + sealedbox) exposes the sealer as a
+    // global; it's enqueued as a hard dependency of this bridge. No pubkey
+    // (older bundle) → leave encryptBlob unset so the renderer falls back to
+    // the inline data-URI path (still works, just not E2E).
+    if (recipientPubkey &&
+        window.DataMakerBlobCrypto &&
+        typeof window.DataMakerBlobCrypto.seal === 'function') {
+      hooks.encryptBlob = function (bytes) {
+        return window.DataMakerBlobCrypto.seal(bytes, recipientPubkey);
+      };
+    }
     const lsKey = 'dm:' + slug;
 
     // Gate submit on the consent checkbox when this form requires it.

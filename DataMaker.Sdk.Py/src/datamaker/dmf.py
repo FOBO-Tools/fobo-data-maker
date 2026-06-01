@@ -17,6 +17,7 @@ from typing import List, Optional
 
 from .crypto import sha256_hex, verify_ed25519
 from .errors import DmfError
+from .fobo import verify_fobo_attestation
 
 MANIFEST_ENTRY = "manifest.json"
 SIGNATURE_ENTRY = "signature.bin"
@@ -36,6 +37,13 @@ class FormDescriptor:
     envelope_version: int
     fields: List[dict] = dc_field(default_factory=list)
     verified: bool = True
+    #: ``{is_verified, email, company, sub, expires_at}`` when a valid FOBO
+    #: attestation is present, else ``None`` (self-signed, no FOBO chain).
+    fobo_verification: Optional[dict] = None
+
+    @property
+    def is_fobo_verified(self) -> bool:
+        return self.fobo_verification is not None
 
 
 def read_form(dmf_bytes: bytes, verify: bool = True) -> FormDescriptor:
@@ -65,6 +73,12 @@ def read_form(dmf_bytes: bytes, verify: bool = True) -> FormDescriptor:
     recipient = manifest.get("recipient")
     signer = manifest.get("signer")
 
+    # FOBO attestation (optional) — its own chain, verified against the root
+    # pubkey regardless of `verify`. None when absent or it fails to verify.
+    fobo = None
+    if signer and signer.get("publicKey") and isinstance(signer.get("foboAttestation"), dict):
+        fobo = verify_fobo_attestation(signer["foboAttestation"], signer["publicKey"])
+
     return FormDescriptor(
         form_id=form.get("id"),
         name=form.get("name"),
@@ -77,6 +91,7 @@ def read_form(dmf_bytes: bytes, verify: bool = True) -> FormDescriptor:
         envelope_version=manifest.get("envelopeVersion", 0),
         fields=extract_fields(form),
         verified=verify,
+        fobo_verification=fobo,
     )
 
 

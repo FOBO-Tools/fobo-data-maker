@@ -68,7 +68,9 @@ A renderer additionally turns `form.json` into UI and collects values.
    decorative columns (richtext/image/divider/heading/button/group).
 3. **Evaluate expressions** for `visibleWhen` / `calculatedExpression` /
    validation — either run the bundle's compiled JS or implement the
-   [DSL + Fn library](/fobo-data-maker/schema/expressions/). Fail open when you can't.
+   [DSL + Fn library](/fobo-data-maker/schema/expressions/). When you can't
+   evaluate: fail open for `visibleWhen` (show the field); emit
+   `calculatedExpression` fields empty + flag them uncomputed — never editable.
 4. **Validate on submit**, then hand the values to the submit-client steps
    above.
 

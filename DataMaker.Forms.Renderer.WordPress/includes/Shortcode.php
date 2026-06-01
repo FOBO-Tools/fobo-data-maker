@@ -68,10 +68,23 @@ final class Shortcode
             $ver($fnRel),
             ['in_footer' => false, 'strategy' => 'defer']
         );
+        // Browser sealed-box (tweetnacl + sealedbox) — E2E-encrypts blob bytes
+        // before the direct-to-S3 PUT (#45). Pre-built + committed at
+        // assets/vendor/ (built via `make vendor-crypto`); exposes the global
+        // window.DataMakerBlobCrypto the bridge reads. Hard dependency of the
+        // bridge so it's defined before any upload runs.
+        $blobCryptoRel = 'assets/vendor/dm-blob-crypto.min.js';
+        wp_register_script(
+            'datamaker-renderer-blobcrypto',
+            DM_RENDERER_URL . $blobCryptoRel,
+            [],
+            $ver($blobCryptoRel),
+            ['in_footer' => false, 'strategy' => 'defer']
+        );
         wp_register_script(
             'datamaker-renderer-bridge',
             DM_RENDERER_URL . $bridgeRel,
-            ['datamaker-renderer-fn'],
+            ['datamaker-renderer-fn', 'datamaker-renderer-blobcrypto'],
             $ver($bridgeRel),
             ['in_footer' => false, 'strategy' => 'defer']
         );

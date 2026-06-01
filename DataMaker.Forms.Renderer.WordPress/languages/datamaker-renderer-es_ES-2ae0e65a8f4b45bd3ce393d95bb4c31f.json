@@ -1,0 +1,60 @@
+{
+    "translation-revision-date": "2026-05-30 00:00+0000",
+    "generator": "WP-CLI\/2.12.0",
+    "source": "assets\/block.js",
+    "domain": "messages",
+    "locale_data": {
+        "messages": {
+            "": {
+                "domain": "messages",
+                "lang": "es_ES",
+                "plural-forms": "nplurals=2; plural=(n != 1);"
+            },
+            "Data Maker Form": [
+                "Formulario Data Maker"
+            ],
+            "Render a form uploaded under Data Maker Forms \u2192 Upload .dmf.": [
+                "Muestra un formulario subido en Formularios Data Maker \u2192 Subir .dmf."
+            ],
+            "Could not load forms.": [
+                "No se pudieron cargar los formularios."
+            ],
+            "\u2014 Select a form \u2014": [
+                "\u2014 Seleccionar un formulario \u2014"
+            ],
+            "Inherit form setting": [
+                "Heredar el ajuste del formulario"
+            ],
+            "Always apply designer styling": [
+                "Aplicar siempre el estilo del dise\u00f1ador"
+            ],
+            "Always strip designer styling": [
+                "Eliminar siempre el estilo del dise\u00f1ador"
+            ],
+            "Form": [
+                "Formulario"
+            ],
+            "Uploaded form": [
+                "Formulario subido"
+            ],
+            "Upload more forms under Data Maker Forms \u2192 Upload .dmf.": [
+                "Suba m\u00e1s formularios en Formularios Data Maker \u2192 Subir .dmf."
+            ],
+            "Designer styling override": [
+                "Anulaci\u00f3n del estilo del dise\u00f1ador"
+            ],
+            "Layout always honors the form. This only flips colors \/ fonts \/ button styling from the Data Maker designer.": [
+                "El dise\u00f1o siempre respeta el formulario. Esto solo cambia los colores \/ fuentes \/ estilo de botones del dise\u00f1ador de Data Maker."
+            ],
+            "Upload a .dmf": [
+                "Subir un .dmf"
+            ],
+            "Slug: ": [
+                "Slug: "
+            ],
+            "Pick a form from the sidebar.": [
+                "Elija un formulario en la barra lateral."
+            ]
+        }
+    }
+}

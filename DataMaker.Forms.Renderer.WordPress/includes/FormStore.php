@@ -225,7 +225,7 @@ final class FormStore
     public static function resolve_success_message(?string $stored): string
     {
         $s = trim((string)($stored ?? ''));
-        return $s !== '' ? $s : "## Thanks for your submission.";
+        return $s !== '' ? $s : __('## Thanks for your submission.', 'datamaker-renderer');
     }
 
     /**

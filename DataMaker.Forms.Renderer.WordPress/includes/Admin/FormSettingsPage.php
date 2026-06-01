@@ -29,7 +29,7 @@ final class FormSettingsPage
         // Forms list "Settings" link per row).
         add_submenu_page(
             'datamaker-renderer',
-            'Form settings',
+            __('Form settings', 'datamaker-renderer'),
             null,
             'manage_options',
             'datamaker-renderer-form',
@@ -43,7 +43,7 @@ final class FormSettingsPage
 
         $form_id = isset($_GET['form_id']) ? (int)$_GET['form_id'] : 0;
         if ($form_id <= 0) {
-            echo '<div class="wrap"><h1>Form settings</h1><p>Missing or invalid form id.</p></div>';
+            echo '<div class="wrap"><h1>' . esc_html__('Form settings', 'datamaker-renderer') . '</h1><p>' . esc_html__('Missing or invalid form id.', 'datamaker-renderer') . '</p></div>';
             return;
         }
 
@@ -51,7 +51,7 @@ final class FormSettingsPage
         global $wpdb;
         $row = $wpdb->get_row($wpdb->prepare("SELECT * FROM " . FormStore::table() . " WHERE id = %d", $form_id), ARRAY_A);
         if (!$row) {
-            echo '<div class="wrap"><h1>Form settings</h1><p>Form not found.</p></div>';
+            echo '<div class="wrap"><h1>' . esc_html__('Form settings', 'datamaker-renderer') . '</h1><p>' . esc_html__('Form not found.', 'datamaker-renderer') . '</p></div>';
             return;
         }
 
@@ -148,8 +148,11 @@ final class FormSettingsPage
 
         ?>
         <div class="wrap">
-            <?php PageHeader::render('Form settings — ' . (string)($form['name'] ?? $row['slug'])); ?>
-            <p><a href="<?php echo esc_url($back_url); ?>">← Back to forms</a></p>
+            <?php PageHeader::render(
+                /* translators: %s = form name or slug */
+                sprintf(__('Form settings — %s', 'datamaker-renderer'), (string)($form['name'] ?? $row['slug']))
+            ); ?>
+            <p><a href="<?php echo esc_url($back_url); ?>">← <?php esc_html_e('Back to forms', 'datamaker-renderer'); ?></a></p>
 
             <?php if ($notice): ?>
                 <div class="notice notice-success is-dismissible"><p><?php echo esc_html($notice); ?></p></div>
@@ -158,30 +161,30 @@ final class FormSettingsPage
             <form method="post">
                 <?php wp_nonce_field('dm_form_settings', 'dm_form_settings_nonce'); ?>
 
-                <h2>Behaviour</h2>
+                <h2><?php esc_html_e('Behaviour', 'datamaker-renderer'); ?></h2>
                 <table class="form-table" role="presentation">
                     <tr>
-                        <th scope="row">Designer styling</th>
+                        <th scope="row"><?php esc_html_e('Designer styling', 'datamaker-renderer'); ?></th>
                         <td>
                             <label>
                                 <input type="checkbox" name="use_theme" value="1" <?php checked($useThemeOn); ?>>
-                                Apply Theme/Styling
+                                <?php esc_html_e('Apply Theme/Styling', 'datamaker-renderer'); ?>
                             </label>
-                            <p class="description">On = render the form the way it looks in the desktop designer (palette, fonts, button variants, heading styles, per-element overrides). Off = strip all of that and let the active WordPress theme drive the look. Layout (rows, columns, spacing) is honored in both modes.</p>
+                            <p class="description"><?php esc_html_e('On = render the form the way it looks in the desktop designer (palette, fonts, button variants, heading styles, per-element overrides). Off = strip all of that and let the active WordPress theme drive the look. Layout (rows, columns, spacing) is honored in both modes.', 'datamaker-renderer'); ?></p>
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row">Edit flow</th>
+                        <th scope="row"><?php esc_html_e('Edit flow', 'datamaker-renderer'); ?></th>
                         <td>
                             <label>
                                 <input type="checkbox" name="edit_flow" value="1" <?php checked($editFlowOn); ?>>
-                                Let submitters edit their submission later (browser localStorage)
+                                <?php esc_html_e('Let submitters edit their submission later (browser localStorage)', 'datamaker-renderer'); ?>
                             </label>
-                            <p class="description">When on, a submitter returning to the same form on the same browser sees "Continue editing?" before a fresh start.</p>
+                            <p class="description"><?php esc_html_e('When on, a submitter returning to the same form on the same browser sees "Continue editing?" before a fresh start.', 'datamaker-renderer'); ?></p>
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row">After submit</th>
+                        <th scope="row"><?php esc_html_e('After submit', 'datamaker-renderer'); ?></th>
                         <td>
                             <?php
                             $stored      = (string)($row['after_submit'] ?? '');
@@ -192,13 +195,13 @@ final class FormSettingsPage
                             ?>
                             <p>
                                 <label><input type="radio" name="after_submit_kind" value="none" <?php checked($kindCurrent, 'none'); ?>>
-                                Stay on page (default)</label>
+                                <?php esc_html_e('Stay on page (default)', 'datamaker-renderer'); ?></label>
                             </p>
                             <p>
                                 <label><input type="radio" name="after_submit_kind" value="page" <?php checked($kindCurrent, 'page'); ?>>
-                                Redirect to a WordPress page:</label>
+                                <?php esc_html_e('Redirect to a WordPress page:', 'datamaker-renderer'); ?></label>
                                 <select name="after_submit_page" style="margin-left:8px">
-                                    <option value="0">— select a page —</option>
+                                    <option value="0">— <?php esc_html_e('select a page', 'datamaker-renderer'); ?> —</option>
                                     <?php foreach ($pages as $p): ?>
                                         <option value="<?php echo (int)$p->ID; ?>" <?php selected($pageCurrent, (int)$p->ID); ?>>
                                             <?php echo esc_html($p->post_title); ?>
@@ -208,44 +211,59 @@ final class FormSettingsPage
                             </p>
                             <p>
                                 <label><input type="radio" name="after_submit_kind" value="url" <?php checked($kindCurrent, 'url'); ?>>
-                                Redirect to a URL:</label>
+                                <?php esc_html_e('Redirect to a URL:', 'datamaker-renderer'); ?></label>
                                 <input type="url" class="regular-text" name="after_submit_url" value="<?php echo esc_attr($urlCurrent); ?>" placeholder="https://…" style="margin-left:8px">
                             </p>
-                            <p class="description">Browser navigates to the chosen target after a successful submission. "Stay on page" replaces the form with the success message below.</p>
+                            <p class="description"><?php esc_html_e('Browser navigates to the chosen target after a successful submission. "Stay on page" replaces the form with the success message below.', 'datamaker-renderer'); ?></p>
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row">Success message</th>
+                        <th scope="row"><?php esc_html_e('Success message', 'datamaker-renderer'); ?></th>
                         <td>
                             <?php
                             $msgStored  = (string)($row['success_message'] ?? '');
-                            $msgDisplay = $msgStored !== '' ? $msgStored : "## Thanks for your submission.";
+                            $msgDefault = __('## Thanks for your submission.', 'datamaker-renderer');
+                            $msgDisplay = $msgStored !== '' ? $msgStored : $msgDefault;
                             ?>
-                            <textarea name="success_message" class="large-text code" rows="6" placeholder="## Thanks for your submission."><?php echo esc_textarea($msgDisplay); ?></textarea>
-                            <p class="description">Markdown allowed (<code>## Heading</code>, <code>**bold**</code>, <code>*italic*</code>, <code>- bullet</code>, <code>[link](url)</code>). Rendered inside the form's container after a successful submit when "After submit" is set to <em>Stay on page</em>; ignored for redirect modes. Leave blank for the default.</p>
+                            <textarea name="success_message" class="large-text code" rows="6" placeholder="<?php echo esc_attr($msgDefault); ?>"><?php echo esc_textarea($msgDisplay); ?></textarea>
+                            <p class="description"><?php
+                                printf(
+                                    wp_kses(
+                                        /* translators: %1$s-%5$s = Markdown syntax examples wrapped in <code>; %6$s = "Stay on page" wrapped in <em> */
+                                        __('Markdown allowed (%1$s, %2$s, %3$s, %4$s, %5$s). Rendered inside the form\'s container after a successful submit when "After submit" is set to %6$s; ignored for redirect modes. Leave blank for the default.', 'datamaker-renderer'),
+                                        ['code' => [], 'em' => []]
+                                    ),
+                                    '<code>## Heading</code>',
+                                    '<code>**bold**</code>',
+                                    '<code>*italic*</code>',
+                                    '<code>- bullet</code>',
+                                    '<code>[link](url)</code>',
+                                    '<em>' . esc_html__('Stay on page', 'datamaker-renderer') . '</em>'
+                                );
+                            ?></p>
                         </td>
                     </tr>
                 </table>
 
-                <h2>Visibility</h2>
-                <p>Uncheck any item to hide it from this form on the WordPress site. Filtering happens server-side, before the renderer reads the form, so the layout grid auto-flows around the gaps.</p>
+                <h2><?php esc_html_e('Visibility', 'datamaker-renderer'); ?></h2>
+                <p><?php esc_html_e('Uncheck any item to hide it from this form on the WordPress site. Filtering happens server-side, before the renderer reads the form, so the layout grid auto-flows around the gaps.', 'datamaker-renderer'); ?></p>
 
                 <table class="widefat striped">
                     <thead>
                         <tr>
                             <th style="width:80px">
-                                <label title="Show or hide every non-required item at once">
-                                    <input type="checkbox" id="dm-vis-all"> all
+                                <label title="<?php esc_attr_e('Show or hide every non-required item at once', 'datamaker-renderer'); ?>">
+                                    <input type="checkbox" id="dm-vis-all"> <?php esc_html_e('all', 'datamaker-renderer'); ?>
                                 </label>
                             </th>
-                            <th>Item</th>
-                            <th>Kind</th>
-                            <th>Where</th>
+                            <th><?php esc_html_e('Item', 'datamaker-renderer'); ?></th>
+                            <th><?php esc_html_e('Kind', 'datamaker-renderer'); ?></th>
+                            <th><?php esc_html_e('Where', 'datamaker-renderer'); ?></th>
                         </tr>
                     </thead>
                     <tbody>
                     <?php if (!$items): ?>
-                        <tr><td colspan="4">No layout elements found.</td></tr>
+                        <tr><td colspan="4"><?php esc_html_e('No layout elements found.', 'datamaker-renderer'); ?></td></tr>
                     <?php else: foreach ($items as $it):
                         $idAttr  = esc_attr($it['id']);
                         $required = !empty($it['required']);
@@ -267,7 +285,7 @@ final class FormSettingsPage
                             <td>
                                 <?php echo esc_html($it['label']); ?>
                                 <?php if ($required): ?>
-                                    <span style="color:#a8201a;font-size:11px;margin-left:6px;" title="Required fields can't be hidden">required</span>
+                                    <span style="color:#a8201a;font-size:11px;margin-left:6px;" title="<?php esc_attr_e('Required fields can\'t be hidden', 'datamaker-renderer'); ?>"><?php esc_html_e('required', 'datamaker-renderer'); ?></span>
                                 <?php endif; ?>
                             </td>
                             <td><code><?php echo esc_html($it['kind']); ?></code></td>
@@ -276,7 +294,17 @@ final class FormSettingsPage
                     <?php endforeach; endif; ?>
                     </tbody>
                 </table>
-                <p class="description">A checked box = <strong>visible</strong>. The form posts the inverted set as <code>hidden[]</code> so legacy fields not yet in the form definition aren't accidentally hidden when added later.</p>
+                <p class="description"><?php
+                    printf(
+                        wp_kses(
+                            /* translators: %1$s = "visible" wrapped in <strong>; %2$s = hidden[] wrapped in <code> */
+                            __('A checked box = %1$s. The form posts the inverted set as %2$s so legacy fields not yet in the form definition aren\'t accidentally hidden when added later.', 'datamaker-renderer'),
+                            ['strong' => [], 'code' => []]
+                        ),
+                        '<strong>' . esc_html__('visible', 'datamaker-renderer') . '</strong>',
+                        '<code>hidden[]</code>'
+                    );
+                ?></p>
 
                 <h2 style="margin-top:32px;"><?php esc_html_e('Privacy &amp; consent', 'datamaker-renderer'); ?></h2>
                 <table class="form-table" role="presentation">
@@ -382,8 +410,8 @@ final class FormSettingsPage
                             <?php if ($turnstile_site_key === ''): ?>
                                 <p class="description" style="color:#a8201a;">
                                     <?php
-                                    /* translators: %s = link to plugin settings */
                                     printf(
+                                        /* translators: %s = link to plugin settings */
                                         esc_html__('Turnstile keys not configured. Set them in %s first.', 'datamaker-renderer'),
                                         '<a href="' . esc_url(admin_url('admin.php?page=datamaker-renderer-settings')) . '">' . esc_html__('Data Maker Forms → Settings', 'datamaker-renderer') . '</a>'
                                     );
@@ -418,7 +446,7 @@ final class FormSettingsPage
                 </table>
 
                 <h2 style="margin-top:32px;"><?php esc_html_e('Form-wide messages', 'datamaker-renderer'); ?></h2>
-                <p class="description">Form-level text the renderer shows, independent of any single field. Empty box = use the form's default (set in the designer) or, failing that, the engine's English fallback.</p>
+                <p class="description"><?php esc_html_e('Form-level text the renderer shows, independent of any single field. Empty box = use the form\'s default (set in the designer) or, failing that, the engine\'s English fallback.', 'datamaker-renderer'); ?></p>
 
                 <?php
                 $form_msg_overrides   = $msg_overrides['__form'] ?? [];
@@ -447,8 +475,8 @@ final class FormSettingsPage
                     </tbody>
                 </table>
 
-                <h2 style="margin-top:32px;">Field error messages</h2>
-                <p class="description">Override the validation error text shown next to each field. Empty box = use the form's default (set in the designer) or, failing that, the engine's English fallback. Both are shown as placeholder text inside each box.</p>
+                <h2 style="margin-top:32px;"><?php esc_html_e('Field error messages', 'datamaker-renderer'); ?></h2>
+                <p class="description"><?php esc_html_e('Override the validation error text shown next to each field. Empty box = use the form\'s default (set in the designer) or, failing that, the engine\'s English fallback. Both are shown as placeholder text inside each box.', 'datamaker-renderer'); ?></p>
 
                 <?php
                 $fields_for_msgs = is_array($form['fields'] ?? null) ? $form['fields'] : [];
@@ -459,7 +487,7 @@ final class FormSettingsPage
                 ?>
 
                 <?php if (!$any_slot): ?>
-                    <p class="description"><em>No fields in this form expose customizable message slots. Toggle Required, set field options (min/max length, allowed extensions, etc.) in the designer to enable per-check overrides.</em></p>
+                    <p class="description"><em><?php esc_html_e('No fields in this form expose customizable message slots. Toggle Required, set field options (min/max length, allowed extensions, etc.) in the designer to enable per-check overrides.', 'datamaker-renderer'); ?></em></p>
                 <?php else: ?>
                     <table class="form-table" role="presentation">
                         <tbody>
@@ -505,7 +533,7 @@ final class FormSettingsPage
                     </table>
                 <?php endif; ?>
 
-                <?php submit_button('Save form settings'); ?>
+                <?php submit_button(__('Save form settings', 'datamaker-renderer')); ?>
             </form>
 
             <script>
@@ -584,9 +612,11 @@ final class FormSettingsPage
             if (!empty($f['id'])) $field_by_id[(string)$f['id']] = $f;
         }
         foreach (($form['steps'] ?? []) as $stepIdx => $step) {
-            $stepLabel = $step['title'] ?? ('Step ' . ($stepIdx + 1));
+            /* translators: %d = step number */
+            $stepLabel = $step['title'] ?? sprintf(__('Step %d', 'datamaker-renderer'), $stepIdx + 1);
             foreach (($step['sections'] ?? []) as $secIdx => $section) {
-                $secLabel = $section['title'] ?? ('Section ' . ($secIdx + 1));
+                /* translators: %d = section number */
+                $secLabel = $section['title'] ?? sprintf(__('Section %d', 'datamaker-renderer'), $secIdx + 1);
                 foreach (($section['rows'] ?? []) as $rowIdx => $row) {
                     foreach (($row['columns'] ?? []) as $col) {
                         self::collect_column($col, $field_by_id, "{$stepLabel} → {$secLabel}", $out);
@@ -598,10 +628,16 @@ final class FormSettingsPage
     }
 
     /**
-     * A field is required when its boolean `required` flag is set OR when
-     * its validation list carries an unconditional RequiredRule (no `when`
-     * gate). Conditional Required rules depend on runtime state and aren't
-     * gated here — the admin can still hide them.
+     * A field is treated as required — and therefore NOT hideable — when its
+     * boolean `required` flag is set OR its validation list carries ANY
+     * RequiredRule, conditional (`when` gate) or not.
+     *
+     * Conditional required rules count too: a requirement-expression field is
+     * still author-declared mandatory data, just situational. Hiding it would
+     * silently drop data the publisher marked mandatory under some condition.
+     * (Earlier this gated on `empty($r['when'])` — unconditional only — which
+     * left conditionally-required fields hideable; brought in line with the
+     * desktop hosted-forms HideableElements::IsFieldRequired.)
      */
     private static function is_field_required(array $field): bool
     {
@@ -611,8 +647,7 @@ final class FormSettingsPage
         foreach ($rules as $r) {
             if (!is_array($r)) continue;
             $kind = strtolower((string)($r['$kind'] ?? $r['kind'] ?? ''));
-            if ($kind !== 'required') continue;
-            if (empty($r['when'])) return true;
+            if ($kind === 'required') return true;
         }
         return false;
     }
@@ -648,10 +683,11 @@ final class FormSettingsPage
                 }
                 break;
             case 'group':
+                $groupLabel = (string)($col['title'] ?? '') !== '' ? (string)$col['title'] : __('(group)', 'datamaker-renderer');
                 if ($id) {
-                    $out[] = ['id' => $id, 'label' => (string)($col['title'] ?? '(group)'), 'kind' => 'group', 'where' => $where];
+                    $out[] = ['id' => $id, 'label' => $groupLabel, 'kind' => 'group', 'where' => $where];
                 }
-                $whereInner = $where . ' → ' . (string)($col['title'] ?? '(group)');
+                $whereInner = $where . ' → ' . $groupLabel;
                 foreach (($col['rows'] ?? []) as $r) {
                     foreach (($r['columns'] ?? []) as $c) {
                         self::collect_column($c, $field_by_id, $whereInner, $out);
@@ -659,26 +695,26 @@ final class FormSettingsPage
                 }
                 break;
             case 'heading':
-                if ($id) $out[] = ['id' => $id, 'label' => (string)($col['text'] ?? '(heading)'), 'kind' => 'heading', 'where' => $where];
+                if ($id) $out[] = ['id' => $id, 'label' => (string)($col['text'] ?? '') !== '' ? (string)$col['text'] : __('(heading)', 'datamaker-renderer'), 'kind' => 'heading', 'where' => $where];
                 break;
             case 'richtext':
                 if ($id) {
                     $md = (string)($col['markdown'] ?? '');
-                    $preview = strlen($md) > 60 ? substr($md, 0, 57) . '…' : ($md ?: '(rich text)');
+                    $preview = strlen($md) > 60 ? substr($md, 0, 57) . '…' : ($md ?: __('(rich text)', 'datamaker-renderer'));
                     $out[] = ['id' => $id, 'label' => $preview, 'kind' => 'rich text', 'where' => $where];
                 }
                 break;
             case 'image':
-                if ($id) $out[] = ['id' => $id, 'label' => (string)($col['altText'] ?? $col['source'] ?? '(image)'), 'kind' => 'image', 'where' => $where];
+                if ($id) $out[] = ['id' => $id, 'label' => (string)($col['altText'] ?? $col['source'] ?? '') !== '' ? (string)($col['altText'] ?? $col['source']) : __('(image)', 'datamaker-renderer'), 'kind' => 'image', 'where' => $where];
                 break;
             case 'divider':
-                if ($id) $out[] = ['id' => $id, 'label' => '(divider)', 'kind' => 'divider', 'where' => $where];
+                if ($id) $out[] = ['id' => $id, 'label' => __('(divider)', 'datamaker-renderer'), 'kind' => 'divider', 'where' => $where];
                 break;
             case 'spacer':
-                if ($id) $out[] = ['id' => $id, 'label' => '(spacer)', 'kind' => 'spacer', 'where' => $where];
+                if ($id) $out[] = ['id' => $id, 'label' => __('(spacer)', 'datamaker-renderer'), 'kind' => 'spacer', 'where' => $where];
                 break;
             case 'button':
-                if ($id) $out[] = ['id' => $id, 'label' => (string)($col['label'] ?? $col['name'] ?? '(button)'), 'kind' => 'button — ' . (string)($col['action'] ?? 'None'), 'where' => $where];
+                if ($id) $out[] = ['id' => $id, 'label' => (string)($col['label'] ?? $col['name'] ?? '') !== '' ? (string)($col['label'] ?? $col['name']) : __('(button)', 'datamaker-renderer'), 'kind' => 'button — ' . (string)($col['action'] ?? 'None'), 'where' => $where];
                 break;
         }
     }

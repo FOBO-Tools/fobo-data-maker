@@ -515,9 +515,45 @@ h3.section-title { margin: var(--spacing-section) 0 6px; font-size: var(--sectio
 
 /* ─── Geo ─────────────────────────────────────────────────────── */
 .dm-geo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.dm-geo-addr-row { position: relative; }
+.dm-geo-addr {
+  width: 100%;
+  box-sizing: border-box;
+}
+.dm-geo-coords {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
+}
+/* Autocomplete dropdown floats over the page; absolute-positioned so it
+   doesn't push the lat/lng row down while the user is typing. */
+.dm-geo-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 5;
+  margin-top: 2px;
+  max-height: 220px;
+  overflow-y: auto;
+  background: var(--dm-paper);
+  border: 1px solid var(--dm-field-border);
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+.dm-geo-suggestion {
+  padding: 6px 10px;
+  font-size: 13px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--dm-field-border);
+}
+.dm-geo-suggestion:last-child { border-bottom: 0; }
+.dm-geo-suggestion:hover {
+  background: var(--dm-field-fill);
 }
 
 /* ─── Chips (list field) ──────────────────────────────────────── */
@@ -882,11 +918,12 @@ h3.section-title { margin: var(--spacing-section) 0 6px; font-size: var(--sectio
 .dm-submit {
   padding: 8px 20px;
   min-width: 120px;
-  /* Solid FOBO cyan button; text matches the form sheet (white in light,
-     dark surface in dark) so it contrasts with the cyan + reads as
-     anchored to the form's paper colour. */
+  /* Solid FOBO cyan button. Dark on-accent text in BOTH themes — cyan is a
+     bright fill in light and dark alike, so dark text keeps ~9:1 contrast.
+     (Paper-coloured text went white in light mode → ~2:1 on cyan, unreadable.)
+     A custom palette can override --dm-on-accent for a dark author accent. */
   background: #04c8ff;
-  color: var(--dm-paper);
+  color: var(--dm-on-accent, #0e1520);
   border: 0;
   border-radius: 6px;
   font-size: 14px;
@@ -913,7 +950,7 @@ h3.section-title { margin: var(--spacing-section) 0 6px; font-size: var(--sectio
 }
 .dm-btn-primary {
   background: var(--dm-accent, #04c8ff);
-  color: var(--dm-paper, #fff);
+  color: var(--dm-on-accent, #0e1520);
   border-color: var(--dm-accent, #04c8ff);
 }
 .dm-btn-primary:hover  { filter: brightness(1.08); }

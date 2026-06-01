@@ -10,6 +10,7 @@
  * License:           BSD-3-Clause
  * License URI:       https://opensource.org/license/bsd-3-clause
  * Text Domain:       datamaker-renderer
+ * Domain Path:       /languages
  */
 
 if (!defined('ABSPATH')) {

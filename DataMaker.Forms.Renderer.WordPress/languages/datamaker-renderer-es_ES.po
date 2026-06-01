@@ -1,0 +1,974 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Data Maker Forms 0.1.0\n"
+"Report-Msgid-Bugs-To: https://fobo-tools.com/\n"
+"PO-Revision-Date: 2026-05-30 00:00+0000\n"
+"Last-Translator: FOBO <support@fobo-tools.com>\n"
+"Language-Team: Español\n"
+"Language: es_ES\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Domain: datamaker-renderer\n"
+
+
+#. Plugin Name of the plugin
+#: datamaker-renderer.php
+#: includes/Admin/FormsListPage.php:34
+#: includes/Admin/UploadPage.php:19
+#: includes/Admin/UploadPage.php:20
+msgid "Data Maker Forms"
+msgstr "Formularios Data Maker"
+
+#. Plugin URI of the plugin
+#: datamaker-renderer.php
+msgid "https://fobo-tools.com/"
+msgstr ""
+
+#. Description of the plugin
+#: datamaker-renderer.php
+msgid "Renders Data Maker forms from signed .dmf uploads. POSTs sealed submissions to the Data Maker API; supports the localStorage-backed edit flow."
+msgstr "Muestra formularios Data Maker a partir de archivos .dmf firmados. Envía los envíos sellados a la API de Data Maker; admite el flujo de edición basado en localStorage."
+
+#. Author of the plugin
+#: datamaker-renderer.php
+msgid "FOBO"
+msgstr ""
+
+#: includes/Admin/FormSettingsPage.php:32
+#: includes/Admin/FormSettingsPage.php:46
+#: includes/Admin/FormSettingsPage.php:54
+#: includes/Admin/PreviewPage.php:124
+msgid "Form settings"
+msgstr "Ajustes del formulario"
+
+#: includes/Admin/FormSettingsPage.php:46
+#: includes/Admin/PreviewPage.php:93
+msgid "Missing or invalid form id."
+msgstr "Falta el id del formulario o no es válido."
+
+#: includes/Admin/FormSettingsPage.php:54
+#: includes/Admin/PreviewPage.php:100
+msgid "Form not found."
+msgstr "Formulario no encontrado."
+
+#: includes/Admin/FormSettingsPage.php:128
+msgid "Saved."
+msgstr "Guardado."
+
+#. translators: %s = form name or slug
+#: includes/Admin/FormSettingsPage.php:153
+#, php-format
+msgid "Form settings — %s"
+msgstr "Ajustes del formulario — %s"
+
+#: includes/Admin/FormSettingsPage.php:155
+#: includes/Admin/PreviewPage.php:122
+msgid "Back to forms"
+msgstr "Volver a los formularios"
+
+#: includes/Admin/FormSettingsPage.php:164
+msgid "Behaviour"
+msgstr "Comportamiento"
+
+#: includes/Admin/FormSettingsPage.php:167
+#: includes/Admin/UploadPage.php:80
+msgid "Designer styling"
+msgstr "Estilo del diseñador"
+
+#: includes/Admin/FormSettingsPage.php:171
+#: includes/Admin/UploadPage.php:84
+msgid "Apply Theme/Styling"
+msgstr "Aplicar tema/estilo"
+
+#: includes/Admin/FormSettingsPage.php:173
+msgid "On = render the form the way it looks in the desktop designer (palette, fonts, button variants, heading styles, per-element overrides). Off = strip all of that and let the active WordPress theme drive the look. Layout (rows, columns, spacing) is honored in both modes."
+msgstr "Activado = muestra el formulario tal como se ve en el diseñador de escritorio (paleta, fuentes, variantes de botones, estilos de encabezado, anulaciones por elemento). Desactivado = elimina todo eso y deja que el tema de WordPress activo defina el aspecto. El diseño (filas, columnas, espaciado) se respeta en ambos modos."
+
+#: includes/Admin/FormSettingsPage.php:177
+msgid "Edit flow"
+msgstr "Flujo de edición"
+
+#: includes/Admin/FormSettingsPage.php:181
+msgid "Let submitters edit their submission later (browser localStorage)"
+msgstr "Permitir que quienes envían editen su envío más tarde (localStorage del navegador)"
+
+#: includes/Admin/FormSettingsPage.php:183
+msgid "When on, a submitter returning to the same form on the same browser sees \"Continue editing?\" before a fresh start."
+msgstr "Cuando está activado, quien vuelve al mismo formulario en el mismo navegador ve «¿Continuar editando?» antes de empezar de nuevo."
+
+#: includes/Admin/FormSettingsPage.php:187
+msgid "After submit"
+msgstr "Después de enviar"
+
+#: includes/Admin/FormSettingsPage.php:198
+msgid "Stay on page (default)"
+msgstr "Permanecer en la página (predeterminado)"
+
+#: includes/Admin/FormSettingsPage.php:202
+msgid "Redirect to a WordPress page:"
+msgstr "Redirigir a una página de WordPress:"
+
+#: includes/Admin/FormSettingsPage.php:204
+#: includes/Admin/FormSettingsPage.php:330
+msgid "select a page"
+msgstr "seleccionar una página"
+
+#: includes/Admin/FormSettingsPage.php:214
+msgid "Redirect to a URL:"
+msgstr "Redirigir a una URL:"
+
+#: includes/Admin/FormSettingsPage.php:217
+msgid "Browser navigates to the chosen target after a successful submission. \"Stay on page\" replaces the form with the success message below."
+msgstr "El navegador va al destino elegido tras un envío correcto. «Permanecer en la página» reemplaza el formulario por el mensaje de éxito de abajo."
+
+#: includes/Admin/FormSettingsPage.php:221
+msgid "Success message"
+msgstr "Mensaje de éxito"
+
+#: includes/Admin/FormSettingsPage.php:225
+#: includes/FormStore.php:228
+msgid "## Thanks for your submission."
+msgstr "## Gracias por su envío."
+
+#. translators: %1$s-%5$s = Markdown syntax examples wrapped in <code>; %6$s = "Stay on page" wrapped in <em>
+#: includes/Admin/FormSettingsPage.php:233
+#, php-format
+msgid "Markdown allowed (%1$s, %2$s, %3$s, %4$s, %5$s). Rendered inside the form's container after a successful submit when \"After submit\" is set to %6$s; ignored for redirect modes. Leave blank for the default."
+msgstr "Markdown permitido (%1$s, %2$s, %3$s, %4$s, %5$s). Se muestra dentro del contenedor del formulario tras un envío correcto cuando «Después de enviar» es %6$s; se ignora en los modos de redirección. Déjelo en blanco para el valor predeterminado."
+
+#: includes/Admin/FormSettingsPage.php:241
+msgid "Stay on page"
+msgstr "Permanecer en la página"
+
+#: includes/Admin/FormSettingsPage.php:248
+msgid "Visibility"
+msgstr "Visibilidad"
+
+#: includes/Admin/FormSettingsPage.php:249
+msgid "Uncheck any item to hide it from this form on the WordPress site. Filtering happens server-side, before the renderer reads the form, so the layout grid auto-flows around the gaps."
+msgstr "Desmarque cualquier elemento para ocultarlo de este formulario en el sitio WordPress. El filtrado se hace en el servidor, antes de que el renderizador lea el formulario, por lo que la cuadrícula del diseño se reorganiza automáticamente alrededor de los huecos."
+
+#: includes/Admin/FormSettingsPage.php:255
+msgid "Show or hide every non-required item at once"
+msgstr "Mostrar u ocultar todos los elementos no obligatorios a la vez"
+
+#: includes/Admin/FormSettingsPage.php:256
+msgid "all"
+msgstr "todo"
+
+#: includes/Admin/FormSettingsPage.php:259
+msgid "Item"
+msgstr "Elemento"
+
+#: includes/Admin/FormSettingsPage.php:260
+msgid "Kind"
+msgstr "Tipo"
+
+#: includes/Admin/FormSettingsPage.php:261
+msgid "Where"
+msgstr "Ubicación"
+
+#: includes/Admin/FormSettingsPage.php:266
+msgid "No layout elements found."
+msgstr "No se encontraron elementos de diseño."
+
+#: includes/Admin/FormSettingsPage.php:288
+msgid "Required fields can't be hidden"
+msgstr "Los campos obligatorios no se pueden ocultar"
+
+#: includes/Admin/FormSettingsPage.php:288
+msgid "required"
+msgstr "obligatorio"
+
+#. translators: %1$s = "visible" wrapped in <strong>; %2$s = hidden[] wrapped in <code>
+#: includes/Admin/FormSettingsPage.php:301
+#, php-format
+msgid "A checked box = %1$s. The form posts the inverted set as %2$s so legacy fields not yet in the form definition aren't accidentally hidden when added later."
+msgstr "Una casilla marcada = %1$s. El formulario envía el conjunto invertido como %2$s para que los campos heredados que aún no están en la definición no se oculten por accidente al añadirse más tarde."
+
+#: includes/Admin/FormSettingsPage.php:304
+msgid "visible"
+msgstr "visible"
+
+#: includes/Admin/FormSettingsPage.php:309
+msgid "Privacy &amp; consent"
+msgstr "Privacidad y consentimiento"
+
+#: includes/Admin/FormSettingsPage.php:312
+msgid "Privacy policy target"
+msgstr "Destino de la política de privacidad"
+
+#: includes/Admin/FormSettingsPage.php:324
+msgid "Not set"
+msgstr "Sin definir"
+
+#: includes/Admin/FormSettingsPage.php:328
+msgid "WordPress page:"
+msgstr "Página de WordPress:"
+
+#: includes/Admin/FormSettingsPage.php:340
+msgid "External URL:"
+msgstr "URL externa:"
+
+#: includes/Admin/FormSettingsPage.php:346
+msgid "Linked from the consent label below when set."
+msgstr "Se enlaza desde la etiqueta de consentimiento de abajo cuando está definida."
+
+#: includes/Admin/FormSettingsPage.php:350
+msgid "Privacy link text"
+msgstr "Texto del enlace de privacidad"
+
+#: includes/Admin/FormSettingsPage.php:356
+#: includes/Shortcode.php:203
+msgid "privacy policy"
+msgstr "política de privacidad"
+
+#: includes/Admin/FormSettingsPage.php:357
+msgid "Text shown as the link to the privacy target. Empty = \"privacy policy\"."
+msgstr "Texto mostrado como enlace al destino de privacidad. Vacío = «política de privacidad»."
+
+#: includes/Admin/FormSettingsPage.php:361
+msgid "Require consent before submit"
+msgstr "Requerir consentimiento antes de enviar"
+
+#: includes/Admin/FormSettingsPage.php:366
+msgid "Show a consent checkbox above the submit button; block POST until ticked."
+msgstr "Mostrar una casilla de consentimiento encima del botón de envío; bloquear el envío hasta que se marque."
+
+#: includes/Admin/FormSettingsPage.php:373
+#: includes/Shortcode.php:271
+msgid "I agree to the privacy policy."
+msgstr "Acepto la política de privacidad."
+
+#: includes/Admin/FormSettingsPage.php:375
+msgid "Use {privacy} as a placeholder to insert a link to the URL above."
+msgstr "Use {privacy} como marcador para insertar un enlace a la URL de arriba."
+
+#: includes/Admin/FormSettingsPage.php:380
+msgid "Anti-abuse"
+msgstr "Antiabuso"
+
+#: includes/Admin/FormSettingsPage.php:383
+msgid "Honeypot field"
+msgstr "Campo trampa (honeypot)"
+
+#: includes/Admin/FormSettingsPage.php:388
+msgid "Render a hidden field; reject submissions that fill it. Recommended."
+msgstr "Mostrar un campo oculto; rechazar los envíos que lo rellenen. Recomendado."
+
+#: includes/Admin/FormSettingsPage.php:393
+msgid "Rate limit (per minute, per IP)"
+msgstr "Límite de tasa (por minuto, por IP)"
+
+#: includes/Admin/FormSettingsPage.php:398
+msgid "0 = no limit (a plugin-wide default still applies). Soft throttle enforced via WP transients."
+msgstr "0 = sin límite (se sigue aplicando un valor predeterminado de todo el plugin). Limitación flexible aplicada mediante transients de WP."
+
+#: includes/Admin/FormSettingsPage.php:402
+#: includes/Admin/SettingsPage.php:93
+msgid "Cloudflare Turnstile"
+msgstr "Cloudflare Turnstile"
+
+#: includes/Admin/FormSettingsPage.php:408
+msgid "Require visitors to pass a Turnstile challenge before submitting."
+msgstr "Exigir a los visitantes que superen un desafío Turnstile antes de enviar."
+
+#. translators: %s = link to plugin settings
+#: includes/Admin/FormSettingsPage.php:415
+#, php-format
+msgid "Turnstile keys not configured. Set them in %s first."
+msgstr "Claves de Turnstile no configuradas. Defínalas primero en %s."
+
+#: includes/Admin/FormSettingsPage.php:416
+msgid "Data Maker Forms → Settings"
+msgstr "Formularios Data Maker → Ajustes"
+
+#: includes/Admin/FormSettingsPage.php:421
+msgid "Server verifies each token with Cloudflare before sealing the submission. Honeypot + rate limit still apply."
+msgstr "El servidor verifica cada token con Cloudflare antes de sellar el envío. El honeypot y el límite de tasa siguen aplicándose."
+
+#: includes/Admin/FormSettingsPage.php:427
+msgid "Integrations"
+msgstr "Integraciones"
+
+#: includes/Admin/FormSettingsPage.php:430
+msgid "Webhook URL"
+msgstr "URL del webhook"
+
+#. translators: %s = action hook name
+#: includes/Admin/FormSettingsPage.php:440
+#, php-format
+msgid "POSTed with submission metadata (no plaintext field values) after a successful sealed submit. For full notification flows use the WP action hook %s — works with Post SMTP, Mailpoet, WPForms add-ons, Zapier, custom code."
+msgstr "Se envía por POST con los metadatos del envío (sin valores de campo en texto plano) tras un envío sellado correcto. Para flujos de notificación completos use el hook de acción de WP %s — funciona con Post SMTP, Mailpoet, complementos de WPForms, Zapier y código personalizado."
+
+#: includes/Admin/FormSettingsPage.php:448
+msgid "Form-wide messages"
+msgstr "Mensajes de todo el formulario"
+
+#: includes/Admin/FormSettingsPage.php:449
+msgid "Form-level text the renderer shows, independent of any single field. Empty box = use the form's default (set in the designer) or, failing that, the engine's English fallback."
+msgstr "Texto a nivel de formulario que muestra el renderizador, independiente de cualquier campo. Caja vacía = usar el valor predeterminado del formulario (definido en el diseñador) o, en su defecto, la reserva en inglés del motor."
+
+#: includes/Admin/FormSettingsPage.php:478
+msgid "Field error messages"
+msgstr "Mensajes de error de campo"
+
+#: includes/Admin/FormSettingsPage.php:479
+msgid "Override the validation error text shown next to each field. Empty box = use the form's default (set in the designer) or, failing that, the engine's English fallback. Both are shown as placeholder text inside each box."
+msgstr "Anule el texto de error de validación que se muestra junto a cada campo. Caja vacía = usar el valor predeterminado del formulario (definido en el diseñador) o, en su defecto, la reserva en inglés del motor. Ambos se muestran como texto de marcador dentro de cada caja."
+
+#: includes/Admin/FormSettingsPage.php:490
+msgid "No fields in this form expose customizable message slots. Toggle Required, set field options (min/max length, allowed extensions, etc.) in the designer to enable per-check overrides."
+msgstr "Ningún campo de este formulario expone mensajes personalizables. Active «Obligatorio» o configure opciones de campo (longitud mín./máx., extensiones permitidas, etc.) en el diseñador para habilitar las anulaciones por comprobación."
+
+#: includes/Admin/FormSettingsPage.php:536
+msgid "Save form settings"
+msgstr "Guardar los ajustes del formulario"
+
+#. translators: %d = step number
+#: includes/Admin/FormSettingsPage.php:616
+#, php-format
+msgid "Step %d"
+msgstr "Paso %d"
+
+#. translators: %d = section number
+#: includes/Admin/FormSettingsPage.php:619
+#, php-format
+msgid "Section %d"
+msgstr "Sección %d"
+
+#: includes/Admin/FormSettingsPage.php:681
+msgid "(group)"
+msgstr "(grupo)"
+
+#: includes/Admin/FormSettingsPage.php:693
+msgid "(heading)"
+msgstr "(encabezado)"
+
+#: includes/Admin/FormSettingsPage.php:698
+msgid "(rich text)"
+msgstr "(texto enriquecido)"
+
+#: includes/Admin/FormSettingsPage.php:703
+msgid "(image)"
+msgstr "(imagen)"
+
+#: includes/Admin/FormSettingsPage.php:706
+msgid "(divider)"
+msgstr "(separador)"
+
+#: includes/Admin/FormSettingsPage.php:709
+msgid "(spacer)"
+msgstr "(espaciador)"
+
+#: includes/Admin/FormSettingsPage.php:712
+msgid "(button)"
+msgstr "(botón)"
+
+#: includes/Admin/FormsListPage.php:25
+msgid "Form deleted."
+msgstr "Formulario eliminado."
+
+#: includes/Admin/FormsListPage.php:27
+msgid "Forbidden — nonce check failed."
+msgstr "Prohibido — falló la comprobación del nonce."
+
+#: includes/Admin/FormsListPage.php:35
+#: includes/Admin/UploadPage.php:27
+msgid "Upload .dmf"
+msgstr "Subir .dmf"
+
+#: includes/Admin/FormsListPage.php:39
+msgid "Slug (shortcode id)"
+msgstr "Slug (id del shortcode)"
+
+#: includes/Admin/FormsListPage.php:40
+msgid "Form id"
+msgstr "Id del formulario"
+
+#: includes/Admin/FormsListPage.php:41
+msgid "Schema"
+msgstr "Esquema"
+
+#: includes/Admin/FormsListPage.php:42
+msgid "Signed"
+msgstr "Firmado"
+
+#: includes/Admin/FormsListPage.php:43
+msgid "Uploaded"
+msgstr "Subido"
+
+#: includes/Admin/FormsListPage.php:49
+msgid "No forms uploaded yet."
+msgstr "Aún no se ha subido ningún formulario."
+
+#: includes/Admin/FormsListPage.php:58
+msgid "yes"
+msgstr "sí"
+
+#: includes/Admin/FormsListPage.php:58
+msgid "no"
+msgstr "no"
+
+#: includes/Admin/FormsListPage.php:61
+#: includes/Shortcode.php:361
+msgid "Preview"
+msgstr "Vista previa"
+
+#: includes/Admin/FormsListPage.php:62
+#: includes/Admin/UploadPage.php:29
+msgid "Settings"
+msgstr "Ajustes"
+
+#: includes/Admin/FormsListPage.php:63
+msgid "Delete this form?"
+msgstr "¿Eliminar este formulario?"
+
+#: includes/Admin/FormsListPage.php:66
+msgid "Delete"
+msgstr "Eliminar"
+
+#: includes/Admin/PreviewPage.php:27
+msgid "Preview form"
+msgstr "Vista previa del formulario"
+
+#. translators: %s = form slug
+#: includes/Admin/PreviewPage.php:72
+#, php-format
+msgid "Preview — %s"
+msgstr "Vista previa — %s"
+
+#: includes/Admin/PreviewPage.php:93
+#: includes/Admin/PreviewPage.php:100
+#: includes/Admin/PreviewPage.php:139
+msgid "Form preview"
+msgstr "Vista previa del formulario"
+
+#. translators: %s = form slug
+#: includes/Admin/PreviewPage.php:119
+#, php-format
+msgid "Form preview — %s"
+msgstr "Vista previa del formulario — %s"
+
+#: includes/Admin/PreviewPage.php:126
+msgid "Open in new tab"
+msgstr "Abrir en una nueva pestaña"
+
+#. translators: %s = shortcode
+#: includes/Admin/PreviewPage.php:131
+#, php-format
+msgid "Shortcode: %s — paste this anywhere on the site to embed the form."
+msgstr "Shortcode: %s — péguelo en cualquier parte del sitio para insertar el formulario."
+
+#: includes/Admin/PreviewPage.php:140
+msgid "Preview submits go through the same pipeline as the live site (sealed POST → API). Use a test recipient inbox before sharing the form publicly."
+msgstr "Los envíos de la vista previa pasan por el mismo flujo que el sitio en producción (POST sellado → API). Use una bandeja de destinatario de prueba antes de compartir el formulario públicamente."
+
+#: includes/Admin/SettingsPage.php:74
+msgid "Data Maker Forms — Settings"
+msgstr "Formularios Data Maker — Ajustes"
+
+#: includes/Admin/SettingsPage.php:79
+msgid "Signature verification"
+msgstr "Verificación de firma"
+
+#: includes/Admin/SettingsPage.php:83
+msgid "Require uploaded .dmf bundles to be Ed25519-signed"
+msgstr "Exigir que los paquetes .dmf subidos estén firmados con Ed25519"
+
+#: includes/Admin/SettingsPage.php:87
+msgid "base64-encoded signer pubkey (optional)"
+msgstr "clave pública del firmante codificada en base64 (opcional)"
+
+#: includes/Admin/SettingsPage.php:88
+msgid "If set, the uploaded .dmf must be signed with exactly this pubkey. Leave blank to accept any signed bundle."
+msgstr "Si se define, el .dmf subido debe estar firmado exactamente con esta clave pública. Déjelo en blanco para aceptar cualquier paquete firmado."
+
+#. translators: %s = link to cloudflare.com/turnstile
+#: includes/Admin/SettingsPage.php:97
+#, php-format
+msgid "Privacy-friendly CAPTCHA challenge. Enroll for free at %s; paste the site & secret keys here. Each form chooses whether to require it via Form Settings."
+msgstr "Desafío CAPTCHA respetuoso con la privacidad. Regístrese gratis en %s; pegue aquí las claves de sitio y secreta. Cada formulario decide si lo requiere desde sus ajustes."
+
+#: includes/Admin/SettingsPage.php:103
+msgid "Site key"
+msgstr "Clave de sitio"
+
+#: includes/Admin/SettingsPage.php:107
+msgid "Public key embedded in the form page (data-sitekey)."
+msgstr "Clave pública incrustada en la página del formulario (data-sitekey)."
+
+#: includes/Admin/SettingsPage.php:111
+msgid "Secret key"
+msgstr "Clave secreta"
+
+#: includes/Admin/SettingsPage.php:115
+msgid "Used server-side to verify tokens with Cloudflare. Never sent to the browser."
+msgstr "Se usa en el servidor para verificar tokens con Cloudflare. Nunca se envía al navegador."
+
+#: includes/Admin/UploadPage.php:28
+msgid "Forms"
+msgstr "Formularios"
+
+#: includes/Admin/UploadPage.php:43
+msgid "Data Maker Forms — Upload .dmf"
+msgstr "Formularios Data Maker — Subir .dmf"
+
+#: includes/Admin/UploadPage.php:52
+msgid "Shortcode slug"
+msgstr "Slug del shortcode"
+
+#. translators: %s = example shortcode
+#: includes/Admin/UploadPage.php:58
+#, php-format
+msgid "Used in the shortcode: %s. Re-uploading the same slug overwrites the form in place."
+msgstr "Se usa en el shortcode: %s. Volver a subir el mismo slug sobrescribe el formulario en su lugar."
+
+#: includes/Admin/UploadPage.php:65
+msgid ".dmf bundle"
+msgstr "Paquete .dmf"
+
+#. translators: %s = ON or OFF
+#: includes/Admin/UploadPage.php:72
+#, php-format
+msgid "Signature verification is currently %s — change under Settings."
+msgstr "La verificación de firma está actualmente %s — cámbiela en Ajustes."
+
+#: includes/Admin/UploadPage.php:73
+msgid "ON"
+msgstr "ACTIVADA"
+
+#: includes/Admin/UploadPage.php:73
+msgid "OFF"
+msgstr "DESACTIVADA"
+
+#: includes/Admin/UploadPage.php:86
+msgid "On = render the form the way it looks in the desktop designer (palette, fonts, button variants, heading styles, per-element overrides). Off = strip all of that and let the active WordPress theme drive the look. Per-form; you can flip it later under Forms → Settings."
+msgstr "Activado = muestra el formulario tal como se ve en el diseñador de escritorio (paleta, fuentes, variantes de botones, estilos de encabezado, anulaciones por elemento). Desactivado = elimina todo eso y deja que el tema de WordPress activo defina el aspecto. Por formulario; puede cambiarlo después en Formularios → Ajustes."
+
+#: includes/Admin/UploadPage.php:90
+msgid "Upload form"
+msgstr "Subir formulario"
+
+#: includes/Admin/UploadPage.php:107
+msgid "No file uploaded."
+msgstr "No se subió ningún archivo."
+
+#: includes/Admin/UploadPage.php:111
+msgid "Slug is required."
+msgstr "El slug es obligatorio."
+
+#. translators: %s = human-readable size
+#: includes/Admin/UploadPage.php:121
+#, php-format
+msgid "Uploaded .dmf is larger than the %s limit."
+msgstr "El .dmf subido supera el límite de %s."
+
+#: includes/Admin/UploadPage.php:129
+msgid "Could not read the uploaded file."
+msgstr "No se pudo leer el archivo subido."
+
+#: includes/Admin/UploadPage.php:143
+msgid "Could not parse the .dmf bundle (signature, format, or signing-key mismatch)."
+msgstr "No se pudo analizar el paquete .dmf (signatura, formato o clave de firma no coinciden)."
+
+#: includes/Admin/UploadPage.php:158
+msgid "This .dmf was exported in share-only mode (no recipient block). Submissions can't route back to a publisher, so the plugin won't accept it. Sign in to FOBO in the Data Maker desktop app, re-export the form, and try again."
+msgstr "Este .dmf se exportó en modo solo compartir (sin bloque de destinatario). Los envíos no pueden enrutarse de vuelta a un editor, por lo que el plugin no lo aceptará. Inicie sesión en FOBO en la aplicación de escritorio de Data Maker, vuelva a exportar el formulario e inténtelo de nuevo."
+
+#. translators: 1: numeric form id, 2: shortcode
+#: includes/Admin/UploadPage.php:169
+#, php-format
+msgid "Form saved (id #%1$d). Embed it with: %2$s"
+msgstr "Formulario guardado (id n.º %1$d). Insértelo con: %2$s"
+
+#: includes/Block.php:22
+#: assets/block.js:19
+#: assets/block.js:86
+msgid "Data Maker Form"
+msgstr "Formulario Data Maker"
+
+#: includes/Block.php:25
+msgid "Render a Data Maker form uploaded under Data Maker Forms → Upload .dmf."
+msgstr "Muestra un formulario Data Maker subido en Formularios Data Maker → Subir .dmf."
+
+#: includes/Block.php:87
+msgid "Pick a form in the block sidebar."
+msgstr "Elija un formulario en la barra lateral del bloque."
+
+#: includes/MessageCatalog.php:31
+msgid "Required"
+msgstr "Obligatorio"
+
+#. translators: %d = minimum character count
+#: includes/MessageCatalog.php:43
+#, php-format
+msgid "Minimum length (%d)"
+msgstr "Longitud mínima (%d)"
+
+#. translators: %d = minimum character count
+#: includes/MessageCatalog.php:45
+#, php-format
+msgid "Must be at least %d character."
+msgid_plural "Must be at least %d characters."
+msgstr[0] "Debe tener al menos %d carácter."
+msgstr[1] "Debe tener al menos %d caracteres."
+
+#. translators: %d = maximum character count
+#: includes/MessageCatalog.php:53
+#, php-format
+msgid "Maximum length (%d)"
+msgstr "Longitud máxima (%d)"
+
+#. translators: %d = maximum character count
+#: includes/MessageCatalog.php:55
+#, php-format
+msgid "Must be at most %d character."
+msgid_plural "Must be at most %d characters."
+msgstr[0] "Debe tener como máximo %d carácter."
+msgstr[1] "Debe tener como máximo %d caracteres."
+
+#: includes/MessageCatalog.php:59
+msgid "Pattern match"
+msgstr "Coincidencia de patrón"
+
+#: includes/MessageCatalog.php:59
+msgid "Value does not match the required pattern."
+msgstr "El valor no coincide con el patrón requerido."
+
+#: includes/MessageCatalog.php:65
+msgid "Email format"
+msgstr "Formato de correo"
+
+#: includes/MessageCatalog.php:65
+msgid "Not a valid email address."
+msgstr "No es una dirección de correo válida."
+
+#: includes/MessageCatalog.php:66
+msgid "URL format"
+msgstr "Formato de URL"
+
+#: includes/MessageCatalog.php:66
+msgid "Not a valid URL."
+msgstr "No es una URL válida."
+
+#: includes/MessageCatalog.php:67
+msgid "Phone format"
+msgstr "Formato de teléfono"
+
+#: includes/MessageCatalog.php:67
+msgid "Not a valid phone number."
+msgstr "No es un número de teléfono válido."
+
+#: includes/MessageCatalog.php:68
+msgid "Whole number"
+msgstr "Número entero"
+
+#: includes/MessageCatalog.php:68
+msgid "Not a whole number."
+msgstr "No es un número entero."
+
+#: includes/MessageCatalog.php:69
+msgid "Decimal number"
+msgstr "Número decimal"
+
+#: includes/MessageCatalog.php:69
+msgid "Not a valid decimal number."
+msgstr "No es un número decimal válido."
+
+#: includes/MessageCatalog.php:70
+msgid "Monetary amount"
+msgstr "Importe monetario"
+
+#: includes/MessageCatalog.php:70
+msgid "Not a valid monetary amount."
+msgstr "No es un importe monetario válido."
+
+#: includes/MessageCatalog.php:71
+msgid "Date"
+msgstr "Fecha"
+
+#: includes/MessageCatalog.php:71
+msgid "Not a valid date."
+msgstr "No es una fecha válida."
+
+#: includes/MessageCatalog.php:72
+msgid "Date-time"
+msgstr "Fecha y hora"
+
+#: includes/MessageCatalog.php:72
+msgid "Not a valid date-time."
+msgstr "No es una fecha y hora válidas."
+
+#: includes/MessageCatalog.php:73
+msgid "Boolean"
+msgstr "Booleano"
+
+#: includes/MessageCatalog.php:73
+msgid "Not a boolean."
+msgstr "No es un booleano."
+
+#: includes/MessageCatalog.php:77
+msgid "Allowed choice"
+msgstr "Opción permitida"
+
+#: includes/MessageCatalog.php:77
+msgid "Value is not in the allowed list."
+msgstr "El valor no está en la lista permitida."
+
+#: includes/MessageCatalog.php:83
+msgid "Allowed choices"
+msgstr "Opciones permitidas"
+
+#: includes/MessageCatalog.php:83
+msgid "Some items are not in the allowed list."
+msgstr "Algunos elementos no están en la lista permitida."
+
+#: includes/MessageCatalog.php:86
+msgid "Latitude range"
+msgstr "Rango de latitud"
+
+#: includes/MessageCatalog.php:86
+msgid "Latitude must be between -90 and 90."
+msgstr "La latitud debe estar entre -90 y 90."
+
+#: includes/MessageCatalog.php:87
+msgid "Longitude range"
+msgstr "Rango de longitud"
+
+#: includes/MessageCatalog.php:87
+msgid "Longitude must be between -180 and 180."
+msgstr "La longitud debe estar entre -180 y 180."
+
+#: includes/MessageCatalog.php:88
+msgid "Geo point"
+msgstr "Punto geográfico"
+
+#: includes/MessageCatalog.php:88
+msgid "Not a valid geo point."
+msgstr "No es un punto geográfico válido."
+
+#: includes/MessageCatalog.php:92
+msgid "File extension"
+msgstr "Extensión de archivo"
+
+#: includes/MessageCatalog.php:92
+msgid "File extension not allowed."
+msgstr "Extensión de archivo no permitida."
+
+#: includes/MessageCatalog.php:107
+msgid "Validation banner"
+msgstr "Banner de validación"
+
+#: includes/MessageCatalog.php:108
+#: includes/Shortcode.php:370
+msgid "Please fix the highlighted fields before submitting."
+msgstr "Corrija los campos resaltados antes de enviar."
+
+#: includes/Shortcode.php:360
+msgid "Submit"
+msgstr "Enviar"
+
+#: includes/Shortcode.php:362
+msgid "Edit"
+msgstr "Editar"
+
+#: includes/Shortcode.php:363
+msgid "No items"
+msgstr "Sin elementos"
+
+#: includes/Shortcode.php:364
+msgid "Add and press Enter"
+msgstr "Añadir y pulsar Intro"
+
+#: includes/Shortcode.php:365
+msgid "Click to upload"
+msgstr "Haga clic para subir"
+
+#: includes/Shortcode.php:366
+msgid "No file selected"
+msgstr "Ningún archivo seleccionado"
+
+#: includes/Shortcode.php:367
+msgid "Browse…"
+msgstr "Examinar…"
+
+#: includes/Shortcode.php:368
+msgid "Clear"
+msgstr "Borrar"
+
+#: includes/Shortcode.php:369
+msgid "Please fix the highlighted fields."
+msgstr "Corrija los campos resaltados."
+
+#: includes/Shortcode.php:372
+msgid "Please tick the consent box to submit."
+msgstr "Marque la casilla de consentimiento para enviar."
+
+#: includes/Shortcode.php:373
+msgid "Please complete the challenge to submit."
+msgstr "Complete el desafío para enviar."
+
+#: includes/Shortcode.php:374
+msgid "Submitted. Redirecting…"
+msgstr "Enviado. Redirigiendo…"
+
+#: includes/Shortcode.php:375
+msgid "Continue editing"
+msgstr "Continuar editando"
+
+#: includes/Shortcode.php:376
+msgid "Start over"
+msgstr "Empezar de nuevo"
+
+#: includes/Shortcode.php:377
+msgid "You started this form earlier on this browser. Continue editing your previous submission?"
+msgstr "Empezó este formulario antes en este navegador. ¿Continuar editando su envío anterior?"
+
+#: includes/Shortcode.php:378
+msgid "This submission is too large to send. Try shrinking large images or removing big attachments, then submit again."
+msgstr "Este envío es demasiado grande para enviarlo. Intente reducir las imágenes grandes o quitar los archivos adjuntos grandes y vuelva a enviar."
+
+#: includes/Shortcode.php:379
+msgid "Network error — please check your connection and try submitting again."
+msgstr "Error de red — compruebe su conexión e intente enviar de nuevo."
+
+#: includes/Shortcode.php:380
+msgid "This form is no longer available. Please contact the form owner."
+msgstr "Este formulario ya no está disponible. Póngase en contacto con el propietario del formulario."
+
+#: includes/Shortcode.php:381
+msgid "This form is not accepting submissions right now."
+msgstr "Este formulario no está aceptando envíos en este momento."
+
+#: includes/Shortcode.php:382
+msgid "The form server is unreachable right now. Please try again in a moment."
+msgstr "El servidor del formulario no está accesible en este momento. Inténtelo de nuevo en un momento."
+
+#: includes/Shortcode.php:383
+msgid "Something went wrong sending your submission. Please try again — if it keeps happening, contact the form owner."
+msgstr "Algo salió mal al enviar su envío. Inténtelo de nuevo — si sigue ocurriendo, póngase en contacto con el propietario del formulario."
+
+#: includes/Shortcode.php:384
+msgid "Submission failed"
+msgstr "Error en el envío"
+
+#: includes/SubmitProxy.php:81
+msgid "slug + hash required."
+msgstr "se requieren slug + hash."
+
+#: includes/SubmitProxy.php:86
+msgid "hash must be 64-char lowercase hex SHA-256."
+msgstr "el hash debe ser un SHA-256 hexadecimal en minúsculas de 64 caracteres."
+
+#: includes/SubmitProxy.php:91
+#: includes/SubmitProxy.php:174
+msgid "form not found."
+msgstr "formulario no encontrado."
+
+#: includes/SubmitProxy.php:94
+msgid "form has no recipient configured."
+msgstr "el formulario no tiene un destinatario configurado."
+
+#: includes/SubmitProxy.php:109
+msgid "Too many uploads. Please wait a moment."
+msgstr "Demasiadas subidas. Espere un momento."
+
+#: includes/SubmitProxy.php:116
+#: includes/SubmitProxy.php:236
+msgid "Data Maker API URL not configured."
+msgstr "URL de la API de Data Maker no configurada."
+
+#: includes/SubmitProxy.php:156
+msgid "libsodium PHP extension required."
+msgstr "se requiere la extensión PHP libsodium."
+
+#: includes/SubmitProxy.php:162
+msgid "Submission too large."
+msgstr "Envío demasiado grande."
+
+#: includes/SubmitProxy.php:169
+msgid "slug + values required."
+msgstr "se requieren slug + values."
+
+#: includes/SubmitProxy.php:177
+msgid "form has no recipient configured; submissions are not supported."
+msgstr "el formulario no tiene un destinatario configurado; los envíos no son compatibles."
+
+#: includes/SubmitProxy.php:188
+msgid "Submission rejected."
+msgstr "Envío rechazado."
+
+#: includes/SubmitProxy.php:195
+msgid "Consent is required before submitting."
+msgstr "Se requiere consentimiento antes de enviar."
+
+#: includes/SubmitProxy.php:209
+msgid "Challenge verification failed. Please try again."
+msgstr "Falló la verificación del desafío. Inténtelo de nuevo."
+
+#: includes/SubmitProxy.php:229
+msgid "Too many submissions. Please wait a moment."
+msgstr "Demasiados envíos. Espere un momento."
+
+#: includes/SubmitProxy.php:239
+msgid "Data Maker API URL is not allowed."
+msgstr "La URL de la API de Data Maker no está permitida."
+
+#: assets/block.js:20
+msgid "Render a form uploaded under Data Maker Forms → Upload .dmf."
+msgstr "Muestra un formulario subido en Formularios Data Maker → Subir .dmf."
+
+#: assets/block.js:37
+msgid "Could not load forms."
+msgstr "No se pudieron cargar los formularios."
+
+#: assets/block.js:40
+msgid "— Select a form —"
+msgstr "— Seleccionar un formulario —"
+
+#: assets/block.js:46
+msgid "Inherit form setting"
+msgstr "Heredar el ajuste del formulario"
+
+#: assets/block.js:47
+msgid "Always apply designer styling"
+msgstr "Aplicar siempre el estilo del diseñador"
+
+#: assets/block.js:48
+msgid "Always strip designer styling"
+msgstr "Eliminar siempre el estilo del diseñador"
+
+#: assets/block.js:54
+msgid "Form"
+msgstr "Formulario"
+
+#: assets/block.js:60
+msgid "Uploaded form"
+msgstr "Formulario subido"
+
+#: assets/block.js:64
+msgid "Upload more forms under Data Maker Forms → Upload .dmf."
+msgstr "Suba más formularios en Formularios Data Maker → Subir .dmf."
+
+#: assets/block.js:67
+msgid "Designer styling override"
+msgstr "Anulación del estilo del diseñador"
+
+#: assets/block.js:71
+msgid "Layout always honors the form. This only flips colors / fonts / button styling from the Data Maker designer."
+msgstr "El diseño siempre respeta el formulario. Esto solo cambia los colores / fuentes / estilo de botones del diseñador de Data Maker."
+
+#: assets/block.js:74
+msgid "Upload a .dmf"
+msgstr "Subir un .dmf"
+
+#: assets/block.js:89
+msgid "Slug: "
+msgstr "Slug: "
+
+#: assets/block.js:90
+msgid "Pick a form from the sidebar."
+msgstr "Elija un formulario en la barra lateral."

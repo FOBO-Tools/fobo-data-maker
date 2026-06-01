@@ -19,10 +19,10 @@ final class Block
     {
         register_block_type('datamaker/form', [
             'api_version'     => 3,
-            'title'           => 'Data Maker Form',
+            'title'           => __('Data Maker Form', 'datamaker-renderer'),
             'category'        => 'embed',
             'icon'            => 'feedback',
-            'description'     => 'Render a Data Maker form uploaded under Data Maker Forms → Upload .dmf.',
+            'description'     => __('Render a Data Maker form uploaded under Data Maker Forms → Upload .dmf.', 'datamaker-renderer'),
             'attributes'      => [
                 'slug'  => ['type' => 'string', 'default' => ''],
                 'theme' => ['type' => 'string', 'default' => ''],   // ''=inherit, 'on', 'off'
@@ -42,6 +42,18 @@ final class Block
             DM_RENDERER_VERSION,
             true
         );
+
+        // Wire the block editor's __() calls to the plugin's JSON
+        // translations. WP loads languages/datamaker-renderer-{locale}-
+        // {md5(block.js path)}.json for this handle — produced by
+        // `make json` (wp i18n make-json) from the per-locale .po files.
+        if (function_exists('wp_set_script_translations')) {
+            wp_set_script_translations(
+                'datamaker-renderer-block-editor',
+                'datamaker-renderer',
+                DM_RENDERER_DIR . 'languages'
+            );
+        }
     }
 
     public static function register_rest_routes(): void
@@ -71,7 +83,9 @@ final class Block
     {
         $slug = isset($attributes['slug']) ? sanitize_title((string)$attributes['slug']) : '';
         if (!$slug) {
-            return '<p style="padding:12px;border:1px dashed #888;color:#666;">Pick a form in the block sidebar.</p>';
+            return '<p style="padding:12px;border:1px dashed #888;color:#666;">'
+                . esc_html__('Pick a form in the block sidebar.', 'datamaker-renderer')
+                . '</p>';
         }
         $theme = isset($attributes['theme']) ? sanitize_text_field((string)$attributes['theme']) : '';
         return Shortcode::render(['id' => $slug, 'theme' => $theme]);

@@ -12,8 +12,28 @@ MIN_DIR    := assets/dist
 TERSER_VER := 5.36.0
 CSSO_VER   := 4.0.2
 NODE_IMG   := node:20-alpine
+WPCLI_IMG  := wordpress:cli-php8.2
+TWEETNACL_VER := 1.0.3
+SEALEDBOX_VER := 1.0.0
+ESBUILD_VER   := 0.21.5
 
-.PHONY: sync-assets minify package clean check up down logs wp-shell wp-install
+.PHONY: sync-assets minify vendor-crypto package pot mo json clean check up down logs wp-shell wp-install
+
+# Bundle the browser sealed-box (tweetnacl + tweetnacl-sealedbox-js) used to
+# E2E-encrypt blob bytes before the direct-to-S3 PUT (#45). esbuild produces a
+# single IIFE that assigns window.DataMakerBlobCrypto. Pinned versions so the
+# committed bundle is reproducible. Output is checked in (not gitignored) so a
+# plain checkout ships a working plugin without a build step.
+vendor-crypto:
+	@mkdir -p assets/vendor
+	docker run --rm -v "$(CURDIR)":/work -w /work $(NODE_IMG) sh -lc '\
+	  set -e; \
+	  npm install --silent --no-fund --no-audit --prefix /tmp/bc \
+	      tweetnacl@$(TWEETNACL_VER) tweetnacl-sealedbox-js@$(SEALEDBOX_VER) esbuild@$(ESBUILD_VER) >/dev/null; \
+	  NODE_PATH=/tmp/bc/node_modules /tmp/bc/node_modules/.bin/esbuild assets/src/dm-blob-crypto.js \
+	      --bundle --minify --format=iife --outfile=assets/vendor/dm-blob-crypto.min.js; \
+	'
+	@echo "Built assets/vendor/dm-blob-crypto.min.js"
 
 sync-assets:
 	cp $(RENDERER_SRC)/renderer.js       assets/renderer.js
@@ -59,10 +79,41 @@ package: minify
 	# Stage into a folder named after the plugin so WP installer unpacks
 	# into wp-content/plugins/datamaker-renderer/.
 	@rm -rf $(DIST)/staging && mkdir -p $(DIST)/staging/$(PLUGIN)
-	@cp -R datamaker-renderer.php includes assets readme.txt $(DIST)/staging/$(PLUGIN)/
+	@cp -R datamaker-renderer.php includes assets languages readme.txt $(DIST)/staging/$(PLUGIN)/
 	cd $(DIST)/staging && zip -r ../../$(ZIP) $(PLUGIN) >/dev/null
 	@rm -rf $(DIST)/staging
 	@echo "Built $(ZIP)"
+
+# ── Translations (gettext) ─────────────────────────────────────────────
+# `make pot` re-extracts every __()/_e()/esc_html__()/_n() call (PHP) and
+# every block-editor __() (assets/block.js) into languages/$(PLUGIN).pot
+# via WP-CLI's i18n command (no WP install needed — make-pot is a
+# standalone source scan). `make mo` compiles each languages/*.po into its
+# .mo sibling (PHP gettext); `make json` splits the JS-sourced strings out
+# of each .po into the md5-named .json WordPress loads for the block-editor
+# script handle (wp_set_script_translations). vendor/, tests/, dist/, the
+# minified bundle, and the big generated renderer assets (no gettext calls)
+# are excluded so only first-party plugin strings land in the pot.
+pot:
+	docker run --rm -v "$(CURDIR)":/app -w /app $(WPCLI_IMG) \
+		wp i18n make-pot . languages/$(PLUGIN).pot \
+		--domain=$(PLUGIN) \
+		--exclude=vendor,tests,dist,assets/dist,assets/renderer.js,assets/fn.js,assets/wp-bridge.js \
+		--allow-root
+	@echo "Extracted languages/$(PLUGIN).pot"
+
+mo:
+	docker run --rm -v "$(CURDIR)":/app -w /app $(WPCLI_IMG) sh -lc '\
+		for po in languages/*.po; do \
+			[ -f "$$po" ] || continue; \
+			wp i18n make-mo "$$po" "$${po%.po}.mo" --allow-root; \
+		done'
+	@echo "Compiled languages/*.mo"
+
+json:
+	docker run --rm -v "$(CURDIR)":/app -w /app $(WPCLI_IMG) \
+		wp i18n make-json languages --no-purge --pretty-print --allow-root
+	@echo "Generated languages/*.json (block-editor JS)"
 
 check:
 	@php -l datamaker-renderer.php

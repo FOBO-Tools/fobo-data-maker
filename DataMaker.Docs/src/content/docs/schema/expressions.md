@@ -79,6 +79,9 @@ to support `visibleWhen`/`calculatedExpression`. Two options:
    functions you use. Match the case-insensitive string semantics and UTC date
    handling to stay consistent with the server.
 
-If you can't evaluate an expression, **fail open** for `visibleWhen` (show the
-field) and leave `calculatedExpression` fields editable — never silently drop
-data.
+If you can't evaluate an expression, **fail open** for `visibleWhen` — show the
+field rather than hide it. For `calculatedExpression`, emit the field **empty**
+(or omit it) and surface that it couldn't be computed; never present a
+calculated field as an editable input, and never substitute a stale or guessed
+value. A blank, clearly-uncomputed field is honest; an editable one invites a
+human to overwrite a value the form author meant to derive.

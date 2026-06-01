@@ -37,6 +37,7 @@ export default defineConfig({
           { label: 'JavaScript / Node', link: '/sdks/javascript/' },
           { label: 'Python', link: '/sdks/python/' },
           { label: '.NET', link: '/sdks/dotnet/' },
+          { label: 'PHP', link: '/sdks/php/' },
         ] },
         { label: 'Renderers', items: [
           { label: 'Web embed', link: '/renderers/web-embed/' },

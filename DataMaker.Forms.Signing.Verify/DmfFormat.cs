@@ -47,6 +47,16 @@ public static class DmfFormat
     public const string PaletteEntryName    = "palette.css";
     public const string FontsEntryName      = "fonts.css";
 
+    /// <summary>
+    /// Bundle folder for design-time images lifted out of inline data URIs.
+    /// Entries are <c>images/{sha256}.{ext}</c>, hash-checked in the manifest
+    /// and referenced from the form JSON as <c>dmf:images/{sha256}.{ext}</c>.
+    /// </summary>
+    public const string ImagesPrefix = "images/";
+
+    /// <summary>Scheme marking a form image source that resolves to a bundle file.</summary>
+    public const string ImageRefScheme = "dmf:";
+
     /// <summary>SHA-256 produces 32 bytes; we serialise as lowercase hex (64 chars).</summary>
     public const int Sha256HexLength = 64;
 }

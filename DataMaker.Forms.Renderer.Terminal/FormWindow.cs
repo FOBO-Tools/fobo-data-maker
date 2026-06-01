@@ -266,6 +266,7 @@ internal sealed class FormWindow : Window
                     RecipientUserId    = _verified.RecipientUserId!,
                     SubmitEndpointBase = baseUri,
                     Http               = _http,
+                    RecipientPublicKey = _verified.RecipientPublicKey!,
                 };
         }
         else

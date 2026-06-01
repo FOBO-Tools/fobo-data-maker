@@ -34,7 +34,7 @@
       useEffect(function () {
         apiFetch({ path: '/datamaker/v1/forms' })
           .then(function (rows) { setForms(Array.isArray(rows) ? rows : []); })
-          .catch(function (e)   { setError(e && e.message ? e.message : 'Could not load forms.'); });
+          .catch(function (e)   { setError(e && e.message ? e.message : __('Could not load forms.', 'datamaker-renderer')); });
       }, []);
 
       const options = [{ label: __('— Select a form —', 'datamaker-renderer'), value: '' }];

@@ -24,6 +24,9 @@ final class DmfReader
     public const FILE_PALETTE       = 'palette.css';
     public const FILE_FONTS         = 'fonts.css';
 
+    /** FOBO root Ed25519 pubkey (base64). Fingerprint 50:be:66:c4:fb:a6:b0:12. */
+    public const FOBO_ROOT_PUBKEY_B64 = 'K2XDkrQ3vn5FSzbohodSMGiSrfomXg9/bgfczFxEGh4=';
+
     /** Hard cap on the inflated size of any individual zip entry. Prevents
      *  zip-bomb uploads (1 KB compressed → 100 MB inflated) from OOM-ing
      *  the PHP worker. 16 MB is far above any legitimate font/asset blob. */
@@ -87,6 +90,7 @@ final class DmfReader
             $css_bytes      = null;
             $palette_bytes  = null;
             $fonts_bytes    = null;
+            $images         = array(); // 'images/{hash}.{ext}' => raw bytes
 
             foreach (($manifest['files'] ?? []) as $entry) {
                 $path   = $entry['path']   ?? '';
@@ -106,6 +110,11 @@ final class DmfReader
                     case self::FILE_ELEMENT_CSS: $css_bytes      = $bytes; break;
                     case self::FILE_PALETTE:     $palette_bytes  = $bytes; break;
                     case self::FILE_FONTS:       $fonts_bytes    = $bytes; break;
+                    default:
+                        if (strncmp($path, 'images/', 7) === 0) {
+                            $images[$path] = $bytes;
+                        }
+                        break;
                 }
             }
 
@@ -118,6 +127,21 @@ final class DmfReader
                 throw new \RuntimeException('form.json is not valid JSON.');
             }
 
+            // Rehydrate dmf:images/… refs back to inline data URIs from the
+            // (already hash-verified) bundle image files, so the renderer sees
+            // ordinary inline images. No-op when the bundle has no lifted images.
+            if ($images) {
+                $form = self::rehydrate_images($form, $images);
+            }
+
+            // FOBO attestation (optional) — its own chain, verified against the
+            // root pubkey regardless of $verify_signature. Null when absent or
+            // it fails to verify; the form is still self-signed-usable.
+            $fobo = self::verify_fobo_attestation(
+                $manifest['signer']['foboAttestation'] ?? null,
+                $signer_pubkey_b64
+            );
+
             return [
                 'form'             => $form,
                 'compiled'         => $compiled_bytes ? (json_decode($compiled_bytes, true) ?: new \stdClass()) : new \stdClass(),
@@ -129,10 +153,122 @@ final class DmfReader
                 'signature_verified' => (bool)$verify_signature,
                 'signer_pubkey'    => $signer_pubkey_b64,
                 'recipient'        => $manifest['recipient'] ?? null,
+                'fobo'             => $fobo,
             ];
         } finally {
             $zip->close();
             @unlink($tmp);
+        }
+    }
+
+    /**
+     * Recursively replace every `dmf:images/{hash}.{ext}` string in the decoded
+     * form with a `data:` URI built from the bundle's (hash-verified) image
+     * bytes. Unknown refs and http(s)/data: sources are left untouched.
+     *
+     * @param mixed $node
+     * @param array<string,string> $images  'images/{hash}.{ext}' => raw bytes
+     * @return mixed
+     */
+    private static function rehydrate_images($node, array $images)
+    {
+        if (is_array($node)) {
+            foreach ($node as $key => $value) {
+                $node[$key] = self::rehydrate_images($value, $images);
+            }
+            return $node;
+        }
+        if (is_string($node) && strncmp($node, 'dmf:images/', 11) === 0) {
+            $path = substr($node, 4); // drop "dmf:" → "images/{hash}.{ext}"
+            if (isset($images[$path])) {
+                $ext  = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+                $mime = self::mime_for_ext($ext);
+                return 'data:' . $mime . ';base64,' . base64_encode($images[$path]);
+            }
+        }
+        return $node;
+    }
+
+    /**
+     * Verify a manifest's signer.foboAttestation against the FOBO root pubkey.
+     * Returns ['is_verified','email','company','sub','expires_at'] on success,
+     * or null (bad signature, unknown version, pubkey mismatch, expired, or
+     * malformed / libsodium unavailable).
+     *
+     * @param mixed $attestation
+     */
+    private static function verify_fobo_attestation($attestation, string $signer_pubkey_b64): ?array
+    {
+        if (!is_array($attestation)) {
+            return null;
+        }
+        $payload_json = $attestation['payloadJson']     ?? null;
+        $sig_b64      = $attestation['signatureBase64'] ?? null;
+        if (!is_string($payload_json) || !is_string($sig_b64)) {
+            return null;
+        }
+        if (!function_exists('sodium_crypto_sign_verify_detached')) {
+            return null;
+        }
+
+        $sig  = base64_decode($sig_b64, true);
+        $root = base64_decode(self::FOBO_ROOT_PUBKEY_B64, true);
+        if ($sig === false || $root === false || strlen($sig) !== SODIUM_CRYPTO_SIGN_BYTES) {
+            return null;
+        }
+
+        try {
+            $ok = sodium_crypto_sign_verify_detached($sig, $payload_json, $root);
+        } catch (\Throwable $e) {
+            return null;
+        }
+        if (!$ok) {
+            return null;
+        }
+
+        $p = json_decode($payload_json, true);
+        if (!is_array($p)) {
+            return null;
+        }
+        $ver = $p['attestationVersion'] ?? 0;
+        if (!is_int($ver) || $ver < 1 || $ver > 2) {
+            return null;
+        }
+        // FOBO must vouch for the same key that signed the form.
+        if (($p['subjectPublicKey'] ?? null) !== $signer_pubkey_b64) {
+            return null;
+        }
+
+        $expires = $p['expiresAt'] ?? null;
+        if (is_string($expires)) {
+            $exp_ts = strtotime($expires);
+            if ($exp_ts !== false && time() >= $exp_ts) {
+                return null;
+            }
+        }
+
+        return [
+            'is_verified' => true,
+            'email'       => $p['subjectEmail']   ?? null,
+            'company'     => $p['subjectCompany'] ?? null,
+            'sub'         => $p['subjectSub']     ?? null,
+            'expires_at'  => $expires,
+        ];
+    }
+
+    private static function mime_for_ext(string $ext): string
+    {
+        switch ($ext) {
+            case 'png':  return 'image/png';
+            case 'jpg':  return 'image/jpeg';
+            case 'jpeg': return 'image/jpeg';
+            case 'gif':  return 'image/gif';
+            case 'webp': return 'image/webp';
+            case 'svg':  return 'image/svg+xml';
+            case 'bmp':  return 'image/bmp';
+            case 'ico':  return 'image/x-icon';
+            case 'avif': return 'image/avif';
+            default:     return 'application/octet-stream';
         }
     }
 

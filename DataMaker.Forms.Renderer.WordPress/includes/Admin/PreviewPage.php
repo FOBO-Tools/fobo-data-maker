@@ -68,6 +68,7 @@ final class PreviewPage
 <head>
     <meta charset="<?php bloginfo('charset'); ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <?php /* translators: %s = form slug */ ?>
     <title><?php echo esc_html(sprintf(__('Preview — %s', 'datamaker-renderer'), $slug)); ?></title>
     <style>
         html, body { margin: 0; padding: 0; background: #ffffff; }
@@ -113,7 +114,10 @@ final class PreviewPage
         ], home_url('/'));
         ?>
         <div class="wrap">
-            <?php PageHeader::render(__('Form preview — ', 'datamaker-renderer') . $slug); ?>
+            <?php PageHeader::render(
+                /* translators: %s = form slug */
+                sprintf(__('Form preview — %s', 'datamaker-renderer'), $slug)
+            ); ?>
             <p>
                 <a href="<?php echo esc_url($back_url); ?>">← <?php esc_html_e('Back to forms', 'datamaker-renderer'); ?></a>
                 &nbsp;|&nbsp;

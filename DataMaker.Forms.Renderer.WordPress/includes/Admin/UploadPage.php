@@ -16,17 +16,17 @@ final class UploadPage
     public static function register_menu(): void
     {
         add_menu_page(
-            'Data Maker Forms',
-            'Data Maker Forms',
+            __('Data Maker Forms', 'datamaker-renderer'),
+            __('Data Maker Forms', 'datamaker-renderer'),
             'manage_options',
             'datamaker-renderer',
             [self::class, 'render'],
             'dashicons-feedback',
             58
         );
-        add_submenu_page('datamaker-renderer', 'Upload .dmf',  'Upload .dmf', 'manage_options', 'datamaker-renderer',          [self::class, 'render']);
-        add_submenu_page('datamaker-renderer', 'Forms',        'Forms',       'manage_options', 'datamaker-renderer-forms',    [FormsListPage::class, 'render']);
-        add_submenu_page('datamaker-renderer', 'Settings',     'Settings',    'manage_options', 'datamaker-renderer-settings', [SettingsPage::class, 'render']);
+        add_submenu_page('datamaker-renderer', __('Upload .dmf', 'datamaker-renderer'), __('Upload .dmf', 'datamaker-renderer'), 'manage_options', 'datamaker-renderer',          [self::class, 'render']);
+        add_submenu_page('datamaker-renderer', __('Forms', 'datamaker-renderer'),       __('Forms', 'datamaker-renderer'),       'manage_options', 'datamaker-renderer-forms',    [FormsListPage::class, 'render']);
+        add_submenu_page('datamaker-renderer', __('Settings', 'datamaker-renderer'),    __('Settings', 'datamaker-renderer'),    'manage_options', 'datamaker-renderer-settings', [SettingsPage::class, 'render']);
     }
 
     public static function render(): void
@@ -40,7 +40,7 @@ final class UploadPage
         $settings = SettingsPage::get();
         ?>
         <div class="wrap">
-            <?php PageHeader::render('Data Maker Forms — Upload .dmf'); ?>
+            <?php PageHeader::render(__('Data Maker Forms — Upload .dmf', 'datamaker-renderer')); ?>
             <?php if ($notice): ?>
                 <div class="notice notice-<?php echo esc_attr($notice['kind']); ?>"><p><?php echo wp_kses_post($notice['html']); ?></p></div>
             <?php endif; ?>
@@ -49,35 +49,45 @@ final class UploadPage
                 <?php wp_nonce_field('dm_upload', 'dm_upload_nonce'); ?>
                 <table class="form-table" role="presentation">
                     <tr>
-                        <th scope="row"><label for="dm-slug">Shortcode slug</label></th>
+                        <th scope="row"><label for="dm-slug"><?php esc_html_e('Shortcode slug', 'datamaker-renderer'); ?></label></th>
                         <td>
                             <input id="dm-slug" type="text" class="regular-text" name="slug" required placeholder="customer-intake">
-                            <p class="description">Used in the shortcode: <code>[datamaker_form id="customer-intake"]</code>. Re-uploading the same slug overwrites the form in place.</p>
+                            <p class="description"><?php
+                                printf(
+                                    /* translators: %s = example shortcode */
+                                    esc_html__('Used in the shortcode: %s. Re-uploading the same slug overwrites the form in place.', 'datamaker-renderer'),
+                                    '<code>[datamaker_form id="customer-intake"]</code>'
+                                );
+                            ?></p>
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row"><label for="dm-file">.dmf bundle</label></th>
+                        <th scope="row"><label for="dm-file"><?php esc_html_e('.dmf bundle', 'datamaker-renderer'); ?></label></th>
                         <td>
                             <input id="dm-file" type="file" name="dmf_file" accept=".dmf,application/vnd.datamaker.form" required>
                             <p class="description">
-                                Signature verification is currently
-                                <strong><?php echo $settings['verify_signature'] ? 'ON' : 'OFF'; ?></strong>
-                                — change under Settings.
+                                <?php
+                                printf(
+                                    /* translators: %s = ON or OFF */
+                                    esc_html__('Signature verification is currently %s — change under Settings.', 'datamaker-renderer'),
+                                    '<strong>' . ($settings['verify_signature'] ? esc_html__('ON', 'datamaker-renderer') : esc_html__('OFF', 'datamaker-renderer')) . '</strong>'
+                                );
+                                ?>
                             </p>
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row">Designer styling</th>
+                        <th scope="row"><?php esc_html_e('Designer styling', 'datamaker-renderer'); ?></th>
                         <td>
                             <label>
                                 <input type="checkbox" name="use_theme" value="1" checked>
-                                Apply Theme/Styling
+                                <?php esc_html_e('Apply Theme/Styling', 'datamaker-renderer'); ?>
                             </label>
-                            <p class="description">On = render the form the way it looks in the desktop designer (palette, fonts, button variants, heading styles, per-element overrides). Off = strip all of that and let the active WordPress theme drive the look. Per-form; you can flip it later under Forms → Settings.</p>
+                            <p class="description"><?php esc_html_e('On = render the form the way it looks in the desktop designer (palette, fonts, button variants, heading styles, per-element overrides). Off = strip all of that and let the active WordPress theme drive the look. Per-form; you can flip it later under Forms → Settings.', 'datamaker-renderer'); ?></p>
                         </td>
                     </tr>
                 </table>
-                <?php submit_button('Upload form'); ?>
+                <?php submit_button(__('Upload form', 'datamaker-renderer')); ?>
             </form>
         </div>
         <?php
@@ -145,7 +155,7 @@ final class UploadPage
         if (!$hasRecipient) {
             return [
                 'kind' => 'error',
-                'html' => 'This .dmf was exported in share-only mode (no recipient block). Submissions can\'t route back to a publisher, so the plugin won\'t accept it. Sign in to FOBO in the Data Maker desktop app, re-export the form, and try again.',
+                'html' => esc_html__('This .dmf was exported in share-only mode (no recipient block). Submissions can\'t route back to a publisher, so the plugin won\'t accept it. Sign in to FOBO in the Data Maker desktop app, re-export the form, and try again.', 'datamaker-renderer'),
             ];
         }
 
@@ -154,7 +164,12 @@ final class UploadPage
         $shortcode = '[datamaker_form id="' . esc_attr($slug) . '"]';
         return [
             'kind' => 'success',
-            'html' => sprintf('Form saved (id #%d). Embed it with: <code>%s</code>', $id, esc_html($shortcode)),
+            'html' => sprintf(
+                /* translators: 1: numeric form id, 2: shortcode */
+                esc_html__('Form saved (id #%1$d). Embed it with: %2$s', 'datamaker-renderer'),
+                $id,
+                '<code>' . esc_html($shortcode) . '</code>'
+            ),
         ];
     }
 }

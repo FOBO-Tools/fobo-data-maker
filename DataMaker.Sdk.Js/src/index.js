@@ -15,7 +15,7 @@
 // payload is validated and sealed client-side before a single byte leaves.
 
 const { parseDmf, extractFields } = require('./dmf');
-const { initSodium, sealPayload, sha256Hex } = require('./encrypt');
+const { initSodium, sealPayload, sha256Hex, sealBlob } = require('./encrypt');
 const { validateValues } = require('./validate');
 const {
   DEFAULT_API_BASE_URL,
@@ -54,6 +54,7 @@ module.exports = {
   initSodium,
   sealPayload,
   sha256Hex,
+  sealBlob,
 
   // Typed errors.
   ...errors,

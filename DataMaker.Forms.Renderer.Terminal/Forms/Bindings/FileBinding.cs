@@ -98,15 +98,21 @@ internal sealed class FileBinding : FieldBinding
         {
             SetUploading(true, $"Reading {Path.GetFileName(path)}…");
             var bytes  = await File.ReadAllBytesAsync(path);
-            var hash   = ComputeSha256Hex(bytes);
+            var hash   = ComputeSha256Hex(bytes);   // over PLAINTEXT — stays the S3 key
             var mime   = GuessMime(path);
             var name   = Path.GetFileName(path);
-            var size   = bytes.LongLength;
+            var size   = bytes.LongLength;          // plaintext size (UX / saved ref)
+
+            // E2E-seal the bytes against the recipient pubkey before they
+            // leave for S3 (#45). Magic + crypto_box_seal — only the form
+            // owner's desktop opens it. The slot size below is the ciphertext
+            // length (what's actually PUT).
+            var sealed_ = DataMaker.Sdk.SealedBox.SealBlob(bytes, ctx.RecipientPublicKey);
 
             ShowStatus($"Uploading ({FormatBytes(size)})…", isError: false);
 
             // POST /submissions/upload-slot → { url, key, expiresAtUtc }.
-            var slot = await PostUploadSlotAsync(ctx, hash, mime, size);
+            var slot = await PostUploadSlotAsync(ctx, hash, mime, sealed_.LongLength);
             if (slot is null)
             {
                 ShowStatus("Upload-slot request failed.", isError: true);
@@ -114,8 +120,8 @@ internal sealed class FileBinding : FieldBinding
                 return;
             }
 
-            // PUT the bytes to the pre-signed URL.
-            using var content = new ByteArrayContent(bytes);
+            // PUT the sealed bytes to the pre-signed URL.
+            using var content = new ByteArrayContent(sealed_);
             if (!string.IsNullOrEmpty(mime))
                 content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(mime);
             using var put = new HttpRequestMessage(HttpMethod.Put, slot.Url) { Content = content };

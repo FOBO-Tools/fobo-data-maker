@@ -71,42 +71,48 @@ final class SettingsPage
         $s = self::get();
         ?>
         <div class="wrap">
-            <?php PageHeader::render('Data Maker Forms — Settings'); ?>
+            <?php PageHeader::render(__('Data Maker Forms — Settings', 'datamaker-renderer')); ?>
             <form method="post" action="options.php">
                 <?php settings_fields('datamaker_renderer'); ?>
                 <table class="form-table" role="presentation">
                     <tr>
-                        <th scope="row">Signature verification</th>
+                        <th scope="row"><?php esc_html_e('Signature verification', 'datamaker-renderer'); ?></th>
                         <td>
                             <label>
                                 <input type="checkbox" name="datamaker_renderer_settings[verify_signature]" value="1" <?php checked($s['verify_signature']); ?>>
-                                Require uploaded .dmf bundles to be Ed25519-signed
+                                <?php esc_html_e('Require uploaded .dmf bundles to be Ed25519-signed', 'datamaker-renderer'); ?>
                             </label>
                             <br>
                             <input type="text" class="regular-text" name="datamaker_renderer_settings[expected_signer_pubkey]"
-                                value="<?php echo esc_attr($s['expected_signer_pubkey']); ?>" placeholder="base64-encoded signer pubkey (optional)">
-                            <p class="description">If set, the uploaded .dmf must be signed with exactly this pubkey. Leave blank to accept any signed bundle.</p>
+                                value="<?php echo esc_attr($s['expected_signer_pubkey']); ?>" placeholder="<?php esc_attr_e('base64-encoded signer pubkey (optional)', 'datamaker-renderer'); ?>">
+                            <p class="description"><?php esc_html_e('If set, the uploaded .dmf must be signed with exactly this pubkey. Leave blank to accept any signed bundle.', 'datamaker-renderer'); ?></p>
                         </td>
                     </tr>
                 </table>
 
-                <h2 style="margin-top:32px;">Cloudflare Turnstile</h2>
-                <p class="description">Privacy-friendly CAPTCHA challenge. Enroll for free at <a href="https://www.cloudflare.com/products/turnstile/" target="_blank" rel="noopener noreferrer">cloudflare.com/turnstile</a>; paste the site &amp; secret keys here. Each form chooses whether to require it via Form Settings.</p>
+                <h2 style="margin-top:32px;"><?php esc_html_e('Cloudflare Turnstile', 'datamaker-renderer'); ?></h2>
+                <p class="description"><?php
+                    printf(
+                        /* translators: %s = link to cloudflare.com/turnstile */
+                        esc_html__('Privacy-friendly CAPTCHA challenge. Enroll for free at %s; paste the site & secret keys here. Each form chooses whether to require it via Form Settings.', 'datamaker-renderer'),
+                        '<a href="https://www.cloudflare.com/products/turnstile/" target="_blank" rel="noopener noreferrer">cloudflare.com/turnstile</a>'
+                    );
+                ?></p>
                 <table class="form-table" role="presentation">
                     <tr>
-                        <th scope="row">Site key</th>
+                        <th scope="row"><?php esc_html_e('Site key', 'datamaker-renderer'); ?></th>
                         <td>
                             <input type="text" class="regular-text" name="datamaker_renderer_settings[turnstile_site_key]"
                                 value="<?php echo esc_attr($s['turnstile_site_key']); ?>" placeholder="0x4AAAAAAA…" autocomplete="off">
-                            <p class="description">Public key embedded in the form page (data-sitekey).</p>
+                            <p class="description"><?php esc_html_e('Public key embedded in the form page (data-sitekey).', 'datamaker-renderer'); ?></p>
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row">Secret key</th>
+                        <th scope="row"><?php esc_html_e('Secret key', 'datamaker-renderer'); ?></th>
                         <td>
                             <input type="password" class="regular-text" name="datamaker_renderer_settings[turnstile_secret_key]"
                                 value="<?php echo esc_attr($s['turnstile_secret_key']); ?>" placeholder="0x4AAAAAAA…" autocomplete="off">
-                            <p class="description">Used server-side to verify tokens with Cloudflare. Never sent to the browser.</p>
+                            <p class="description"><?php esc_html_e('Used server-side to verify tokens with Cloudflare. Never sent to the browser.', 'datamaker-renderer'); ?></p>
                         </td>
                     </tr>
                 </table>

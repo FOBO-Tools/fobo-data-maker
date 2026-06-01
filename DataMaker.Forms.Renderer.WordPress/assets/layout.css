@@ -41,18 +41,15 @@
 .dm-col            { min-width: 0; }
 .dm-col[hidden]    { display: none; }
 
-/* Responsive collapse. Below 768 px the 12-column grid becomes a single
- * column — designer-set `--cols` (and per-column `grid-column: span N`)
- * are ignored so every column stacks full-width. Without this rule a
- * 12-column form on a 375 px iPhone gives 30 px columns. The override
- * is structural — no brand styling depends on it. */
-@media (max-width: 768px) {
-  .dm-row {
-    grid-template-columns: 1fr;
-  }
-  .dm-col {
-    grid-column: 1 / -1 !important;
-  }
+/* Responsive collapse. Each column stacks full-width at its OWN breakpoint:
+ * renderer.js watches `Column.StackBelowPx` (schema default 640 px) per column
+ * via matchMedia and toggles `.dm-stack` when the viewport is at/below it. A
+ * stacked column spans the whole row (grid auto-flow drops it onto its own
+ * implicit row); siblings above their own breakpoint keep their `span N`.
+ * This replaces the old single global 768 px breakpoint that ignored the
+ * per-column setting. */
+.dm-col.dm-stack {
+  grid-column: 1 / -1 !important;
 }
 
 /* ── Group card ────────────────────────────────────────────────── */

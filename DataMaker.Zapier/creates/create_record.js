@@ -106,7 +106,7 @@ const perform = async (z, bundle) => {
     if (raw === undefined || raw === null || raw === '') continue;
 
     if (kind === 'image' || kind === 'attachment') {
-      values[f.key] = await uploadBlob(z, raw, recipientUserId);
+      values[f.key] = await uploadBlob(z, raw, recipientUserId, form.recipientPubkey);
       continue;
     }
     if (kind === 'multichoice' && Array.isArray(raw)) {

@@ -66,6 +66,20 @@ function sampleValueForKind(kind) {
     case 'url':           return 'https://example.com/';
     case 'longtext':      return 'Lorem ipsum dolor sit amet.';
     case 'choice':        return 'option-1';
+    // Image / Attachment fan out as an object with a fetchable
+    // downloadUrl (fresh pre-signed GET minted desktop-side). A
+    // downstream Zap file-step can map `fields.<key>.downloadUrl` to
+    // pull the bytes.
+    case 'image':
+    case 'attachment':
+      return {
+        fileName:    'example.png',
+        mime:        'image/png',
+        sizeBytes:   12345,
+        hash:        '0'.repeat(64),
+        owned:       true,
+        downloadUrl: 'https://datamaker-api.fobo-tools.com/submissions/blob/…',
+      };
     default:              return 'Sample value';
   }
 }

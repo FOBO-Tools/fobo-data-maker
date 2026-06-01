@@ -49,10 +49,22 @@ public sealed record FoboAttestationPayload(
     [property: JsonPropertyName("subjectSub")]         string SubjectSub,
     [property: JsonPropertyName("subjectEmail")]       string? SubjectEmail,
     [property: JsonPropertyName("issuedAt")]           DateTimeOffset IssuedAt,
-    [property: JsonPropertyName("expiresAt")]          DateTimeOffset ExpiresAt)
+    [property: JsonPropertyName("expiresAt")]          DateTimeOffset ExpiresAt,
+    // v2 (defaulted so v1 payloads deserialise to null and the issuer's
+    // pre-v2 construction keeps compiling until it's wired to stamp it).
+    // Present only when an admin has verified the publisher's company —
+    // never self-asserted. Self-declared company stays in SignerIdentity.
+    [property: JsonPropertyName("subjectCompany")]     string? SubjectCompany = null)
 {
-    /// <summary>Current attestation version. Bump only on payload-shape changes.</summary>
-    public const int CurrentVersion = 1;
+    /// <summary>
+    /// Current attestation version. Bump only on payload-shape changes.
+    /// v2 added <see cref="SubjectCompany"/>. Verifiers accept v1..v2 —
+    /// see <see cref="FoboTrustRoot.Verify"/>.
+    /// </summary>
+    public const int CurrentVersion = 2;
+
+    /// <summary>Oldest payload version still honoured by verifiers.</summary>
+    public const int MinSupportedVersion = 1;
 
     public bool IsExpired(DateTimeOffset now) => now >= ExpiresAt;
 }

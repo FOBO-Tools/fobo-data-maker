@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 using DataMaker.Schema;
+using DataMaker.Schema.Assets;
 using DataMaker.Schema.Forms;
 using DataMaker.Schema.Layout;
 
@@ -163,10 +164,16 @@ public static class DmfReader
             //    a different error from a tampered bundle, and the
             //    crypto checks above must succeed first to give a
             //    meaningful message.
+            // Rehydrate dmf:images/… refs back to inline data URIs from the
+            // (already hash-verified) bundle image files, so every renderer sees
+            // an ordinary inline-image form and needs no dmf:-scheme awareness.
+            // No-op for bundles without lifted images.
+            var formJson = FormAssetRehydrator.Rehydrate(Encoding.UTF8.GetString(formBytes), extras);
+
             Form form;
             try
             {
-                form = JsonSerializer.Deserialize(formBytes, FormTypeInfo)
+                form = JsonSerializer.Deserialize(formJson, FormTypeInfo)
                        ?? throw new InvalidDmfException($"{DmfFormat.FormEntryName} deserialised to null.");
             }
             catch (JsonException ex)

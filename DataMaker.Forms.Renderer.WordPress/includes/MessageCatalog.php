@@ -28,7 +28,7 @@ final class MessageCatalog
         $slots = [];
 
         if (!empty($field['required'])) {
-            $slots[] = ['id' => 'required', 'label' => 'Required', 'default' => self::DEFAULTS['required']];
+            $slots[] = ['id' => 'required', 'label' => __('Required', 'datamaker-renderer'), 'default' => __('Required', 'datamaker-renderer')];
         }
 
         // Text-options intrinsics. Parametrized labels carry the parameter so
@@ -39,53 +39,57 @@ final class MessageCatalog
             if ($minLen > 0) {
                 $slots[] = [
                     'id'      => 'text.minLength',
-                    'label'   => "Minimum length ({$minLen})",
-                    'default' => sprintf('Must be at least %d character%s.', $minLen, $minLen === 1 ? '' : 's'),
+                    /* translators: %d = minimum character count */
+                    'label'   => sprintf(__('Minimum length (%d)', 'datamaker-renderer'), $minLen),
+                    /* translators: %d = minimum character count */
+                    'default' => sprintf(_n('Must be at least %d character.', 'Must be at least %d characters.', $minLen, 'datamaker-renderer'), $minLen),
                 ];
             }
             $maxLen = isset($text['maxLength']) ? (int)$text['maxLength'] : 0;
             if ($maxLen > 0) {
                 $slots[] = [
                     'id'      => 'text.maxLength',
-                    'label'   => "Maximum length ({$maxLen})",
-                    'default' => sprintf('Must be at most %d character%s.', $maxLen, $maxLen === 1 ? '' : 's'),
+                    /* translators: %d = maximum character count */
+                    'label'   => sprintf(__('Maximum length (%d)', 'datamaker-renderer'), $maxLen),
+                    /* translators: %d = maximum character count */
+                    'default' => sprintf(_n('Must be at most %d character.', 'Must be at most %d characters.', $maxLen, 'datamaker-renderer'), $maxLen),
                 ];
             }
             if (!empty($text['pattern']) && is_string($text['pattern'])) {
-                $slots[] = ['id' => 'text.pattern', 'label' => 'Pattern match', 'default' => self::DEFAULTS['text.pattern']];
+                $slots[] = ['id' => 'text.pattern', 'label' => __('Pattern match', 'datamaker-renderer'), 'default' => __('Value does not match the required pattern.', 'datamaker-renderer')];
             }
         }
 
         $kind = strtolower((string)($field['kind'] ?? ''));
         switch ($kind) {
-            case 'email':         $slots[] = ['id' => 'email',         'label' => 'Email format',      'default' => self::DEFAULTS['email']];        break;
-            case 'url':           $slots[] = ['id' => 'url',           'label' => 'URL format',        'default' => self::DEFAULTS['url']];          break;
-            case 'phone':         $slots[] = ['id' => 'phone',         'label' => 'Phone format',      'default' => self::DEFAULTS['phone']];        break;
-            case 'number':        $slots[] = ['id' => 'number',        'label' => 'Whole number',      'default' => self::DEFAULTS['number']];       break;
-            case 'decimal':       $slots[] = ['id' => 'decimal',       'label' => 'Decimal number',    'default' => self::DEFAULTS['decimal']];      break;
-            case 'money':         $slots[] = ['id' => 'money',         'label' => 'Monetary amount',   'default' => self::DEFAULTS['money']];        break;
-            case 'date':          $slots[] = ['id' => 'date',          'label' => 'Date',              'default' => self::DEFAULTS['date']];         break;
-            case 'datetime':      $slots[] = ['id' => 'datetime',      'label' => 'Date-time',         'default' => self::DEFAULTS['datetime']];     break;
-            case 'boolean':       $slots[] = ['id' => 'boolean',       'label' => 'Boolean',           'default' => self::DEFAULTS['boolean']];      break;
+            case 'email':         $slots[] = ['id' => 'email',         'label' => __('Email format', 'datamaker-renderer'),    'default' => __('Not a valid email address.', 'datamaker-renderer')];     break;
+            case 'url':           $slots[] = ['id' => 'url',           'label' => __('URL format', 'datamaker-renderer'),      'default' => __('Not a valid URL.', 'datamaker-renderer')];               break;
+            case 'phone':         $slots[] = ['id' => 'phone',         'label' => __('Phone format', 'datamaker-renderer'),    'default' => __('Not a valid phone number.', 'datamaker-renderer')];      break;
+            case 'number':        $slots[] = ['id' => 'number',        'label' => __('Whole number', 'datamaker-renderer'),    'default' => __('Not a whole number.', 'datamaker-renderer')];            break;
+            case 'decimal':       $slots[] = ['id' => 'decimal',       'label' => __('Decimal number', 'datamaker-renderer'),  'default' => __('Not a valid decimal number.', 'datamaker-renderer')];    break;
+            case 'money':         $slots[] = ['id' => 'money',         'label' => __('Monetary amount', 'datamaker-renderer'), 'default' => __('Not a valid monetary amount.', 'datamaker-renderer')];   break;
+            case 'date':          $slots[] = ['id' => 'date',          'label' => __('Date', 'datamaker-renderer'),            'default' => __('Not a valid date.', 'datamaker-renderer')];              break;
+            case 'datetime':      $slots[] = ['id' => 'datetime',      'label' => __('Date-time', 'datamaker-renderer'),       'default' => __('Not a valid date-time.', 'datamaker-renderer')];         break;
+            case 'boolean':       $slots[] = ['id' => 'boolean',       'label' => __('Boolean', 'datamaker-renderer'),         'default' => __('Not a boolean.', 'datamaker-renderer')];                 break;
             case 'choice':
                 $choice = $field['choice'] ?? null;
                 if (is_array($choice) && !empty($choice['choices']) && empty($choice['allowCustom']))
-                    $slots[] = ['id' => 'choice', 'label' => 'Allowed choice', 'default' => self::DEFAULTS['choice']];
+                    $slots[] = ['id' => 'choice', 'label' => __('Allowed choice', 'datamaker-renderer'), 'default' => __('Value is not in the allowed list.', 'datamaker-renderer')];
                 break;
             case 'multi-choice':
             case 'multichoice':
                 $choice = $field['choice'] ?? null;
                 if (is_array($choice) && !empty($choice['choices']) && empty($choice['allowCustom']))
-                    $slots[] = ['id' => 'multichoice', 'label' => 'Allowed choices', 'default' => self::DEFAULTS['multichoice']];
+                    $slots[] = ['id' => 'multichoice', 'label' => __('Allowed choices', 'datamaker-renderer'), 'default' => __('Some items are not in the allowed list.', 'datamaker-renderer')];
                 break;
             case 'geo':
-                $slots[] = ['id' => 'geo.lat', 'label' => 'Latitude range',  'default' => self::DEFAULTS['geo.lat']];
-                $slots[] = ['id' => 'geo.lng', 'label' => 'Longitude range', 'default' => self::DEFAULTS['geo.lng']];
-                $slots[] = ['id' => 'geo',     'label' => 'Geo point',       'default' => self::DEFAULTS['geo']];
+                $slots[] = ['id' => 'geo.lat', 'label' => __('Latitude range', 'datamaker-renderer'),  'default' => __('Latitude must be between -90 and 90.', 'datamaker-renderer')];
+                $slots[] = ['id' => 'geo.lng', 'label' => __('Longitude range', 'datamaker-renderer'), 'default' => __('Longitude must be between -180 and 180.', 'datamaker-renderer')];
+                $slots[] = ['id' => 'geo',     'label' => __('Geo point', 'datamaker-renderer'),       'default' => __('Not a valid geo point.', 'datamaker-renderer')];
                 break;
             case 'image':
             case 'attachment':
-                $slots[] = ['id' => 'attachment.ext', 'label' => 'File extension', 'default' => self::DEFAULTS['attachment.ext']];
+                $slots[] = ['id' => 'attachment.ext', 'label' => __('File extension', 'datamaker-renderer'), 'default' => __('File extension not allowed.', 'datamaker-renderer')];
                 break;
         }
 
@@ -100,34 +104,8 @@ final class MessageCatalog
     public static function form_slots(): array
     {
         return [
-            ['id' => 'validationBanner', 'label' => 'Validation banner',
-             'default' => self::FORM_DEFAULTS['validationBanner']],
+            ['id' => 'validationBanner', 'label' => __('Validation banner', 'datamaker-renderer'),
+             'default' => __('Please fix the highlighted fields before submitting.', 'datamaker-renderer')],
         ];
     }
-
-    /** Form-level engine defaults. */
-    public const FORM_DEFAULTS = [
-        'validationBanner' => 'Please fix the highlighted fields before submitting.',
-    ];
-
-    /** Engine-default English messages keyed by slot id. Single source of truth in PHP-land. */
-    public const DEFAULTS = [
-        'required'         => 'Required',
-        'text.pattern'     => 'Value does not match the required pattern.',
-        'email'            => 'Not a valid email address.',
-        'url'              => 'Not a valid URL.',
-        'phone'            => 'Not a valid phone number.',
-        'number'           => 'Not a whole number.',
-        'decimal'          => 'Not a valid decimal number.',
-        'money'            => 'Not a valid monetary amount.',
-        'date'             => 'Not a valid date.',
-        'datetime'         => 'Not a valid date-time.',
-        'boolean'          => 'Not a boolean.',
-        'choice'           => 'Value is not in the allowed list.',
-        'multichoice'      => 'Some items are not in the allowed list.',
-        'geo.lat'          => 'Latitude must be between -90 and 90.',
-        'geo.lng'          => 'Longitude must be between -180 and 180.',
-        'geo'              => 'Not a valid geo point.',
-        'attachment.ext'   => 'File extension not allowed.',
-    ];
 }

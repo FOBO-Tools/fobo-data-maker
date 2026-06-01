@@ -1,6 +1,8 @@
 dist/
 assets/dist/
-vendor/
+# Composer vendor at plugin root only — assets/vendor/ (the committed
+# tweetnacl blob-crypto bundle, #45) is tracked.
+/vendor/
 .phpunit.cache/
 node_modules/
 *.original.md

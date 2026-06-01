@@ -61,6 +61,16 @@ public static class DmfReader
             var recipient = manifest.TryGetProperty("recipient", out var r) && r.ValueKind == JsonValueKind.Object ? r : (JsonElement?)null;
             var signer = manifest.TryGetProperty("signer", out var s) && s.ValueKind == JsonValueKind.Object ? s : (JsonElement?)null;
 
+            // FOBO attestation (optional) — its own chain, verified against the
+            // root pubkey independent of the manifest-signature `verify` flag.
+            // Null when absent or it fails to verify.
+            FoboAttestation? fobo = null;
+            if (signer is { } sgFobo && GetString(sgFobo, "publicKey") is { } signerPub
+                && sgFobo.TryGetProperty("foboAttestation", out var att) && att.ValueKind == JsonValueKind.Object)
+            {
+                fobo = FoboTrustRoot.Verify(att, signerPub);
+            }
+
             RenderBundle? bundle = null;
             if (includeRenderBundle)
             {
@@ -90,6 +100,7 @@ public static class DmfReader
                         sg.TryGetProperty("identity", out var id2) && id2.ValueKind == JsonValueKind.Object ? GetString(id2, "name") : null,
                         sg.TryGetProperty("identity", out var id3) && id3.ValueKind == JsonValueKind.Object ? GetString(id3, "company") : null)
                     : null,
+                FoboVerification = fobo,
                 EnvelopeVersion = GetInt(manifest, "envelopeVersion") ?? 0,
                 Fields = ExtractFields(form),
                 Verified = verify,

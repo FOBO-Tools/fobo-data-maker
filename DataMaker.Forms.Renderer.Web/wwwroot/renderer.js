@@ -743,14 +743,33 @@ function mount(rootArg, bundleArg, hooksArg) {
     } catch (_) {
       return null;
     }
+    // E2E-encrypt the bytes before they leave the browser when the host
+    // wired a sealer (hooks.encryptBlob — libsodium in the SDK embed,
+    // tweetnacl-sealedbox in the WP bridge). The hash above stays over the
+    // PLAINTEXT (S3 key + dedup + integrity), but the bytes PUT to S3 are
+    // ciphertext (magic + crypto_box_seal). No sealer wired (preview /
+    // legacy host) → plaintext PUT, exactly as before. See #45 / PLAN-BLOB-E2E.
+    let body = bytes;
+    if (typeof hooks.encryptBlob === 'function') {
+      try {
+        const sealed = await hooks.encryptBlob(bytes);
+        if (sealed && sealed.length) body = sealed;
+        else return null; // sealer present but failed → don't ship plaintext
+      } catch (_) {
+        return null;       // never silently fall back to plaintext once E2E is on
+      }
+    }
+
     const slot = await hooks.uploadSlot({
-      hash, mime: f0.type || null, sizeBytes: f0.size, fileName: f0.name,
+      // sizeBytes is the ciphertext length (what's actually PUT — the 50 MB
+      // slot cap is on the upload), not the plaintext file size.
+      hash, mime: f0.type || null, sizeBytes: body.length, fileName: f0.name,
     });
     if (!slot || !slot.url) return null;
 
     const resp = await fetch(slot.url, {
       method: 'PUT',
-      body: bytes,
+      body: body,
       headers: f0.type ? { 'Content-Type': f0.type } : undefined,
     });
     if (!resp.ok) return null;

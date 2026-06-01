@@ -8,19 +8,21 @@
 // the desktop receiver sees a URL-only blob and pulls bytes from S3
 // on demand. No bytes ever travel through the Lambda envelope.
 
-const { sha256Hex } = require('./encrypt');
+const { sha256Hex, sealBlob } = require('./encrypt');
 
 const SYNC_BASE = 'https://datamaker-api.fobo-tools.com';
 
 /**
  * Upload one Zapier file input to FOBO submission storage.
  *
- * @param z          — Zapier platform-core z helper (z.request, z.JSON)
- * @param fileUrl    — URL Zapier supplied for the file input
- * @param recipient  — recipientUserId from the published form
+ * @param z                — Zapier platform-core z helper (z.request, z.JSON)
+ * @param fileUrl          — URL Zapier supplied for the file input
+ * @param recipient        — recipientUserId from the published form
+ * @param recipientPubkey  — base64 X25519 public key from the published form
+ *                           (E2E-seals the bytes before the S3 PUT, #45)
  * @returns ImageRef / AttachmentRef shape: { url, hash, fileName, mime, sizeBytes, owned }
  */
-async function uploadBlob(z, fileUrl, recipient) {
+async function uploadBlob(z, fileUrl, recipient, recipientPubkey) {
   // Download Zapier's file URL — z.request handles auth, redirects, +
   // returns raw bytes when `raw: true` is set.
   const fileResp = await z.request({
@@ -35,13 +37,23 @@ async function uploadBlob(z, fileUrl, recipient) {
   // hash + upload in one pass. (chunked uploads aren't worth the
   // complexity for ≤ 50 MB blobs the slot accepts.)
   const buffer = await streamToBuffer(fileResp.body);
-  const hash   = await sha256Hex(buffer);
+  const hash   = await sha256Hex(buffer); // over PLAINTEXT — stays the S3 key
 
   const mime     = sniffMime(fileResp.headers, fileUrl);
   const fileName = sniffFileName(fileResp.headers, fileUrl);
 
+  // E2E-seal the bytes against the recipient pubkey before they leave for
+  // S3 (#45). Magic + crypto_box_seal — only the form owner's desktop opens
+  // it. The hash above is over the plaintext (key + dedup + integrity); the
+  // bytes PUT are ciphertext. recipientPubkey is required — a published form
+  // always carries one.
+  if (!recipientPubkey)
+    throw new z.errors.Error('published form has no recipient pubkey — cannot seal blob', 'NoRecipientPubkey');
+  const sealed = Buffer.from(await sealBlob(buffer, recipientPubkey));
+
   // Reserve a presigned-PUT slot. Same shape sync Lambda's
-  // SubmissionBlobsController.UploadSlotRequest expects.
+  // SubmissionBlobsController.UploadSlotRequest expects. sizeBytes is the
+  // CIPHERTEXT length (what's actually PUT, for the slot's 50 MB cap).
   const slotResp = await z.request({
     url:    `${SYNC_BASE}/submissions/upload-slot`,
     method: 'POST',
@@ -49,7 +61,7 @@ async function uploadBlob(z, fileUrl, recipient) {
       recipientUserId: recipient,
       hash,
       mime,
-      sizeBytes:       buffer.length,
+      sizeBytes:       sealed.length,
     },
     headers: { 'content-type': 'application/json' },
   });
@@ -57,12 +69,12 @@ async function uploadBlob(z, fileUrl, recipient) {
     throw new z.errors.Error(`upload-slot failed: ${slotResp.status} ${slotResp.content}`, 'UploadSlotError', slotResp.status);
   const slot = z.JSON.parse(slotResp.content);
 
-  // PUT bytes directly to S3. The slot includes the Content-Type
+  // PUT ciphertext directly to S3. The slot includes the Content-Type
   // header binding so PutObject signature stays valid.
   const putResp = await z.request({
     url:     slot.url,
     method:  'PUT',
-    body:    buffer,
+    body:    sealed,
     headers: { 'content-type': mime || 'application/octet-stream' },
     raw:     true,
     skipThrowForStatus: true,

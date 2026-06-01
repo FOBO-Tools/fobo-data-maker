@@ -3,6 +3,6 @@
 // app all share one libsodium crypto_box_seal implementation — no second copy
 // of the wire contract to keep in sync.
 
-const { initSodium, sealPayload, sha256Hex } = require('@fobo-tools/datamaker');
+const { initSodium, sealPayload, sha256Hex, sealBlob } = require('@fobo-tools/datamaker');
 
-module.exports = { sealPayload, sha256Hex, initSodium };
+module.exports = { sealPayload, sha256Hex, initSodium, sealBlob };

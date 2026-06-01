@@ -18,5 +18,13 @@ internal sealed class UploadContext
     public required string SubmitEndpointBase { get; init; }   // already trailing-slash-normalised
     public required HttpClient Http { get; init; }
 
+    /// <summary>
+    /// Recipient's raw X25519 public key — used to E2E-seal image/attachment
+    /// bytes before the direct-to-S3 PUT (#45). Always present when
+    /// <see cref="Current"/> is set: share-only bundles (no recipient) leave
+    /// Current null entirely, so the upload path never runs without it.
+    /// </summary>
+    public required byte[] RecipientPublicKey { get; init; }
+
     public static UploadContext? Current { get; set; }
 }
