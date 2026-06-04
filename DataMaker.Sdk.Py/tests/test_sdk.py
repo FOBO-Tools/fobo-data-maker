@@ -93,7 +93,7 @@ def test_build_submission_seals_openable_payload():
     })
     env = built["envelope"]
     assert env["formId"] == "contact_form"
-    assert env["recipientUserId"] == "user-123"
+    assert env["recipientPubkey"] == form.recipient_public_key
     assert env["submitterId"] is None
     assert len(env["submissionId"]) == 32
 

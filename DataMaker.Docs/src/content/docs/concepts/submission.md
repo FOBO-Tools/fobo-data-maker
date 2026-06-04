@@ -55,7 +55,7 @@ the holder of the recipient private key can open it.
 {
   "submissionId": "00000000000000000000000000000000",
   "formId": "contact_form",
-  "recipientUserId": "user-123",
+  "recipientPubkey": "<base64 X25519 public key>",
   "submitterId": null,
   "ciphertext": "<base64 sealed box>"
 }
@@ -65,9 +65,13 @@ the holder of the recipient private key can open it.
 |---|---|---|
 | `submissionId` | string | Random UUIDv4 with dashes stripped (32 hex chars). Idempotency key. |
 | `formId` | string | From `form.json`. |
-| `recipientUserId` | string | From `manifest.recipient.userId`. |
+| `recipientPubkey` | string | **Required.** The recipient destination — the X25519 box public key from `manifest.recipient.publicKey` that the ciphertext is sealed to. The server fingerprints it to route the submission to the right database. |
 | `submitterId` | string \| null | `null` for anonymous submissions (the common case). |
 | `ciphertext` | string | Base64 sealed-box of the SubmissionPayload. |
+
+A user can own several databases, each its own recipient identity. Routing keys on
+`recipientPubkey` (not a user id), so each database receives only its own forms'
+submissions. Queue ownership is verified against the server-side identity registry.
 
 Only the envelope's plaintext metadata is visible to the server (for routing,
 dedup, timestamping). The `ciphertext` is opaque to it.

@@ -22,8 +22,8 @@ ciphertext to `/submissions`. Your server never sees plaintext.
 <script>
   window.DataMakerConfig = {
     encrypt: 'client',
-    recipientPublicKey: '<base64 from manifest.recipient.publicKey>',
-    recipientUserId: '<manifest.recipient.userId>',
+    recipientPublicKey: '<base64 from manifest.recipient.publicKey>', // required — the submission destination
+    recipientUserId: '<manifest.recipient.userId>',                   // only needed for file-attachment uploads
     // apiBaseUrl optional — defaults to the public endpoint
   };
 </script>

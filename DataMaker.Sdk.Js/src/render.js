@@ -45,8 +45,8 @@ function setRenderOptions(opts = {}) {
 // Returns: async (payload) => result. `payload` is the renderer's
 // { form, col, values }. Resolves to { ok, submissionId?, editToken?, issues?, error? }.
 function createSubmitHandler(config = {}) {
-  if (!config.recipientPublicKey || !config.recipientUserId) {
-    throw new Error('createSubmitHandler needs recipientPublicKey and recipientUserId');
+  if (!config.recipientPublicKey) {
+    throw new Error('createSubmitHandler needs recipientPublicKey');
   }
 
   setRenderOptions({ applyFormStyle: config.applyFormStyle });
@@ -70,7 +70,6 @@ function createSubmitHandler(config = {}) {
       formId: form.id,
       schemaVersion: form.schemaVersion != null ? form.schemaVersion : 1,
       recipientPublicKey: config.recipientPublicKey,
-      recipientUserId: config.recipientUserId,
       fields: extractFields(form),
     };
 

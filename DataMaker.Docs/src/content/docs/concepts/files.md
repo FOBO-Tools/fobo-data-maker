@@ -42,7 +42,7 @@ Then set the field value to the ref:
 
 | Field | Type | Notes |
 |---|---|---|
-| `recipientUserId` | string | **Required.** Same value as the envelope — `manifest.recipient.userId`. |
+| `recipientUserId` | string | **Required.** The form owner — `manifest.recipient.userId`. (The submission *envelope* now routes on `recipientPubkey`; the attachment upload path stays keyed by the owner's user id.) |
 | `hash` | string | **Required.** SHA-256 of the bytes, 64-char lowercase hex. Must match the bytes you PUT. |
 | `mime` | string \| null | Optional. Binds into the PUT signature — send the same `Content-Type` on the PUT. |
 | `sizeBytes` | number \| null | Optional. `1 .. 52428800` (50 MB). Out of range → **400**. |

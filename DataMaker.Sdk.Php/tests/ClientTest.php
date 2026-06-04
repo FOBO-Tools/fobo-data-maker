@@ -40,7 +40,7 @@ final class ClientTest extends TestCase
 
         $env = $built['envelope'];
         self::assertSame('contact_form', $env['formId']);
-        self::assertSame('user-123', $env['recipientUserId']);
+        self::assertSame($form->recipientPublicKey, $env['recipientPubkey']);
         self::assertSame(32, strlen($env['submissionId']));
 
         // Decrypt the sealed ciphertext with the recipient secret key.

@@ -34,9 +34,6 @@ final class Client
         if (empty($form->recipientPublicKey)) {
             throw new DataMakerError('form has no recipient public key — share-only bundles cannot receive submissions', 'NO_RECIPIENT');
         }
-        if (empty($form->recipientUserId)) {
-            throw new DataMakerError('form has no recipient userId', 'NO_RECIPIENT');
-        }
 
         $outValues = $values;
         if ($opts['validate'] ?? true) {
@@ -58,11 +55,13 @@ final class Client
         $sid = $opts['submissionId'] ?? self::newSubmissionId();
 
         $envelope = [
-            'submissionId'    => $sid,
-            'formId'          => $form->formId,
-            'recipientUserId' => $form->recipientUserId,
-            'submitterId'     => $opts['submitterId'] ?? null,
-            'ciphertext'      => $ciphertext,
+            'submissionId'   => $sid,
+            'formId'         => $form->formId,
+            // Recipient DESTINATION: the box public key the form is sealed to. The
+            // server fingerprints it to route to the right database. Required.
+            'recipientPubkey' => $form->recipientPublicKey,
+            'submitterId'    => $opts['submitterId'] ?? null,
+            'ciphertext'     => $ciphertext,
         ];
 
         return ['submissionId' => $sid, 'envelope' => $envelope, 'payload' => $payload, 'values' => $outValues];

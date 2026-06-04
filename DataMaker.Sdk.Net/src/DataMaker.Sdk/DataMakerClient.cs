@@ -46,8 +46,6 @@ public sealed class DataMakerClient
         options ??= new SubmitOptions();
         if (string.IsNullOrEmpty(form.RecipientPublicKey))
             throw new DataMakerException("form has no recipient public key — share-only bundles cannot receive submissions", "NO_RECIPIENT");
-        if (string.IsNullOrEmpty(form.RecipientUserId))
-            throw new DataMakerException("form has no recipient userId", "NO_RECIPIENT");
 
         IReadOnlyDictionary<string, object?> outValues = values;
         if (options.Validate)
@@ -68,7 +66,7 @@ public sealed class DataMakerClient
         var ciphertext = SealedBox.Seal(plaintext, form.RecipientPublicKey!);
         var id = NewSubmissionId();
 
-        var envelope = new SubmissionEnvelope(id, form.FormId, form.RecipientUserId!, options.SubmitterId, ciphertext);
+        var envelope = new SubmissionEnvelope(id, form.FormId, form.RecipientPublicKey!, options.SubmitterId, ciphertext);
         return new BuiltSubmission(id, envelope, payload, outValues);
     }
 

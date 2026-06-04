@@ -86,7 +86,6 @@ public sealed class DataMakerFormTagHelper : TagHelper
         else
         {
             cfg["recipientPublicKey"] = form.RecipientPublicKey;
-            cfg["recipientUserId"] = form.RecipientUserId;
             cfg["apiBaseUrl"] = ApiBaseUrl;
         }
 

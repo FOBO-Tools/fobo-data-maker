@@ -10,7 +10,9 @@ namespace DataMaker.Sdk;
 public sealed record SubmissionEnvelope(
     [property: JsonPropertyName("submissionId")]    string SubmissionId,
     [property: JsonPropertyName("formId")]          string FormId,
-    [property: JsonPropertyName("recipientUserId")] string RecipientUserId,
+    // The recipient DESTINATION: the box public key the form is sealed to. The
+    // server fingerprints it to route to the right database. Required.
+    [property: JsonPropertyName("recipientPubkey")] string RecipientPubkey,
     [property: JsonPropertyName("submitterId")]     string? SubmitterId,
     [property: JsonPropertyName("ciphertext")]      string Ciphertext);
 

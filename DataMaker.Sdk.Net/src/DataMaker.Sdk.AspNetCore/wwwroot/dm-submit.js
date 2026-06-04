@@ -62,7 +62,6 @@
     }
     var handler = window.DataMaker.createSubmitHandler({
       recipientPublicKey: cfg.recipientPublicKey,
-      recipientUserId: cfg.recipientUserId,
       apiBaseUrl: cfg.apiBaseUrl,
       submitterId: cfg.submitterId || null,
       applyFormStyle: cfg.applyFormStyle,

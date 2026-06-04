@@ -27,16 +27,13 @@ function newSubmissionId() {
 // Returns { submissionId, envelope, payload, values }.
 //
 // `form` is a descriptor from parseDmf (or an equivalent object with formId,
-// schemaVersion, recipientPublicKey, recipientUserId, fields).
+// schemaVersion, recipientPublicKey, fields).
 async function buildSubmission(form, input, opts = {}) {
   if (!form || !form.recipientPublicKey) {
     throw new DataMakerError(
       'form has no recipient public key — share-only bundles cannot receive submissions',
       'NO_RECIPIENT'
     );
-  }
-  if (!form.recipientUserId) {
-    throw new DataMakerError('form has no recipient userId', 'NO_RECIPIENT');
   }
 
   let values = input || {};
@@ -66,7 +63,9 @@ async function buildSubmission(form, input, opts = {}) {
   const envelope = {
     submissionId,
     formId: form.formId,
-    recipientUserId: form.recipientUserId,
+    // Recipient DESTINATION: the box public key the form is sealed to. The server
+    // fingerprints it to route to the right database. Required.
+    recipientPubkey: form.recipientPublicKey,
     submitterId: opts.submitterId ?? null,
     ciphertext,
   };

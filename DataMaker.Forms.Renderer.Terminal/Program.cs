@@ -121,7 +121,7 @@ try
     //      hit the same production relay Lambda)
     // Live URL of the data-maker-sync SyncFunction Lambda in eu-west-1.
     // Change only when the Lambda is redeployed to a different Function URL.
-    const string DefaultSubmitEndpoint = "https://ekfikehauh3z46tfz7j5r6pvbm0ezugo.lambda-url.eu-west-1.on.aws/";
+    const string DefaultSubmitEndpoint = "https://datamaker-api.fobo-tools.com/";
     var submitEndpoint = options.SubmitEndpoint
         ?? Environment.GetEnvironmentVariable("DATAMAKER_SYNC_API")
         ?? DefaultSubmitEndpoint;

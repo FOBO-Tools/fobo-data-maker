@@ -112,7 +112,7 @@ public class DataMakerSdkTests
         });
 
         Assert.That(built.Envelope.FormId, Is.EqualTo("contact_form"));
-        Assert.That(built.Envelope.RecipientUserId, Is.EqualTo("user-123"));
+        Assert.That(built.Envelope.RecipientPubkey, Is.EqualTo(form.RecipientPublicKey));
         Assert.That(built.Envelope.SubmitterId, Is.Null);
         Assert.That(built.Envelope.SubmissionId.Length, Is.EqualTo(32)); // GUID "N"
 

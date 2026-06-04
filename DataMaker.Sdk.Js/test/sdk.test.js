@@ -116,7 +116,7 @@ test('buildSubmission seals a payload the recipient can open', async () => {
   });
 
   assert.equal(envelope.formId, 'contact_form');
-  assert.equal(envelope.recipientUserId, 'user-123');
+  assert.equal(envelope.recipientPubkey, form.recipientPublicKey);
   assert.equal(envelope.submitterId, null);
   assert.equal(envelope.submissionId.length, 32); // GUID "n" format, no dashes
 

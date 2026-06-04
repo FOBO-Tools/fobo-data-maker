@@ -62,16 +62,10 @@ public sealed record BackupSettings
     /// </summary>
     public string? LastRunError { get; init; }
 
-    /// <summary>
-    /// When true, snapshots are sealed with the user's recovery code as
-    /// KEK (the <c>.dmbak</c> sealed format — see
-    /// <c>RecoveryBundleFormat</c>). Requires a cached
-    /// <c>BackupKek</c> entry in <see cref="DataMaker.KeyVault.IKeyVault"/>,
-    /// which lands after the user signs in to FOBO + saves their
-    /// recovery code. Default is false so the offline-only user keeps
-    /// the legacy unencrypted ZIP behaviour with no regression.
-    /// </summary>
-    public bool EncryptionEnabled { get; init; }
+    // EncryptionEnabled removed (#76(b)) — backups are always sealed with the
+    // user's recovery code (RecoveryBundleFormat). There is no unencrypted
+    // export mode. Old persisted settings carrying this field deserialize
+    // fine (the extra property is ignored).
 
     /// <summary>
     /// Optional secondary destination uploaded right after every successful

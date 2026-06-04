@@ -270,12 +270,15 @@ final class SubmitProxy
 
         $ciphertext = sodium_crypto_box_seal($payload_json, $recipient_pubkey);
 
+        // recipientPubkey is the routing DESTINATION (the box public key the form
+        // is sealed to); the server fingerprints it to deliver to the right
+        // database. recipientUserId is no longer part of the submission envelope.
         $envelope = [
-            'submissionId'    => $submission_id,
-            'formId'          => (string)$row['form_id'],
-            'recipientUserId' => (string)$row['recipient_user_id'],
-            'submitterId'     => null,
-            'ciphertext'      => base64_encode($ciphertext),
+            'submissionId'   => $submission_id,
+            'formId'         => (string)$row['form_id'],
+            'recipientPubkey' => (string)$row['recipient_pubkey'],
+            'submitterId'    => null,
+            'ciphertext'     => base64_encode($ciphertext),
         ];
         if ($update) {
             $envelope['editToken'] = (string)$params['edit_token'];

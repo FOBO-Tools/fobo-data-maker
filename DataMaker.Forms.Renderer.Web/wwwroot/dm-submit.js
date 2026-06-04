@@ -39,14 +39,13 @@
     if (!window.DataMaker || typeof window.DataMaker.createSubmitHandler !== 'function') {
       throw new Error('datamaker.browser.js must load before dm-submit.js');
     }
-    if (!config.recipientPublicKey || !config.recipientUserId) {
-      throw new Error('DataMakerConfig needs recipientPublicKey and recipientUserId');
+    if (!config.recipientPublicKey) {
+      throw new Error('DataMakerConfig needs recipientPublicKey');
     }
     if (config.applyFormStyle !== undefined) ns.applyFormStyle = config.applyFormStyle;
 
     var handler = window.DataMaker.createSubmitHandler({
       recipientPublicKey: config.recipientPublicKey,
-      recipientUserId: config.recipientUserId,
       apiBaseUrl: config.apiBaseUrl,
       submitterId: config.submitterId || null,
       applyFormStyle: config.applyFormStyle,

@@ -72,8 +72,6 @@ def build_submission(
             "form has no recipient public key — share-only bundles cannot receive submissions",
             "NO_RECIPIENT",
         )
-    if not form.recipient_user_id:
-        raise DataMakerError("form has no recipient userId", "NO_RECIPIENT")
 
     out_values = values or {}
     if validate:
@@ -94,7 +92,9 @@ def build_submission(
     envelope = {
         "submissionId": sid,
         "formId": form.form_id,
-        "recipientUserId": form.recipient_user_id,
+        # Recipient DESTINATION: the box public key the form is sealed to. The
+        # server fingerprints it to route to the right database. Required.
+        "recipientPubkey": form.recipient_public_key,
         "submitterId": submitter_id,
         "ciphertext": ciphertext,
     }
