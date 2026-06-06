@@ -12,7 +12,12 @@
     "end-to-end-encryption"
   ],
   "homepage": "https://datamaker.fobo-tools.com/",
-  "bugs": "https://github.com/ChivanCOM/datamaker/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FOBO-Tools/fobo-data-maker.git",
+    "directory": "DataMaker.Sdk.Js"
+  },
+  "bugs": "https://github.com/FOBO-Tools/fobo-data-maker/issues",
   "author": "FOBO Tools <hello@fobo-tools.com>",
   "license": "BSD-3-Clause",
   "publishConfig": {
