@@ -23,7 +23,6 @@ ciphertext to `/submissions`. Your server never sees plaintext.
   window.DataMakerConfig = {
     encrypt: 'client',
     recipientPublicKey: '<base64 from manifest.recipient.publicKey>', // required — the submission destination
-    recipientUserId: '<manifest.recipient.userId>',                   // only needed for file-attachment uploads
     // apiBaseUrl optional — defaults to the public endpoint
   };
 </script>
@@ -42,6 +41,87 @@ produced server-side when the `.dmf` is published — read it out of the `.dmf v
 Set `DataMakerConfig.applyFormStyle = false` to drop the form author's baked
 design (palette + per-element CSS) and let your own site styles apply. The
 structural layout layer still works.
+
+## Wasm renderer (exact design fidelity)
+
+The JS renderer rebuilds your form in HTML/CSS. It matches most designs closely,
+but a few advanced layouts render differently. When that happens, switch to the
+**Wasm renderer** — the full desktop designer compiled to WebAssembly, so the
+embedded form is a pixel-for-pixel match of what you built. It's heavier (the
+renderer downloads as a WASM bundle, so the first load is slower), which is why
+the JS renderer stays the default. Opt in with a single prop:
+
+```html
+<div id="form-root"></div>
+<script type="application/json" id="form-bundle">
+  /* { form, compiled, elementCss, paletteCss } — the .dmf v3 bundle */
+</script>
+
+<script>
+  window.DataMakerConfig = {
+    renderer: 'wasm',                              // ← the only change
+    recipientPublicKey: '<base64 from manifest.recipient.publicKey>',
+    // apiBaseUrl optional — defaults to the public endpoint
+  };
+</script>
+<script src="datamaker.browser.js"></script>   <!-- the SDK browser bundle -->
+<script src="dm-wasm.js"></script>              <!-- frames the wasm renderer (replaces renderer.js + dm-submit.js) -->
+```
+
+`dm-wasm.js` reads `renderer: 'wasm'`, mounts the renderer in an `<iframe>` on
+`#form-root`, and hands it the form from `#form-bundle`. Submission still seals
+client-side against `recipientPublicKey` — the iframe loads its own copy of the
+SDK and posts sealed ciphertext to `/submissions`, exactly like the JS path. The
+iframe auto-sizes to the form.
+
+Extra config props for the Wasm renderer:
+
+- `afterSubmitText` — text shown in place of the form after a successful submit.
+- `wasmHost` — base URL of the renderer bundle. Defaults to the public host; set
+  it only when self-hosting the bundle.
+
+Programmatic mount (SPAs):
+
+```js
+const unmount = DataMaker.mountWasm(window.DataMakerConfig, {
+  root: document.querySelector('#my-form'),
+  // form: <schema object>   // or read from #form-bundle by default
+});
+// later: unmount();
+```
+
+## Light / dark theme
+
+Both renderers (HTML and Wasm) resolve the theme the same way. Set `theme` in
+`DataMakerConfig`:
+
+```js
+window.DataMakerConfig = {
+  theme: 'auto',   // 'auto' (default) | 'light' | 'dark'
+  recipientPublicKey: '…',
+};
+```
+
+- **`auto`** (default) follows the visitor's browser `prefers-color-scheme` and
+  **updates live** if they switch their OS between light and dark.
+- **`light`** / **`dark`** force one mode regardless of the browser.
+
+The form carries both palettes (designed in the Styling tab); the theme just
+picks which one renders. There's no per-form toggle button on an embed — the
+embedding site owns the theme via this prop.
+
+## Hosted forms
+
+Publishing to `{subdomain}.hosted-forms.com`? Two settings live in the
+**Publish to the web** dialog:
+
+- **Renderer** — *HTML* (default) or *Exact*. Pick **Exact** when the hosted
+  page looks different from your design (serves the Wasm renderer).
+- **Theme** — *Auto* (default, follow the visitor's browser, live) / *Light* /
+  *Dark*.
+
+Everything else (header, custom CSS, hidden elements, encrypted delivery) is
+unchanged.
 
 ## ASP.NET Core (TagHelper)
 

@@ -1,6 +1,6 @@
 {
   "name": "@fobo-tools/datamaker",
-  "version": "0.1.0",
+  "version": "0.1.3",
   "description": "Submit records to a Data Maker form from anywhere. Reads a signed .dmf form bundle, validates values against its schema, sealed-box encrypts them client-side, and posts to the public submissions endpoint.",
   "keywords": [
     "datamaker",
@@ -15,6 +15,9 @@
   "bugs": "https://github.com/ChivanCOM/datamaker/issues",
   "author": "FOBO Tools <hello@fobo-tools.com>",
   "license": "BSD-3-Clause",
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "commonjs",
   "main": "src/index.js",
   "types": "index.d.ts",

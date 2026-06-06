@@ -62,6 +62,28 @@ function resolveIconGlyph(raw) {
     }
   }
 
+  // ── Theme ─────────────────────────────────────────────────────────
+  // Follow DataMakerConfig.theme: 'auto' (default) tracks the OS
+  // prefers-color-scheme live; 'light'/'dark' force it. Sets `dark` (the
+  // palette's :root.dark scope) + `dm-dark` (legacy toggle class) on <html>.
+  // Mirrors the WASM renderer so a form looks identical on both surfaces.
+  function dmWantsDark() {
+    var t = (window.DataMakerConfig && window.DataMakerConfig.theme) || 'auto';
+    if (t === 'light') return false;
+    if (t === 'dark') return true;
+    return !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  }
+  function dmApplyTheme() {
+    var d = dmWantsDark();
+    document.documentElement.classList.toggle('dark', d);
+    document.documentElement.classList.toggle('dm-dark', d);
+  }
+  ns.applyTheme = dmApplyTheme; // hosts call after changing config.theme
+  dmApplyTheme();
+  if (window.matchMedia) {
+    try { window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', dmApplyTheme); } catch (e) {}
+  }
+
   // Auto-mount on page load when the page exposes the legacy global
   // ids (#form-root + #form-bundle). Multi-form hosts skip those and
   // call ns.mount(root, bundle, hooks) per shortcode instance instead.

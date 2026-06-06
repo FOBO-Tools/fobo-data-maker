@@ -1,0 +1,59 @@
+name: "Publish: JS SDK (npm)"
+
+# Publishes @fobo-tools/datamaker to npm via npm Trusted Publishing (OIDC) —
+# no long-lived NPM_TOKEN. This runs in the PUBLIC mirror (FOBO-Tools/
+# fobo-data-maker); the private monorepo is source-of-truth and syncs here via
+# scripts/sync-public.sh. Publishing from the public repo is what makes sigstore
+# provenance work (npm only verifies provenance for public source repos).
+#
+# Triggers on a version tag `sdk-js-v*` (or manual dispatch). npm rejects
+# re-publishing an existing version, so cut versions deliberately.
+#
+# ONE-TIME npmjs setup (Trusted Publisher) on the @fobo-tools/datamaker package:
+#   Settings → Trusted Publisher → GitHub Actions:
+#       Organization/owner : FOBO-Tools
+#       Repository         : fobo-data-maker
+#       Workflow filename  : publish-sdk-js.yml
+#
+# Release flow:
+#   1. bump "version" in DataMaker.Sdk.Js/package.json (private repo), commit
+#   2. run scripts/sync-public.sh, commit + push in the public repo
+#   3. in the public repo: git tag sdk-js-v<version> && git push --tags
+
+on:
+  push:
+    tags:
+      - "sdk-js-v*"
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: DataMaker.Sdk.Js
+    permissions:
+      contents: read
+      id-token: write   # OIDC for npm Trusted Publishing + provenance
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      # Trusted Publishing (OIDC) needs npm >= 11.5.1; Node 22 ships npm 10.x.
+      - name: Update npm
+        run: npm install -g npm@latest
+
+      - name: Install (clean, from lockfile)
+        run: npm ci
+
+      - name: Test
+        run: npm test
+
+      # No token: OIDC authenticates against the configured Trusted Publisher.
+      # --provenance attaches a signed build attestation (works because this is
+      # a public repo). prepublishOnly rebuilds the browser bundle.
+      - name: Publish to npm
+        run: npm publish --access public --provenance

@@ -151,6 +151,9 @@ export interface SubmitHandlerConfig {
   /** false → renderer skips the .dmf's author design (palette + per-element
    *  CSS) and renders structure-only. Browser-only; no-op under Node. */
   applyFormStyle?: boolean;
+  /** Light/dark for the embedded form. 'auto' (default) follows the visitor's
+   *  prefers-color-scheme and re-themes live; 'light'/'dark' force one. */
+  theme?: 'auto' | 'light' | 'dark';
 }
 
 export interface RenderOptions {
@@ -173,6 +176,34 @@ export interface SubmitHandlerResult {
 export function createSubmitHandler(
   config: SubmitHandlerConfig
 ): (payload: RenderSubmitPayload) => Promise<SubmitHandlerResult>;
+
+// --- Wasm renderer embed --------------------------------------------------
+export interface MountWasmConfig {
+  /** base64 X25519 recipient key from the .dmf manifest. */
+  recipientPublicKey: string;
+  recipientUserId?: string | null;
+  /** Submissions endpoint; defaults to the public one. */
+  apiBaseUrl?: string;
+  /** Shown in place of the form after a successful submit. */
+  afterSubmitText?: string;
+  /** Base URL of the Wasm bundle host. Defaults to {@link DEFAULT_WASM_HOST}. */
+  wasmHost?: string;
+  /** Light/dark for the form. 'auto' (default) follows the visitor's
+   *  prefers-color-scheme and re-themes live; 'light'/'dark' force one. */
+  theme?: 'auto' | 'light' | 'dark';
+}
+
+/** Public host of the static Wasm renderer bundle. */
+export const DEFAULT_WASM_HOST: string;
+
+/** Mount the full Uno-in-WebAssembly renderer (pixel-parity with the desktop
+ *  designer) into an iframe on `opts.root` (or `#form-root`), reading the form
+ *  from `opts.form` or a `#form-bundle` script. Submission still seals
+ *  client-side. Returns an unmount function. Browser-only. */
+export function mountWasm(
+  config: MountWasmConfig,
+  opts?: { root?: Element; form?: unknown; bundle?: Element }
+): () => void;
 
 // --- validation -----------------------------------------------------------
 export function validateValues(

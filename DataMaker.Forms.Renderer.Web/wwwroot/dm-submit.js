@@ -7,7 +7,7 @@
  * values client-side (libsodium sealed box) and posts them to /submissions.
  *
  * Load order on an embed page:
- *   1. <script>window.DataMakerConfig = { recipientPublicKey, recipientUserId, ... }</script>
+ *   1. <script>window.DataMakerConfig = { recipientPublicKey, ... }</script>
  *   2. datamaker.browser.js   (exposes window.DataMaker — build via
  *      `npm run build:browser` in DataMaker.Sdk.Js, or load from
  *      https://unpkg.com/@fobo-tools/datamaker/dist/datamaker.browser.js)
@@ -16,7 +16,6 @@
  *
  * Config (window.DataMakerConfig or passed to enableSubmit):
  *   recipientPublicKey  required — base64 X25519 key from the form's .dmf manifest
- *   recipientUserId     required — form owner's userId from the manifest
  *   apiBaseUrl          optional — defaults to the public submissions endpoint
  *   submitterId         optional — null (anonymous) unless the host knows it
  *   applyFormStyle      optional — false renders structure-only, dropping the

@@ -120,5 +120,15 @@ datamaker submit contact.dmf --data-file answers.json --dry-run
 ## Browser
 
 A bundled build (`dist/datamaker.browser.js`, global `DataMaker`) powers the
-[web embed](/fobo-data-maker/renderers/web-embed/). `createSubmitHandler(config)` adapts the web
-renderer's `onSubmit` to a sealed POST.
+[web embed](/fobo-data-maker/renderers/web-embed/):
+
+- **`createSubmitHandler(config)`** — adapts the lightweight JS renderer's
+  `onSubmit` to a sealed POST.
+- **`mountWasm(config, opts?)`** — frames the high-fidelity Wasm renderer
+  (pixel-parity with the desktop designer) into `#form-root`; returns an unmount
+  fn. `DEFAULT_WASM_HOST` is the default bundle host.
+
+Both read `config.theme`: **`'auto'`** (default) follows the visitor's
+`prefers-color-scheme` and re-themes live; **`'light'`** / **`'dark'`** force one.
+Other common config: `recipientPublicKey` (required), `apiBaseUrl`,
+`applyFormStyle`. Full list in [web embed](/fobo-data-maker/renderers/web-embed/).

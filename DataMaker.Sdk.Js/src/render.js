@@ -8,8 +8,8 @@
 // The renderer's bundle.form carries the form id, schema version, and field
 // schema, but NOT the recipient's public key — that lives in the .dmf manifest
 // and is known to the host (the desktop/WP/embed page that published the form).
-// So the host supplies { recipientPublicKey, recipientUserId } here; the rest
-// is read off the form the renderer is already showing.
+// So the host supplies recipientPublicKey here; the rest is read off the form
+// the renderer is already showing.
 
 const { extractFields } = require('./dmf');
 const { buildSubmission, postSubmission, DEFAULT_API_BASE_URL } = require('./submit');
@@ -29,7 +29,6 @@ function setRenderOptions(opts = {}) {
 
 // config:
 //   recipientPublicKey  (required) — base64 X25519 key from the .dmf manifest
-//   recipientUserId     (required) — form owner's userId from the manifest
 //   apiBaseUrl          — defaults to the public endpoint
 //   submitterId         — null (anonymous) unless the host knows the submitter
 //   validate            — client-side validate/coerce before sealing (default true)

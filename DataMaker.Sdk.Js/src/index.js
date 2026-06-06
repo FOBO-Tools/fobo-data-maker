@@ -25,6 +25,7 @@ const {
   submit,
 } = require('./submit');
 const { createSubmitHandler, setRenderOptions } = require('./render');
+const { mountWasm, DEFAULT_WASM_HOST } = require('./wasmEmbed');
 const fieldKinds = require('./fieldKinds');
 const errors = require('./errors');
 
@@ -45,6 +46,11 @@ module.exports = {
   // sealed POST, and toggle whether the .dmf's author design is rendered.
   createSubmitHandler,
   setRenderOptions,
+
+  // Wasm-renderer embed — frame the full Uno-in-WASM renderer for exact design
+  // fidelity (heavier than renderer.js). Submit still seals client-side.
+  mountWasm,
+  DEFAULT_WASM_HOST,
 
   // Validation + field-kind helpers.
   validateValues,

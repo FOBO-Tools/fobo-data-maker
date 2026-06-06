@@ -61,6 +61,11 @@ await dm.submit({ dmf, values: { email: 'ada@example.com' } });
 - **`validateValues(fields, input, opts)`** → `{ values, issues }`. Pure
   validation/coercion, no crypto.
 
+- **Browser embed** — `createSubmitHandler(config)` wires the lightweight JS
+  renderer's submit; `mountWasm(config)` frames the high-fidelity Wasm renderer.
+  Both read `theme` from the config (`'auto'` default — follows the visitor's
+  `prefers-color-scheme` and re-themes live; `'light'`/`'dark'` force one).
+
 ### Validation
 
 `submit`/`buildSubmission` reject (with a `ValidationError` carrying
