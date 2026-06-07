@@ -44,6 +44,9 @@ export default defineConfig({
           { label: 'WordPress plugin', link: '/renderers/wordpress/' },
           { label: 'Terminal', link: '/renderers/terminal/' },
         ] },
+        { label: 'Outegrations', items: [
+          { label: 'Webhook', link: '/outegrations/webhook/' },
+        ] },
         { label: 'Schema reference', items: [
           { label: 'Form model', link: '/schema/form-model/' },
           { label: 'Field kinds', link: '/schema/field-kinds/' },
