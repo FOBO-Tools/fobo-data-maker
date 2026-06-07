@@ -1,0 +1,116 @@
+name: "Publish: PHP SDK (Packagist)"
+
+# Publishes the `fobo/datamaker-sdk` package to Packagist. Packagist differs
+# from npm/PyPI: it does NOT host archives and CANNOT install a package that
+# lives in a subdirectory — it crawls a git repo and needs composer.json at the
+# REPO ROOT, with versions driven by git tags. Our PHP SDK lives at
+# DataMaker.Sdk.Php/ inside this mirror, so we can't point Packagist here.
+#
+# The canonical monorepo fix (Symfony/Laravel use it) is splitsh-lite: split the
+# DataMaker.Sdk.Php/ subtree into a standalone read-only repo
+# (FOBO-Tools/datamaker-php-sdk) that has composer.json at its root, then point
+# Packagist at THAT repo. This private monorepo stays source-of-truth; the
+# public fobo-data-maker mirror syncs via scripts/sync-public.sh; and this
+# workflow re-splits the SDK into the dedicated repo on every release tag.
+#
+# Triggers on a version tag `sdk-php-v*` (or manual dispatch). The numeric part
+# becomes a clean `v<version>` tag in the split repo, which Packagist reads as
+# the released version. Packagist rejects nothing, but a tag is immutable once
+# crawled, so cut versions deliberately.
+#
+# ONE-TIME setup:
+#   1. Create the public repo FOBO-Tools/datamaker-php-sdk (empty is fine).
+#   2. Create a PAT (or fine-grained token) with `contents:write` on that repo
+#      and add it to THIS repo as the secret `PHP_SPLIT_TOKEN`.
+#   3. Submit https://github.com/FOBO-Tools/datamaker-php-sdk on packagist.org
+#      (Submit). Package name resolves from composer.json -> `fobo/datamaker-sdk`.
+#   4. Install the "Packagist" GitHub App on FOBO-Tools/datamaker-php-sdk so
+#      Packagist auto-crawls on push (no per-release webhook poke needed).
+#
+# Release flow:
+#   1. bump nothing in composer.json (Packagist takes the version from the tag),
+#      land any SDK changes in the private repo
+#   2. run scripts/sync-public.sh, commit + push in the public repo
+#   3. in the public repo: git tag sdk-php-v<version> && git push --tags
+
+on:
+  push:
+    tags:
+      - "sdk-php-v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to publish (e.g. 1.0.0), for manual runs"
+        required: true
+
+env:
+  SPLIT_PREFIX: "DataMaker.Sdk.Php"
+  TARGET_REPO: "FOBO-Tools/datamaker-php-sdk"
+  SPLITSH_VERSION: "v1.0.1"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      # Full history: splitsh-lite walks the prefix's git history to build the
+      # standalone tree, so a shallow checkout would split nothing.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve version from tag or input
+        id: ver
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            # refs/tags/sdk-php-v1.0.0 -> 1.0.0
+            VERSION="${GITHUB_REF_NAME#sdk-php-v}"
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Publishing v$VERSION"
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.1"
+          extensions: sodium, zip, json, curl
+          tools: composer:v2
+
+      - name: Install deps (clean, from lockfile when present)
+        working-directory: ${{ env.SPLIT_PREFIX }}
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Validate composer.json
+        working-directory: ${{ env.SPLIT_PREFIX }}
+        run: composer validate --strict
+
+      - name: Test
+        working-directory: ${{ env.SPLIT_PREFIX }}
+        run: vendor/bin/phpunit
+
+      - name: Install splitsh-lite
+        run: |
+          curl -sSL "https://github.com/splitsh/lite/releases/download/${SPLITSH_VERSION}/lite_linux_amd64.tar.gz" \
+            | tar -xz
+          chmod +x splitsh-lite
+          ./splitsh-lite --version || true
+
+      # Split the subtree into a single commit sha whose tree is the SDK root,
+      # push it to the dedicated repo's main branch (force: it's a generated,
+      # one-way mirror — splitsh output is deterministic so this fast-forwards
+      # in practice), then tag that sha v<version> for Packagist to read.
+      - name: Split + push to dedicated repo
+        env:
+          TOKEN: ${{ secrets.PHP_SPLIT_TOKEN }}
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          set -euo pipefail
+          SPLIT_SHA="$(./splitsh-lite --prefix="${SPLIT_PREFIX}/")"
+          echo "split sha: $SPLIT_SHA"
+          REMOTE="https://x-access-token:${TOKEN}@github.com/${TARGET_REPO}.git"
+          git push --force "$REMOTE" "${SPLIT_SHA}:refs/heads/main"
+          git tag "v${VERSION}" "$SPLIT_SHA"
+          git push "$REMOTE" "v${VERSION}"
+          echo "Pushed v${VERSION} to ${TARGET_REPO}; Packagist will crawl it."
