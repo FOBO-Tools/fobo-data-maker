@@ -67,7 +67,7 @@ jobs:
         id: login
         uses: NuGet/login@v1
         with:
-          user: fobo-tools   # <-- set to your nuget.org username
+          user: chivantiebosch
 
       - name: Push to NuGet
         run: >

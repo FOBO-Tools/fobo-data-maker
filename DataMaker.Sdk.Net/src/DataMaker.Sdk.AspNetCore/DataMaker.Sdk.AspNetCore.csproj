@@ -13,8 +13,15 @@
     <Description>ASP.NET Core integration for Data Maker forms: a TagHelper that renders a signed .dmf form (hosting the JS renderer) and a server-side encrypt endpoint. Choose client-side end-to-end encryption or server-side sealing.</Description>
     <PackageLicenseExpression>BSD-3-Clause</PackageLicenseExpression>
     <PackageProjectUrl>https://datamaker.fobo-tools.com/</PackageProjectUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/FOBO-Tools/fobo-data-maker</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
