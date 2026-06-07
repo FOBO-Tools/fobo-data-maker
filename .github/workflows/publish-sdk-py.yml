@@ -1,0 +1,60 @@
+name: "Publish: Python SDK (PyPI)"
+
+# Publishes the `datamaker-forms` package to PyPI via PyPI Trusted Publishing
+# (OIDC) — no long-lived PYPI_TOKEN. This runs in the PUBLIC mirror (FOBO-Tools/
+# fobo-data-maker); the private monorepo is source-of-truth and syncs here via
+# scripts/sync-public.sh. Publishing from the public repo is what lets PyPI
+# attach signed build attestations (provenance).
+#
+# Triggers on a version tag `sdk-py-v*` (or manual dispatch). PyPI rejects
+# re-publishing an existing version, so cut versions deliberately.
+#
+# ONE-TIME pypi.org setup (Trusted Publisher) on the `datamaker-forms` project:
+#   Manage project → Publishing → Add a GitHub Actions publisher:
+#       Owner             : FOBO-Tools
+#       Repository        : fobo-data-maker
+#       Workflow filename : publish-sdk-py.yml
+#       Environment       : (leave blank)
+#
+# Release flow:
+#   1. bump "version" in DataMaker.Sdk.Py/pyproject.toml (private repo), commit
+#   2. run scripts/sync-public.sh, commit + push in the public repo
+#   3. in the public repo: git tag sdk-py-v<version> && git push --tags
+
+on:
+  push:
+    tags:
+      - "sdk-py-v*"
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: DataMaker.Sdk.Py
+    permissions:
+      contents: read
+      id-token: write   # OIDC for PyPI Trusted Publishing + attestations
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install build + test deps
+        run: pip install build pytest pynacl
+
+      - name: Test
+        run: python -m pytest -q
+
+      - name: Build sdist + wheel
+        run: python -m build
+
+      # No token: OIDC authenticates against the configured Trusted Publisher.
+      # packages-dir is relative to the repo root, not the job working-directory.
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: DataMaker.Sdk.Py/dist

@@ -48,10 +48,6 @@ internal abstract class FieldBinding
     /// </summary>
     public virtual Label? RequiredAsterisk => null;
 
-    /// <summary>Description line (shown as a single hint row below the editor). Null = no hint.</summary>
-    public virtual string? HintLine =>
-        string.IsNullOrWhiteSpace(Definition.Description) ? null : Definition.Description;
-
     /// <summary>
     /// Called by <see cref="FormRuntime"/> when the field's computed value
     /// changes (calculated fields). Default no-op — regular bindings ignore

@@ -294,19 +294,8 @@ internal sealed class FormRenderer
 
         y += binding.EditorHeight;
 
-        if (binding.HintLine is { } hint)
-        {
-            var hintLabel = new Label(hint)
-            {
-                X           = 0,
-                Y           = y,
-                Width       = Dim.Fill(),
-                ColorScheme = StyleToColorScheme.Build(_fallback, ancestor),
-            };
-            host.Add(hintLabel);
-            emitted.Add(hintLabel);
-            y += 1;
-        }
+        // Field descriptions are intentionally not rendered — on par with the
+        // web/WASM/WordPress + PDF renderers, which drop them too.
 
         _runtime?.RegisterField(def.Name, binding, emitted);
 

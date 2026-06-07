@@ -75,8 +75,13 @@ function resolveIconGlyph(raw) {
   }
   function dmApplyTheme() {
     var d = dmWantsDark();
-    document.documentElement.classList.toggle('dark', d);
-    document.documentElement.classList.toggle('dm-dark', d);
+    // Guard documentElement/classList so an embedding host with a partial DOM
+    // (or a non-browser harness) can't crash the bootstrap on theme apply.
+    var el = document.documentElement;
+    if (el && el.classList) {
+      el.classList.toggle('dark', d);
+      el.classList.toggle('dm-dark', d);
+    }
   }
   ns.applyTheme = dmApplyTheme; // hosts call after changing config.theme
   dmApplyTheme();
