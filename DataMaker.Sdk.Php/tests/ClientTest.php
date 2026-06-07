@@ -14,11 +14,15 @@ use PHPUnit\Framework\TestCase;
 
 final class ClientTest extends TestCase
 {
-    /** Build a descriptor whose recipient is a fresh X25519 keypair we can decrypt with. */
-    private function formWithRecipient(string &$secret): FormDescriptor
+    /**
+     * Build a descriptor whose recipient is a fresh X25519 keypair we can
+     * decrypt with. $keypair is an out-param (by-ref) receiving the full sodium
+     * keypair string — callers pass an uninitialized var, so it stays untyped.
+     */
+    private function formWithRecipient(&$keypair): FormDescriptor
     {
         $kp = sodium_crypto_box_keypair();
-        $secret = $kp;
+        $keypair = $kp;
         $pub = sodium_crypto_box_publickey($kp);
         return new FormDescriptor([
             'formId'             => 'contact_form',
