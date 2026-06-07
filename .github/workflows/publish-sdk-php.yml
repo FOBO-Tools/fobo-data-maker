@@ -56,9 +56,13 @@ jobs:
     steps:
       # Full history: splitsh-lite walks the prefix's git history to build the
       # standalone tree, so a shallow checkout would split nothing.
+      # persist-credentials: false drops checkout's stored github.com auth header
+      # (the github-actions[bot] token), which otherwise overrides the
+      # PHP_SPLIT_TOKEN embedded in our cross-repo push URL.
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Resolve version from tag or input
         id: ver
