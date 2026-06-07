@@ -43,8 +43,10 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install build + test deps
-        run: pip install build pytest pynacl
+      - name: Install package + build/test deps
+        # Editable install puts the src-layout `datamaker` package on the path
+        # so the tests can import it; .[test] pulls pytest, pynacl is a core dep.
+        run: pip install build && pip install -e ".[test]"
 
       - name: Test
         run: python -m pytest -q

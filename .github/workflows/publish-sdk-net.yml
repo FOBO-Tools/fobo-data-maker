@@ -1,0 +1,77 @@
+name: "Publish: .NET SDK (NuGet)"
+
+# Publishes the DataMaker.Sdk + DataMaker.Sdk.AspNetCore packages to NuGet.org
+# via NuGet Trusted Publishing (OIDC) — no long-lived NUGET_API_KEY. This runs
+# in the PUBLIC mirror (FOBO-Tools/fobo-data-maker); the private monorepo is
+# source-of-truth and syncs here via scripts/sync-public.sh. Publishing from the
+# public repo is what lets NuGet attach signed build provenance.
+#
+# Triggers on a version tag `sdk-net-v*` (or manual dispatch). NuGet rejects
+# re-publishing an existing version, so cut versions deliberately.
+#
+# ONE-TIME nuget.org setup (Trusted Publishing) — do this once PER package, on
+# both `DataMaker.Sdk` and `DataMaker.Sdk.AspNetCore`:
+#   Account → Trusted Publishing → Add:
+#       Package owner      : <your nuget.org account/org that owns the IDs>
+#       Repository owner   : FOBO-Tools
+#       Repository         : fobo-data-maker
+#       Workflow file      : publish-sdk-net.yml
+#       Environment        : (leave blank)
+#   The FIRST publish of a brand-new ID can't use a glob — register the exact
+#   IDs above. Set `user:` below to that nuget.org username.
+#
+# Release flow:
+#   1. bump <Version> in BOTH csprojs (private repo):
+#        DataMaker.Sdk.Net/src/DataMaker.Sdk/DataMaker.Sdk.csproj
+#        DataMaker.Sdk.Net/src/DataMaker.Sdk.AspNetCore/DataMaker.Sdk.AspNetCore.csproj
+#      keep them in lockstep, commit
+#   2. run scripts/sync-public.sh, commit + push in the public repo
+#   3. in the public repo: git tag sdk-net-v<version> && git push --tags
+
+on:
+  push:
+    tags:
+      - "sdk-net-v*"
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: DataMaker.Sdk.Net
+    permissions:
+      contents: read
+      id-token: write   # OIDC for NuGet Trusted Publishing + provenance
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restore
+        run: dotnet restore DataMaker.Sdk.slnx
+
+      - name: Test
+        run: dotnet test DataMaker.Sdk.slnx -c Release --no-restore
+
+      # Test project is IsPackable=false, so only the two src packages emit.
+      # No --no-build: tests may not reference AspNetCore, so let pack build it.
+      - name: Pack
+        run: dotnet pack DataMaker.Sdk.slnx -c Release --no-restore -o dist
+
+      # No token: OIDC authenticates against the configured Trusted Publisher
+      # and writes a short-lived key to NUGET_API_KEY for the push below.
+      - name: NuGet login (Trusted Publishing OIDC)
+        id: login
+        uses: NuGet/login@v1
+        with:
+          user: fobo-tools   # <-- set to your nuget.org username
+
+      - name: Push to NuGet
+        run: >
+          dotnet nuget push "dist/*.nupkg"
+          --api-key ${{ steps.login.outputs.NUGET_API_KEY }}
+          --source https://api.nuget.org/v3/index.json
+          --skip-duplicate
