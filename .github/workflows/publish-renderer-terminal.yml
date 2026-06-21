@@ -40,8 +40,11 @@ jobs:
             os: macos-14
             asset: datamaker-form-osx-arm64
             ext: ""
+          # Cross-compiled on the Apple-Silicon runner: GitHub's macos-13
+          # (Intel) runners are scarce/retiring and queue indefinitely. R2R
+          # arm64->x64 cross-gen is supported in .NET 9, so build osx-x64 here.
           - rid: osx-x64
-            os: macos-13
+            os: macos-14
             asset: datamaker-form-osx-x64
             ext: ""
           - rid: linux-x64
