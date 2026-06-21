@@ -53,7 +53,7 @@ crypto you need:
 ```
 
 The official SDKs ([JS](/fobo-data-maker/sdks/javascript/), [Python](/fobo-data-maker/sdks/python/),
-[.NET](/fobo-data-maker/sdks/dotnet/)) are reference implementations — read their source if you
+[.NET](/fobo-data-maker/sdks/dotnet/), [PHP](/fobo-data-maker/sdks/php/)) are reference implementations — read their source if you
 get stuck.
 
 ## A renderer

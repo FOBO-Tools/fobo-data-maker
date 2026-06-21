@@ -61,7 +61,7 @@ await new DataMakerClient().SubmitAsync(form,
 ```
 
 Full guides: [JavaScript](/fobo-data-maker/sdks/javascript/) · [Python](/fobo-data-maker/sdks/python/) ·
-[.NET](/fobo-data-maker/sdks/dotnet/).
+[.NET](/fobo-data-maker/sdks/dotnet/) · [PHP](/fobo-data-maker/sdks/php/).
 
 ## Render a form
 
