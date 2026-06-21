@@ -23,8 +23,9 @@ global $wpdb;
 
 // Drop the custom forms table. `IF EXISTS` keeps the call idempotent
 // across re-installs and across the multisite per-blog iteration.
-$table = $wpdb->prefix . 'dm_forms';
-$wpdb->query("DROP TABLE IF EXISTS `{$table}`");
+$dm_renderer_table = $wpdb->prefix . 'dm_forms';
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- one-time uninstall DROP of our own custom table; name is a code constant, not user input.
+$wpdb->query("DROP TABLE IF EXISTS `{$dm_renderer_table}`");
 
 // Remove every option the plugin writes. Transients used for rate-
 // limit bucketing are short-lived (90 s) so they evaporate without
@@ -37,11 +38,12 @@ delete_option('dm_renderer_db_version');
 // don't leave thousands of orphan `dm_rl_*` rows in wp_options on a
 // busy site. Wildcards aren't supported by delete_transient, so we
 // SELECT the option_name values matching our prefix and delete each.
-$rl_keys = $wpdb->get_col(
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- one-time uninstall scan of the core options table with a literal LIKE prefix; no user input.
+$dm_renderer_rl_keys = $wpdb->get_col(
     "SELECT option_name FROM {$wpdb->options}
      WHERE option_name LIKE '\\_transient\\_dm\\_rl\\_%'
         OR option_name LIKE '\\_transient\\_timeout\\_dm\\_rl\\_%'"
 );
-foreach ($rl_keys as $opt) {
-    delete_option($opt);
+foreach ($dm_renderer_rl_keys as $dm_renderer_opt) {
+    delete_option($dm_renderer_opt);
 }

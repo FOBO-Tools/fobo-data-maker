@@ -30,6 +30,13 @@
    * against whatever wraps it. */
 }
 
+/* The sheet's padding supplies the top/bottom breathing room. The first/last
+ * child's own margin would stack on top of it — a ~12px gap above the first
+ * row (and below the last) that the Uno designer doesn't have. Collapse them
+ * so every renderer starts content at the same Y. */
+.dm-sheet > :first-child { margin-top: 0; }
+.dm-sheet > :last-child  { margin-bottom: 0; }
+
 /* ── Layout grid (Bootstrap-style 12-column) ───────────────────── */
 .dm-row {
   display: grid;
@@ -221,6 +228,11 @@
 .dm-richtext > *:last-child { margin-bottom: 0; }
 .dm-richtext ul, .dm-richtext ol { padding-left: 20px; }
 
+/* Decorative columns set their own display (block / inline-flex), which
+   outranks the UA [hidden] rule — re-assert display:none so VisibleWhen
+   toggling actually hides them (same fix as .dm-col / .dm-field above). */
+.dm-layout-img[hidden], .dm-spacer[hidden], .dm-richtext[hidden], .dm-btn[hidden] { display: none; }
+
 /* ── Date / datetime picker ───────────────────────────────────── */
 .dm-dt-field {
   position: relative;
@@ -288,6 +300,11 @@
 
 /* ── Schema button structural slots ───────────────────────────── */
 .dm-btn             { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font: inherit; }
+/* Layout-column buttons stretch to fill their column and centre their
+   content — mirrors the Uno designer, whose button Border defaults to
+   HorizontalAlignment.Stretch. Wizard nav buttons (.dm-step-nav) are NOT
+   stamped data-col-kind, so they keep their intrinsic Left/Right size. */
+.dm-btn[data-col-kind="button"] { display: flex; width: 100%; justify-content: center; }
 .dm-btn-img         { height: 16px; width: auto; }
 
 /* ── Submit row alignment (auto-injected when no schema button) ─ */

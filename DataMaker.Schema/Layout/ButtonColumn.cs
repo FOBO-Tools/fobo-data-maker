@@ -111,4 +111,10 @@ public enum ButtonAction
 
     /// <summary>Reset every visible field to its DefaultValue (or empty when no default).</summary>
     Reset   = 3,
+
+    /// <summary>Multi-step wizard: advance to the next step (validating the current step first). No-op on a single-step form.</summary>
+    NextStep = 4,
+
+    /// <summary>Multi-step wizard: go back to the previous step. No-op on the first step / a single-step form.</summary>
+    PrevStep = 5,
 }

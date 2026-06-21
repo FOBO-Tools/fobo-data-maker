@@ -1,0 +1,125 @@
+name: "Publish: WordPress plugin (WP.org SVN)"
+
+# Publishes the Data Maker Forms plugin to the WordPress.org plugin directory.
+# WP.org is NOT a push-button registry like npm/PyPI/Packagist — it is an SVN
+# repo gated behind a one-time human review. This workflow automates the part
+# that CAN be automated (build + SVN deploy on a release tag); the review gate
+# below is manual and only happens once.
+#
+# ── ONE-TIME setup (manual, before this workflow can ever succeed) ──────────
+#   1. Build the submission zip locally:
+#         cd DataMaker.Forms.Renderer.WordPress && make package
+#      (produces dist/datamaker-renderer-<version>.zip)
+#   2. Submit it at https://wordpress.org/plugins/developers/add/ from a
+#      wordpress.org account. A human reviewer checks it (days–weeks). They may
+#      ask for changes — iterate on readme.txt / the plugin and resubmit.
+#   3. On approval you are granted an SVN repo at
+#         https://plugins.svn.wordpress.org/datamaker-renderer/
+#      The slug is assigned at approval; if it is NOT "datamaker-renderer",
+#      update SLUG below to match.
+#   4. Add two secrets to the public repo (FOBO-Tools/fobo-data-maker):
+#         WP_SVN_USERNAME  — your wordpress.org login
+#         WP_SVN_PASSWORD  — your wordpress.org password (or an app password)
+#   5. (Optional) Drop banner/icon/screenshot art in
+#         DataMaker.Forms.Renderer.WordPress/.wordpress-org/
+#      so the deploy also publishes the directory listing assets.
+#
+# ── Release flow (every version after approval) ─────────────────────────────
+#   1. Bump the version in BOTH places (they must match — the deploy action
+#      reads the readme Stable tag and refuses a mismatch):
+#         - datamaker-renderer.php   Version: + DM_RENDERER_VERSION
+#         - readme.txt               Stable tag:
+#   2. Land changes in the private monorepo, run scripts/sync-public.sh, then
+#      commit + push in the public repo.
+#   3. In the public repo: git tag wp-renderer-v<version> && git push --tags
+#
+# The build mirrors `make package`: it minifies the browser assets (Docker is
+# available on the runner, so the Makefile's node:20-alpine step just works),
+# stages the exact shipped file set, and hands that directory to the 10up
+# deploy action, which syncs it to SVN trunk/ and cuts tags/<version>/.
+
+on:
+  push:
+    tags:
+      - "wp-renderer-v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to publish (e.g. 0.1.0), for manual runs"
+        required: true
+
+env:
+  SLUG: "datamaker-renderer"
+  PLUGIN_DIR: "DataMaker.Forms.Renderer.WordPress"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve version from tag or input
+        id: ver
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            # refs/tags/wp-renderer-v0.1.0 -> 0.1.0
+            VERSION="${GITHUB_REF_NAME#wp-renderer-v}"
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Publishing v$VERSION"
+
+      # Guard against a half-bumped release: the plugin header, the readme
+      # Stable tag, and the tag/input must agree, or the live listing would
+      # advertise a version whose code never shipped.
+      - name: Verify version consistency
+        working-directory: ${{ env.PLUGIN_DIR }}
+        run: |
+          set -euo pipefail
+          WANT="${{ steps.ver.outputs.version }}"
+          HDR="$(awk -F"'" '/DM_RENDERER_VERSION/{print $4; exit}' datamaker-renderer.php)"
+          README="$(awk -F': *' '/^Stable tag:/{print $2; exit}' readme.txt | tr -d '[:space:]')"
+          echo "tag/input=$WANT  header=$HDR  readme=$README"
+          if [ "$WANT" != "$HDR" ] || [ "$WANT" != "$README" ]; then
+            echo "::error::version mismatch — header($HDR) / readme($README) must both equal $WANT"
+            exit 1
+          fi
+
+      - name: Lint PHP
+        working-directory: ${{ env.PLUGIN_DIR }}
+        run: make check
+
+      # `make package` minifies assets (Docker on the runner) and writes
+      # dist/datamaker-renderer-<version>.zip with a top-level plugin folder.
+      - name: Build package
+        working-directory: ${{ env.PLUGIN_DIR }}
+        run: make package
+
+      # SVN deploy wants a directory, not a zip. Unpack into build/ and point
+      # the action's BUILD_DIR at the plugin folder inside it.
+      - name: Stage build dir
+        working-directory: ${{ env.PLUGIN_DIR }}
+        run: |
+          set -euo pipefail
+          rm -rf build && mkdir -p build
+          unzip -q "dist/${SLUG}-${{ steps.ver.outputs.version }}.zip" -d build
+          echo "Staged $(ls build)"
+
+      - name: Deploy to WordPress.org
+        uses: 10up/action-wordpress-plugin-deploy@stable
+        with:
+          generate-zip: true
+        env:
+          SVN_USERNAME: ${{ secrets.WP_SVN_USERNAME }}
+          SVN_PASSWORD: ${{ secrets.WP_SVN_PASSWORD }}
+          SLUG: ${{ env.SLUG }}
+          VERSION: ${{ steps.ver.outputs.version }}
+          BUILD_DIR: ${{ env.PLUGIN_DIR }}/build/${{ env.SLUG }}
+          ASSETS_DIR: ${{ env.PLUGIN_DIR }}/.wordpress-org
+
+      - name: Upload built zip as run artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.SLUG }}-${{ steps.ver.outputs.version }}
+          path: ${{ env.PLUGIN_DIR }}/dist/${{ env.SLUG }}-${{ steps.ver.outputs.version }}.zip

@@ -3,6 +3,17 @@ namespace DataMaker\Forms\Renderer\WordPress;
 
 if (!defined('ABSPATH')) exit;
 
+// This class is the plugin's sole data-access layer for the custom
+// `{prefix}_dm_forms` table. Every read/write is inherently a direct DB call;
+// all values go through $wpdb->prepare()/update()/insert()/delete() (auto-
+// escaped), and the only string interpolation is the table name, which is a
+// code constant (self::table()), never user input. Caching is intentionally
+// skipped — these are low-volume admin writes plus one per-render lookup.
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
+// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared
+// phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter
+
 /**
  * Custom WP table holding every uploaded .dmf. Form lookup is by `slug`
  * (admin-chosen) and `form_id` (the .dmf's own id) — the shortcode uses the
@@ -329,3 +340,7 @@ final class FormStore
         return $rows ?: [];
     }
 }
+// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
+// phpcs:enable WordPress.DB.DirectDatabaseQuery.NoCaching
+// phpcs:enable WordPress.DB.PreparedSQL.NotPrepared
+// phpcs:enable PluginCheck.Security.DirectDB.UnescapedDBParameter

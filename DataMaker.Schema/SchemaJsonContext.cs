@@ -3,6 +3,7 @@ using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using DataMaker.Schema.Backups;
 using DataMaker.Schema.Charts;
+using DataMaker.Schema.Coachmarks;
 using DataMaker.Schema.Dashboards;
 using DataMaker.Schema.Fields;
 using DataMaker.Schema.Forms;
@@ -49,6 +50,7 @@ namespace DataMaker.Schema;
 [JsonSerializable(typeof(ButtonColumn))]
 [JsonSerializable(typeof(SpacerColumn))]
 [JsonSerializable(typeof(ButtonDefaults))]
+[JsonSerializable(typeof(StepBarStyle))]
 [JsonSerializable(typeof(Style))]
 [JsonSerializable(typeof(FormStyle))]
 [JsonSerializable(typeof(StylePalette))]
@@ -75,6 +77,7 @@ namespace DataMaker.Schema;
 [JsonSerializable(typeof(CloudBackupQuotaResponse))]
 [JsonSerializable(typeof(CloudBackupDownloadResponse))]
 [JsonSerializable(typeof(AgentSettings))]
+[JsonSerializable(typeof(CoachmarkSettings))]
 [JsonSerializable(typeof(ValidationRule))]
 [JsonSerializable(typeof(Choice))]
 [JsonSerializable(typeof(Geo))]

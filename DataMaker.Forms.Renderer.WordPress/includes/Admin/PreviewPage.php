@@ -35,8 +35,10 @@ final class PreviewPage
     /** Register the frontend `?dm_renderer_preview=…` interception. Wired by the main plugin file on `template_redirect`. */
     public static function maybe_serve_frontend_preview(): void
     {
-        if (!isset($_GET['dm_renderer_preview'])) return;
-        $slug = sanitize_title((string)$_GET['dm_renderer_preview']);
+        // Read-only, capability-gated preview (dm_renderer_user_can_manage()
+        // is enforced below); a GET that changes no state needs no nonce.
+        if (!isset($_GET['dm_renderer_preview'])) return; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only, capability-gated preview.
+        $slug = sanitize_title(wp_unslash($_GET['dm_renderer_preview'])); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only, capability-gated preview.
         if (!$slug) return;
 
         // Preview is admin-only. The earlier "share a link" path used a
@@ -88,13 +90,14 @@ final class PreviewPage
     {
         if (!\dm_renderer_user_can_manage()) return;
 
-        $form_id = isset($_GET['form_id']) ? (int)$_GET['form_id'] : 0;
+        $form_id = isset($_GET['form_id']) ? (int) $_GET['form_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only admin display gated by dm_renderer_user_can_manage().
         if ($form_id <= 0) {
             echo '<div class="wrap"><h1>' . esc_html__('Form preview', 'datamaker-renderer') . '</h1><p>' . esc_html__('Missing or invalid form id.', 'datamaker-renderer') . '</p></div>';
             return;
         }
 
         global $wpdb;
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- custom plugin table; id is placeholdered via prepare(), table name is a code constant, single admin read.
         $row = $wpdb->get_row($wpdb->prepare("SELECT * FROM " . FormStore::table() . " WHERE id = %d", $form_id), ARRAY_A);
         if (!$row) {
             echo '<div class="wrap"><h1>' . esc_html__('Form preview', 'datamaker-renderer') . '</h1><p>' . esc_html__('Form not found.', 'datamaker-renderer') . '</p></div>';

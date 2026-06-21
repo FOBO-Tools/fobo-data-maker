@@ -33,6 +33,8 @@ public static class FieldTypeRegistry
         Register(new(FieldTypes.Relation,    "Relation",        typeof(string),                 "TEXT"));
         Register(new(FieldTypes.Image,       "Image",           typeof(ImageRef?),              "TEXT"));
         Register(new(FieldTypes.Attachment,  "Attachment",      typeof(AttachmentRef?),         "TEXT"));
+        Register(new(FieldTypes.Signature,   "Signature",       typeof(SignatureRef?),          "TEXT"));
+        Register(new(FieldTypes.Initials,    "Initials",        typeof(SignatureRef?),          "TEXT"));
         Register(new(FieldTypes.Choice,      "Choice",          typeof(string),                 "TEXT"));
         Register(new(FieldTypes.Date,        "Date",            typeof(string),                 "TEXT"));
         Register(new(FieldTypes.DateTime,    "Date & time",     typeof(string),                 "TEXT"));
@@ -42,6 +44,7 @@ public static class FieldTypeRegistry
         Register(new(FieldTypes.Decimal,     "Decimal",         typeof(decimal?),               "NUMERIC"));
         Register(new(FieldTypes.Money,       "Money",           typeof(decimal?),               "NUMERIC"));
         Register(new(FieldTypes.Boolean,     "Yes / no",        typeof(bool?),                  "INTEGER"));
+        Register(new(FieldTypes.Scale,       "Scale / rating",  typeof(long?),                  "INTEGER"));
 
         // collections — stored as JSON string arrays in the value column.
         Register(new(FieldTypes.MultiChoice, "Multi-choice",    typeof(IReadOnlyList<string>),  "TEXT"));

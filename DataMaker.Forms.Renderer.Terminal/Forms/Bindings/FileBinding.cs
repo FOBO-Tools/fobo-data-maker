@@ -162,7 +162,7 @@ internal sealed class FileBinding : FieldBinding
         }
     }
 
-    private static async Task<UploadSlotResponse?> PostUploadSlotAsync(
+    internal static async Task<UploadSlotResponse?> PostUploadSlotAsync(
         UploadContext ctx, string hash, string? mime, long size)
     {
         var req = new UploadSlotRequest(ctx.RecipientUserId, hash, mime, size);
@@ -200,7 +200,7 @@ internal sealed class FileBinding : FieldBinding
         _                                                           => "(no file)",
     };
 
-    private static string ComputeSha256Hex(byte[] bytes)
+    internal static string ComputeSha256Hex(byte[] bytes)
     {
         var hash = SHA256.HashData(bytes);
         var sb = new System.Text.StringBuilder(64);
@@ -208,7 +208,7 @@ internal sealed class FileBinding : FieldBinding
         return sb.ToString();
     }
 
-    private static string? GuessMime(string path) => Path.GetExtension(path).ToLowerInvariant() switch
+    internal static string? GuessMime(string path) => Path.GetExtension(path).ToLowerInvariant() switch
     {
         ".png"  => "image/png",
         ".jpg" or ".jpeg" => "image/jpeg",
@@ -223,7 +223,7 @@ internal sealed class FileBinding : FieldBinding
         _       => "application/octet-stream",
     };
 
-    private static string FormatBytes(long b) => b switch
+    internal static string FormatBytes(long b) => b switch
     {
         < 1024            => $"{b} B",
         < 1024L * 1024    => $"{b / 1024.0:0.#} KB",

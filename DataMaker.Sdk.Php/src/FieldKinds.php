@@ -19,7 +19,8 @@ final class FieldKinds
         'DATE' => 'date', 'DATETIME' => 'datetime', 'BOOLEAN' => 'boolean',
         'CHOICE' => 'choice', 'MULTI_CHOICE' => 'multi-choice', 'LIST' => 'list',
         'EMAIL' => 'email', 'PHONE' => 'phone', 'URL' => 'url', 'GEO' => 'geo',
-        'IMAGE' => 'image', 'ATTACHMENT' => 'attachment', 'RELATION' => 'relation',
+        'IMAGE' => 'image', 'ATTACHMENT' => 'attachment',
+        'SIGNATURE' => 'signature', 'INITIALS' => 'initials', 'RELATION' => 'relation',
     ];
 
     private const ALIASES = [
@@ -28,7 +29,7 @@ final class FieldKinds
     ];
 
     /** Kinds in fields[] that never accept a submitted value. */
-    public const NON_INPUT_KINDS = ['calc', 'calculated', 'heading', 'signature'];
+    public const NON_INPUT_KINDS = ['calc', 'calculated', 'heading'];
 
     private const TRUE_WORDS  = ['true', '1', 'yes', 'y', 'on'];
     private const FALSE_WORDS = ['false', '0', 'no', 'n', 'off'];

@@ -362,14 +362,14 @@ final class SubmitProxy
      * Default: empty array — always use REMOTE_ADDR, never trust headers.
      */
     private static function client_ip(): string {
-        $remote = (string)($_SERVER['REMOTE_ADDR'] ?? '0.0.0.0');
+        $remote = isset($_SERVER['REMOTE_ADDR']) ? sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'])) : '0.0.0.0';
         $trusted = (array)apply_filters('dm_renderer_trusted_proxies', []);
         if (!self::peer_is_trusted_proxy($remote, $trusted)) {
             return $remote;
         }
         foreach (['HTTP_CF_CONNECTING_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_REAL_IP'] as $h) {
             if (!empty($_SERVER[$h])) {
-                $candidate = trim(explode(',', (string)$_SERVER[$h])[0]);
+                $candidate = trim(explode(',', sanitize_text_field(wp_unslash($_SERVER[$h])))[0]);
                 if (filter_var($candidate, FILTER_VALIDATE_IP)) return $candidate;
             }
         }

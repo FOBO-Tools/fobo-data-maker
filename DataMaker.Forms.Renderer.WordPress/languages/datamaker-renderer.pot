@@ -973,3 +973,15 @@ msgstr ""
 #: assets/block.js:90
 msgid "Pick a form from the sidebar."
 msgstr ""
+
+#: includes/Shortcode.php
+msgid "Back"
+msgstr ""
+
+#: includes/Shortcode.php
+msgid "Next"
+msgstr ""
+
+#: includes/Shortcode.php
+msgid "Please complete the required fields on this step."
+msgstr ""

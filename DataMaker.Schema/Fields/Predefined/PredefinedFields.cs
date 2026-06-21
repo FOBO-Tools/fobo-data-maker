@@ -108,9 +108,15 @@ public static class PredefinedFields
                 new[] { "draft", "active", "archived" }, new[] { "Draft", "Active", "Archived" })),
 
         // ── Ratings ───────────────────────────────────────────────
-        new("star_rating", "Ratings", "Star rating (1–5)", "Integer rating from 1 to 5.", "",
-            names => Integer("star_rating", "Star rating", "Integer rating from 1 to 5.", names,
-                min: 1, max: 5)),
+        new("star_rating", "Ratings", "Star rating (1–5)", "Tap a star — fills up to your pick.", "",
+            names => Scale("star_rating", "Star rating", "Rate from 1 to 5 stars.", names,
+                1, 5, null, null, DataMaker.Schema.Styling.StepFigureShape.Star, cumulative: true)),
+        new("likert_5", "Ratings", "Likert (1–5)", "Agree → disagree 5-point scale.", "",
+            names => Scale("likert", "Likert scale", "Strongly disagree to strongly agree.", names,
+                1, 5, "Strongly disagree", "Strongly agree", DataMaker.Schema.Styling.StepFigureShape.Circle, cumulative: false)),
+        new("nps", "Ratings", "NPS (0–10)", "Net Promoter Score — 0 to 10.", "",
+            names => Scale("nps", "Recommendation", "How likely are you to recommend us (0–10)?", names,
+                0, 10, "Not at all likely", "Extremely likely", DataMaker.Schema.Styling.StepFigureShape.Circle, cumulative: false)),
 
         // ── Media ─────────────────────────────────────────────────
         new("profile_photo", "Media", "Profile photo", "Image upload (jpg/png/webp).", "",
@@ -123,6 +129,12 @@ public static class PredefinedFields
         // ── Location ──────────────────────────────────────────────
         new("location", "Location", "GPS location", "Latitude/longitude point.", "",
             names => Typed(FieldTypes.Geo, "location", "Location", "Latitude/longitude point.", names)),
+
+        // ── Signing ───────────────────────────────────────────────
+        new("signature", "Signing", "Signature", "Hand-drawn signature.", "",
+            names => Typed(FieldTypes.Signature, "signature", "Signature", "Sign here.", names)),
+        new("initials_drawn",  "Signing", "Initials",  "Hand-drawn initials (paraaf).", "",
+            names => Typed(FieldTypes.Initials, "initials", "Initials", "Your initials.", names)),
     };
 
     // ── Factories ───────────────────────────────────────────────────
@@ -280,6 +292,24 @@ public static class PredefinedFields
         {
             Choices = values.Zip(labels, (v, l) => new Choice { Value = v, Label = l }).ToList(),
             AllowCustom = allowCustom,
+        },
+    };
+
+    private static FieldDefinition Scale(
+        string baseName, string label, string desc,
+        IReadOnlyCollection<string> existing,
+        int min, int max, string? minLabel, string? maxLabel,
+        DataMaker.Schema.Styling.StepFigureShape shape, bool cumulative) => new()
+    {
+        Id = Guid.NewGuid().ToString("n"),
+        Name = UniqueName(baseName, existing),
+        Label = label,
+        Description = desc,
+        Kind = FieldTypes.Scale,
+        Scale = new ScaleOptions
+        {
+            Min = min, Max = max, MinLabel = minLabel, MaxLabel = maxLabel,
+            Shape = shape, Cumulative = cumulative,
         },
     };
 

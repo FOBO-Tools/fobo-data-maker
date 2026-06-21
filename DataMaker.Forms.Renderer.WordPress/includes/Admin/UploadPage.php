@@ -103,7 +103,18 @@ final class UploadPage
 
     private static function handle_upload(): array
     {
-        if (empty($_FILES['dmf_file']['tmp_name']) || !is_uploaded_file($_FILES['dmf_file']['tmp_name'])) {
+        // Re-assert the upload nonce in this scope. render() already verified
+        // it before calling, but checking here too keeps the guarantee local
+        // to every $_POST / $_FILES read below (and satisfies static analysis).
+        if (empty($_POST['dm_upload_nonce'])
+            || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['dm_upload_nonce'])), 'dm_upload')) {
+            return ['kind' => 'error', 'html' => esc_html__('Security check failed. Please try again.', 'datamaker-renderer')];
+        }
+
+        $tmp_name = isset($_FILES['dmf_file']['tmp_name'])
+            ? sanitize_text_field(wp_unslash($_FILES['dmf_file']['tmp_name']))
+            : '';
+        if ($tmp_name === '' || !is_uploaded_file($tmp_name)) {
             return ['kind' => 'error', 'html' => esc_html__('No file uploaded.', 'datamaker-renderer')];
         }
         $slug = isset($_POST['slug']) ? sanitize_title(wp_unslash($_POST['slug'])) : '';
@@ -112,7 +123,7 @@ final class UploadPage
         }
 
         $max_bytes = (int)apply_filters('dm_renderer_max_dmf_bytes', self::MAX_DMF_BYTES_DEFAULT);
-        $file_size = (int)($_FILES['dmf_file']['size'] ?? 0);
+        $file_size = isset($_FILES['dmf_file']['size']) ? (int) $_FILES['dmf_file']['size'] : 0;
         if ($max_bytes > 0 && $file_size > $max_bytes) {
             return [
                 'kind' => 'error',
@@ -124,7 +135,7 @@ final class UploadPage
             ];
         }
 
-        $bytes = file_get_contents($_FILES['dmf_file']['tmp_name']);
+        $bytes = file_get_contents($tmp_name);
         if ($bytes === false) {
             return ['kind' => 'error', 'html' => esc_html__('Could not read the uploaded file.', 'datamaker-renderer')];
         }
@@ -138,8 +149,10 @@ final class UploadPage
         } catch (\Throwable $e) {
             // Generic message — exception text can leak internal file
             // paths from the ZipArchive layer. The full reason is logged
-            // server-side for the admin to inspect via error_log.
-            error_log('[datamaker-renderer] .dmf parse failed: ' . $e->getMessage());
+            // server-side (only when WP_DEBUG is on) for the admin to inspect.
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('[datamaker-renderer] .dmf parse failed: ' . $e->getMessage()); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- gated behind WP_DEBUG; diagnostic for the admin upload flow.
+            }
             return ['kind' => 'error', 'html' => esc_html__('Could not parse the .dmf bundle (signature, format, or signing-key mismatch).', 'datamaker-renderer')];
         }
 

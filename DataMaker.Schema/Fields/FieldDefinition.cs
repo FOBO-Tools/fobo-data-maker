@@ -109,6 +109,7 @@ public sealed record FieldDefinition
     public NumberOptions?     Number     { get; init; }
     public MoneyOptions?      Money      { get; init; }
     public ChoiceOptions?     Choice     { get; init; }
+    public ScaleOptions?      Scale      { get; init; }
     public RelationOptions?   Relation   { get; init; }
     public AttachmentOptions? Attachment { get; init; }
     public DateOptions?       Date       { get; init; }

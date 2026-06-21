@@ -29,6 +29,8 @@ KINDS = {
     "GEO": "geo",
     "IMAGE": "image",
     "ATTACHMENT": "attachment",
+    "SIGNATURE": "signature",
+    "INITIALS": "initials",
     "RELATION": "relation",
 }
 ALL_KINDS = set(KINDS.values())
@@ -41,7 +43,7 @@ _ALIASES = {
 }
 
 # Kinds in fields[] that never accept a submitted value.
-NON_INPUT_KINDS = {"calc", "calculated", "heading", "signature"}
+NON_INPUT_KINDS = {"calc", "calculated", "heading"}
 
 _TRUE = {"true", "1", "yes", "y", "on"}
 _FALSE = {"false", "0", "no", "n", "off"}

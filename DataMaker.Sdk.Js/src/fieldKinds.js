@@ -27,6 +27,8 @@ const KINDS = {
   GEO: 'geo',
   IMAGE: 'image',
   ATTACHMENT: 'attachment',
+  SIGNATURE: 'signature',
+  INITIALS: 'initials',
   RELATION: 'relation',
 };
 
@@ -41,15 +43,16 @@ const ALIASES = {
 };
 
 // Kinds carried in form.fields[] that never accept a submitted value:
-// calculated fields are server/derived, signatures aren't wired into the
-// submission pipeline yet, headings are layout-only.
-const NON_INPUT_KINDS = new Set(['calc', 'calculated', 'heading', 'signature']);
+// calculated fields are server/derived, headings are layout-only.
+const NON_INPUT_KINDS = new Set(['calc', 'calculated', 'heading']);
 
 // Composite kinds the SDK passes through verbatim (caller must supply the
 // already-built ref/object). File upload helpers are out of scope for v1.
 const PASSTHROUGH_KINDS = new Set([
   KINDS.IMAGE,
   KINDS.ATTACHMENT,
+  KINDS.SIGNATURE,
+  KINDS.INITIALS,
   KINDS.GEO,
   KINDS.RELATION,
   KINDS.LIST,

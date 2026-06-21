@@ -1,0 +1,108 @@
+---
+title: Host on your own website
+description: Put a DataMaker form on a site you control — the WordPress plugin, an embed on any page, or a plugin for your own CMS. Submissions stay end-to-end encrypted.
+---
+
+You designed the form in DataMaker — now show it on a site **you** control. Every
+option below renders the same `.dmf` bundle and keeps submissions
+**end-to-end encrypted**: values are sealed in the visitor's browser against the
+form's recipient key, so your web host (and ours) only ever routes ciphertext.
+
+Pick the path that matches your stack.
+
+<div class="fobo-grid not-content">
+  <div class="fobo-card">
+    <i class="fa-brands fa-wordpress"></i>
+    <h3>On WordPress</h3>
+    <p>Install the <strong>Data Maker Renderer</strong> plugin, upload your <code>.dmf</code>, and drop a shortcode or block. No code.</p>
+  </div>
+  <div class="fobo-card">
+    <i class="fa-solid fa-code"></i>
+    <h3>On any website</h3>
+    <p>Embed the JS (or pixel-perfect Wasm) renderer on any page, or use the ASP.NET Core tag helper if you host on .NET.</p>
+  </div>
+  <div class="fobo-card">
+    <i class="fa-solid fa-puzzle-piece"></i>
+    <h3>On another CMS</h3>
+    <p>No plugin for your platform yet? Hand the embed to your developer, or ask us to build a plugin for your CMS.</p>
+  </div>
+</div>
+
+## On WordPress
+
+The **Data Maker Renderer** plugin is the no-code path. Upload a signed `.dmf`,
+place a shortcode or block, and the form renders with full validation, calculated
+fields, and conditional visibility — submissions seal in the browser.
+
+```text
+[datamaker_form id="contact_form"]
+```
+
+→ **[WordPress plugin guide](/fobo-data-maker/renderers/wordpress/)** — install,
+shortcode/block, theming, and permissions.
+
+## On any website
+
+Render the form on any page by dropping in the JS renderer and wiring submit.
+End-to-end encryption happens client-side; your server never sees plaintext.
+
+```html
+<div id="form-root"></div>
+<script type="application/json" id="form-bundle">
+  /* { form, compiled, elementCss, paletteCss } — your .dmf v3 bundle */
+</script>
+<script>
+  window.DataMakerConfig = {
+    encrypt: 'client',
+    recipientPublicKey: '<base64 from manifest.recipient.publicKey>',
+  };
+</script>
+<script src="datamaker.browser.js"></script>
+<script src="dm-submit.js"></script>
+<script src="renderer.js"></script>
+```
+
+→ **[Web embed guide](/fobo-data-maker/renderers/web-embed/)** — client- vs
+server-side encryption, the pixel-perfect Wasm renderer, and light/dark theming.
+
+If your form uses an advanced layout that the JS renderer doesn't reproduce
+exactly, switch to the **Wasm renderer** (`renderer: 'wasm'`) for a
+pixel-for-pixel match — covered in the same guide.
+
+### Hosting on .NET
+
+The `DataMaker.Sdk.AspNetCore` tag helper does the whole embed from a `.dmf`
+path:
+
+```cshtml
+<datamaker-form dmf-path="forms/contact.dmf" encrypt="client" />
+```
+
+→ **[.NET SDK](/fobo-data-maker/sdks/dotnet/)**
+
+## On another CMS
+
+There's no drop-in plugin for every platform yet — but two paths cover the rest:
+
+- **Hand it to your developer.** The embed above is plain JS and works on any
+  CMS that lets you add a script + a container element (Webflow, Ghost, Drupal,
+  Squarespace code blocks, a static site, …). Point them at the
+  [web embed guide](/fobo-data-maker/renderers/web-embed/) and the
+  [schema reference](/fobo-data-maker/schema/form-model/).
+- **Build a client or renderer from scratch.** The `.dmf` format, the submission
+  wire contract, and the full form schema are documented end to end →
+  [build your own](/fobo-data-maker/build-your-own/).
+
+Prefer a first-class plugin for your CMS?
+**[Ask FOBO for a plugin](https://github.com/FOBO-Tools/fobo-data-maker/issues/new?title=CMS%20plugin%20request:%20%3Cyour%20platform%3E&body=Which%20CMS%2Fplatform%20do%20you%20need%20a%20Data%20Maker%20plugin%20for%3F)**
+— open a request and tell us which platform you're on.
+
+## Submit from code
+
+Already have somewhere to render and just need to send records? Read the `.dmf`,
+validate, seal, and post with an SDK in your language:
+
+- [JavaScript / Node](/fobo-data-maker/sdks/javascript/)
+- [Python](/fobo-data-maker/sdks/python/)
+- [.NET](/fobo-data-maker/sdks/dotnet/)
+- [PHP](/fobo-data-maker/sdks/php/)

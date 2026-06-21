@@ -169,9 +169,22 @@ public sealed record ImageColumn : Column
     /// <summary>Cap on rendered height in pixels. Null = render at natural height up to the column's width.</summary>
     public int? MaxHeight { get; init; }
 
+    /// <summary>Cap on rendered width in pixels. Null = fill the column's grid span.</summary>
+    public int? MaxWidth { get; init; }
+
+    /// <summary>
+    /// Horizontal placement inside the column when the image is narrower than
+    /// the column (i.e. <see cref="MaxWidth"/> is set). Default fills the column.
+    /// </summary>
+    public ImageAlign Align { get; init; } = ImageAlign.Fill;
+
     /// <summary>Block-level style overrides. Null = inherit.</summary>
     public Style? Style { get; init; }
 }
+
+/// <summary>Horizontal placement of an <see cref="ImageColumn"/> within its grid slot.</summary>
+[JsonConverter(typeof(JsonStringEnumConverter<ImageAlign>))]
+public enum ImageAlign { Fill, Left, Center, Right }
 
 /// <summary>
 /// Decorative horizontal-rule / divider in the layout. NOT a field —

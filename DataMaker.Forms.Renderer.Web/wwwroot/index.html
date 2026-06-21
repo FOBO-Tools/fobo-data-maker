@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0e1520">
+  <link rel="icon" type="image/png" href="__FAVICON__">
   <title>__TITLE__</title>
   <!-- Inline html/body background paint before the main stylesheet parses,
        so the WebView2 doesn't flash its default white between document load
@@ -24,13 +25,6 @@
   <style>__FONTS_CSS__</style>
 </head>
 <body style="background-color:#0e1520">
-  <header class="dm-page-chrome">
-    <!-- The DataMaker app is always Dark, so the WebForm preview boots in
-         Dark too. The toggle (sun → switch to light) lets the designer
-         simulate the alternate recipient view. -->
-    <button id="theme-toggle" type="button" aria-label="Toggle theme">&#xf185;</button>
-  </header>
-
   <main id="form-root" class="dm-sheet">
     <p class="dm-boot-fallback" style="color:#888">Loading form…</p>
   </main>
@@ -48,6 +42,6 @@
   <script>__FN_JS__</script>
 
   <!-- Renderer — DOM construction, value tracking, eval application. -->
-  <script>__RENDERER_JS__</script>
+  <script id="dm-renderer">__RENDERER_JS__</script>
 </body>
 </html>

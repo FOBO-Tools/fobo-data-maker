@@ -6,7 +6,7 @@ export type FieldKind =
   | 'date' | 'datetime' | 'boolean'
   | 'choice' | 'multi-choice' | 'list'
   | 'email' | 'phone' | 'url' | 'geo'
-  | 'image' | 'attachment' | 'relation'
+  | 'image' | 'attachment' | 'signature' | 'initials' | 'relation'
   | (string & {});
 
 export interface ChoiceOption {

@@ -28,6 +28,63 @@ public sealed record ChoiceOptions
     public bool AllowCustom { get; init; }
 }
 
+/// <summary>
+/// Settings for a <c>scale</c> field — a single-pick rating / Likert / NPS
+/// question rendered as a horizontal row of figures (reusing the step bar's
+/// <see cref="DataMaker.Schema.Styling.StepFigureShape"/> so the two share one
+/// visual language). The stored value is the chosen integer point (e.g. 4 on a
+/// 1–5 scale); validation treats it like a number, so it's usable in
+/// expressions and aggregations.
+/// </summary>
+public sealed record ScaleOptions
+{
+    /// <summary>Lowest point. 1 for a Likert scale, 0 for NPS.</summary>
+    public int Min { get; init; } = 1;
+
+    /// <summary>Highest point. 5 for a Likert scale, 10 for NPS. Clamped to ≥ Min + 1 at render.</summary>
+    public int Max { get; init; } = 5;
+
+    /// <summary>Anchor label under the lowest point (e.g. "Strongly disagree"). Null = none.</summary>
+    public string? MinLabel { get; init; }
+
+    /// <summary>Anchor label under the highest point (e.g. "Strongly agree"). Null = none.</summary>
+    public string? MaxLabel { get; init; }
+
+    /// <summary>Figure drawn for each point — shared with the wizard step bar (Circle / Square / Rounded / Diamond / Star).</summary>
+    public DataMaker.Schema.Styling.StepFigureShape Shape { get; init; } = DataMaker.Schema.Styling.StepFigureShape.Circle;
+
+    /// <summary>
+    /// True = fill every point up to and including the selection (a star-rating
+    /// feel). False = highlight only the selected point (a Likert radio feel).
+    /// </summary>
+    public bool Cumulative { get; init; }
+
+    /// <summary>Fill colour (hex) of the selected / highlighted point(s). Null = the form's accent colour.</summary>
+    public string? HighlightColor { get; init; }
+
+    /// <summary>Outline / fill colour (hex) of the un-selected points. Null = the form's muted-ink colour.</summary>
+    public string? UnselectedColor { get; init; }
+
+    /// <summary>Colour (hex) of the field's own label — independent of the figure colours. Null = the form's ink colour.</summary>
+    public string? LabelColor { get; init; }
+
+    /// <summary>Colour (hex) of the low-end (Min) anchor label. Null = the form's muted-ink colour.</summary>
+    public string? MinLabelColor { get; init; }
+
+    /// <summary>Colour (hex) of the high-end (Max) anchor label. Null = the form's muted-ink colour.</summary>
+    public string? MaxLabelColor { get; init; }
+
+    /// <summary>Horizontal placement of the point row within the field. Null = Left.</summary>
+    public ScaleAlignment? Alignment { get; init; }
+
+    /// <summary>Gap (px) between points. Null = renderer default (~6).</summary>
+    public double? Spacing { get; init; }
+}
+
+/// <summary>Horizontal placement of a <see cref="ScaleOptions"/> point row.</summary>
+[System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter<ScaleAlignment>))]
+public enum ScaleAlignment { Left, Center, Right }
+
 public sealed record RelationOptions
 {
     /// <summary>Id of the target Form whose records this field references.</summary>

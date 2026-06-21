@@ -99,6 +99,11 @@ final class Shortcode
         // the widget mounts via explicit class="cf-turnstile" so we don't
         // need a JS callback wire-up. Only enqueued by render() when a
         // form actually requires Turnstile (saves a request for plain forms).
+        // The script MUST load from Cloudflare's origin — it's a remote CAPTCHA
+        // service that can't be bundled — so it's exempt from the bundle-locally
+        // rule. Version is null on purpose: Cloudflare versions the endpoint
+        // itself (/v0/) and rejects an appended ?ver= query.
+        // phpcs:disable PluginCheck.CodeAnalysis.EnqueuedResourceOffloading.OffloadedContent, WordPress.WP.EnqueuedResourceParameters.MissingVersion -- third-party CAPTCHA service; must load from challenges.cloudflare.com, versioned by Cloudflare (an appended ?ver= is rejected).
         wp_register_script(
             'datamaker-renderer-turnstile',
             'https://challenges.cloudflare.com/turnstile/v0/api.js',
@@ -106,6 +111,7 @@ final class Shortcode
             null,
             ['in_footer' => false, 'strategy' => 'defer']
         );
+        // phpcs:enable PluginCheck.CodeAnalysis.EnqueuedResourceOffloading.OffloadedContent, WordPress.WP.EnqueuedResourceParameters.MissingVersion
     }
 
     public static function render($atts): string
@@ -418,6 +424,9 @@ final class Shortcode
         return apply_filters('dm_renderer_i18n', [
             // Renderer.js
             'submit'                    => __('Submit',                                                       'datamaker-renderer'),
+            'step_back'                 => __('Back',                                                         'datamaker-renderer'),
+            'step_next'                 => __('Next',                                                         'datamaker-renderer'),
+            'please_fix_step'           => __('Please complete the required fields on this step.',            'datamaker-renderer'),
             'preview'                   => __('Preview',                                                      'datamaker-renderer'),
             'edit'                      => __('Edit',                                                         'datamaker-renderer'),
             'no_items'                  => __('No items',                                                     'datamaker-renderer'),
@@ -426,6 +435,16 @@ final class Shortcode
             'no_file_selected'          => __('No file selected',                                             'datamaker-renderer'),
             'browse'                    => __('Browse…',                                                      'datamaker-renderer'),
             'clear'                     => __('Clear',                                                        'datamaker-renderer'),
+            'uploading'                 => __('Uploading…',                                                   'datamaker-renderer'),
+            'upload_failed'             => __('Upload failed — try again',                                    'datamaker-renderer'),
+            'still_uploading'           => __('Still uploading attachments — try again in a moment.',         'datamaker-renderer'),
+            'geo_address_placeholder'   => __('Type an address…',                                             'datamaker-renderer'),
+            // Signature / initials pad
+            'sign_here'                 => __('Sign here',                                                    'datamaker-renderer'),
+            'initials_here'             => __('Initials',                                                     'datamaker-renderer'),
+            'printed_name'              => __('Printed name',                                                 'datamaker-renderer'),
+            'signed'                    => __('Signed',                                                       'datamaker-renderer'),
+            'clear_signature'           => __('Clear signature',                                              'datamaker-renderer'),
             'please_fix_highlighted'    => __('Please fix the highlighted fields.',                           'datamaker-renderer'),
             'validation_banner_default' => __('Please fix the highlighted fields before submitting.',         'datamaker-renderer'),
             // wp-bridge.js

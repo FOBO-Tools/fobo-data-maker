@@ -39,13 +39,13 @@ final class DmfReader
             throw new \RuntimeException('Could not allocate temp file for .dmf parse.');
         }
         if (file_put_contents($tmp, $zip_bytes) === false) {
-            @unlink($tmp);
+            wp_delete_file($tmp);
             throw new \RuntimeException('Could not write .dmf to temp file.');
         }
 
         $zip = new \ZipArchive();
         if ($zip->open($tmp) !== true) {
-            @unlink($tmp);
+            wp_delete_file($tmp);
             throw new \RuntimeException('File is not a valid zip archive — is this really a .dmf?');
         }
 
@@ -62,7 +62,7 @@ final class DmfReader
             if ($envelope_version !== self::ENVELOPE_VERSION) {
                 throw new \RuntimeException(sprintf(
                     'Unsupported envelope version %s; this plugin understands v%d.',
-                    var_export($envelope_version, true), self::ENVELOPE_VERSION
+                    wp_json_encode($envelope_version), self::ENVELOPE_VERSION
                 ));
             }
 
@@ -157,7 +157,7 @@ final class DmfReader
             ];
         } finally {
             $zip->close();
-            @unlink($tmp);
+            wp_delete_file($tmp);
         }
     }
 
@@ -280,14 +280,14 @@ final class DmfReader
         // which keeps the original "missing required entry" error.
         $stat = $zip->statName($path);
         if ($stat === false) {
-            throw new \RuntimeException("Bundle is missing required entry '{$path}'.");
+            throw new \RuntimeException("Bundle is missing required entry '" . esc_html($path) . "'.");
         }
         if (isset($stat['size']) && (int)$stat['size'] > self::MAX_ENTRY_BYTES) {
-            throw new \RuntimeException("Entry '{$path}' exceeds the maximum allowed size.");
+            throw new \RuntimeException("Entry '" . esc_html($path) . "' exceeds the maximum allowed size.");
         }
         $bytes = $zip->getFromName($path);
         if ($bytes === false) {
-            throw new \RuntimeException("Bundle is missing required entry '{$path}'.");
+            throw new \RuntimeException("Bundle is missing required entry '" . esc_html($path) . "'.");
         }
         return $bytes;
     }

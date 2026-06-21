@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace DataMaker.Schema.Styling;
 
 /// <summary>
@@ -74,6 +76,14 @@ public sealed record FormStyle : Style
     public ButtonDefaults? SecondaryButtonDefaults { get; init; }
     public ButtonDefaults? SubtleButtonDefaults    { get; init; }
 
+    // ── Step bar (multi-step wizard) ──
+    //
+    // Visual styling for the numbered step bar a multi-step form renders —
+    // position (top / bottom), badge figure shape, colors, font. Null = use the
+    // palette/theme defaults (accent fill for current + completed badges, muted
+    // outline for upcoming, ink labels). Ignored by single-step forms.
+    public StepBarStyle? StepBar { get; init; }
+
     /// <summary>
     /// Project this form-level style down to a per-element <see cref="Style"/>
     /// carrying ONLY the properties that should cascade — typography + text
@@ -94,6 +104,59 @@ public sealed record FormStyle : Style
         LetterSpacing = LetterSpacing,
     };
 }
+
+/// <summary>
+/// Visual styling for the multi-step wizard's numbered step bar. Every member is
+/// an optional override on top of the palette/theme defaults — null means "use
+/// the renderer default" (current/completed = accent fill, upcoming = muted
+/// outline, labels in ink). Lives on <see cref="FormStyle.StepBar"/>.
+/// </summary>
+public sealed record StepBarStyle
+{
+    /// <summary>Where the bar renders relative to the step content. Null = Top.</summary>
+    public StepBarPosition? Position { get; init; }
+
+    /// <summary>Badge shape around each step number. Null = Circle.</summary>
+    public StepFigureShape? Shape { get; init; }
+
+    /// <summary>Fill for the current + completed badges. Null = palette accent.</summary>
+    public string? ActiveColor { get; init; }
+
+    /// <summary>Outline + text for upcoming badges/labels. Null = palette muted ink.</summary>
+    public string? InactiveColor { get; init; }
+
+    /// <summary>Connector line color. Null = falls back to InactiveColor / muted ink.</summary>
+    public string? ConnectorColor { get; init; }
+
+    /// <summary>Active step's label text color. Null = palette ink.</summary>
+    public string? LabelColor { get; init; }
+
+    /// <summary>Label + number font family. Null = inherit the form font.</summary>
+    public string? FontFamily { get; init; }
+
+    /// <summary>Label font size in px. Null = renderer default.</summary>
+    public double? FontSize { get; init; }
+
+    /// <summary>Gap (px) between the bar and the step content. Null = renderer default (~4).</summary>
+    public double? Margin { get; init; }
+
+    /// <summary>Render the step bar at all. Null = true; false hides it entirely (steps still navigate via Back/Next).</summary>
+    public bool? ShowBar { get; init; }
+
+    /// <summary>Draw connector lines between badges. Null = true.</summary>
+    public bool? ShowConnectors { get; init; }
+
+    /// <summary>Show step titles next to badges. Null = true (false = badges only).</summary>
+    public bool? ShowLabels { get; init; }
+}
+
+/// <summary>Where the wizard step bar sits relative to the active step's content.</summary>
+[JsonConverter(typeof(JsonStringEnumConverter<StepBarPosition>))]
+public enum StepBarPosition { Top, Bottom }
+
+/// <summary>Figure drawn around each step number on the wizard step bar.</summary>
+[JsonConverter(typeof(JsonStringEnumConverter<StepFigureShape>))]
+public enum StepFigureShape { Circle, Square, Rounded, Diamond, Star }
 
 /// <summary>
 /// Color palette for one mode (light or dark). Hex strings so the JSON stays

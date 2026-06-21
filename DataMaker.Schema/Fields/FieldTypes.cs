@@ -29,6 +29,7 @@ public static class FieldTypes
     public const string Date        = "date";
     public const string DateTime    = "datetime";
     public const string Boolean     = "boolean";
+    public const string Scale       = "scale";
     public const string Choice      = "choice";
     public const string MultiChoice = "multi-choice";
     public const string List        = "list";
@@ -38,5 +39,7 @@ public static class FieldTypes
     public const string Geo         = "geo";
     public const string Image       = "image";
     public const string Attachment  = "attachment";
+    public const string Signature   = "signature";
+    public const string Initials    = "initials";
     public const string Relation    = "relation";
 }

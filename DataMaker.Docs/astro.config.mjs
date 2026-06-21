@@ -40,11 +40,13 @@ export default defineConfig({
           { label: 'PHP', link: '/sdks/php/' },
         ] },
         { label: 'Renderers', items: [
+          { label: 'Host on your own website', link: '/host-on-your-site/' },
           { label: 'Web embed', link: '/renderers/web-embed/' },
           { label: 'WordPress plugin', link: '/renderers/wordpress/' },
           { label: 'Terminal', link: '/renderers/terminal/' },
         ] },
         { label: 'Outegrations', items: [
+          { label: 'Email', link: '/outegrations/email/' },
           { label: 'Webhook', link: '/outegrations/webhook/' },
         ] },
         { label: 'Schema reference', items: [

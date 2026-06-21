@@ -55,6 +55,9 @@ internal static class FieldBindingFactory
         FieldTypes.Image      => new FileBinding(def, state),
         FieldTypes.Attachment => new FileBinding(def, state),
 
+        FieldTypes.Signature  => new SignatureBinding(def, state),
+        FieldTypes.Initials   => new SignatureBinding(def, state),
+
         _ => new UnsupportedBinding(def, state, $"unknown field kind '{def.Kind}'"),
         };
     }

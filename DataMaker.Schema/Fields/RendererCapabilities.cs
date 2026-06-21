@@ -97,6 +97,8 @@ public static class RendererCapabilities
                 new(FieldTypes.Geo,         FieldSupport.Native,      ""),
                 new(FieldTypes.Image,       FieldSupport.Native,      ""),
                 new(FieldTypes.Attachment,  FieldSupport.Native,      ""),
+                new(FieldTypes.Signature,   FieldSupport.Native,      ""),
+                new(FieldTypes.Initials,    FieldSupport.Native,      ""),
                 new(FieldTypes.Relation,    FieldSupport.Limited,     "shown as plain text — relation picker not yet implemented"),
             },
 
@@ -125,6 +127,8 @@ public static class RendererCapabilities
                 new(FieldTypes.Geo,         FieldSupport.Placeholder, "geo capture isn't possible on paper — fill in the app"),
                 new(FieldTypes.Image,       FieldSupport.Placeholder, "image upload isn't possible on paper — fill in the app"),
                 new(FieldTypes.Attachment,  FieldSupport.Placeholder, "file attachments aren't possible on paper — fill in the app"),
+                new(FieldTypes.Signature,   FieldSupport.Native,      ""),
+                new(FieldTypes.Initials,    FieldSupport.Native,      ""),
                 new(FieldTypes.Relation,    FieldSupport.Placeholder, "relation lookups aren't possible on paper — fill in the app"),
             },
 
@@ -152,6 +156,8 @@ public static class RendererCapabilities
                 new(FieldTypes.Geo,         FieldSupport.Native,      ""),
                 new(FieldTypes.Image,       FieldSupport.Native,      ""),
                 new(FieldTypes.Attachment,  FieldSupport.Native,      ""),
+                new(FieldTypes.Signature,   FieldSupport.Native,      ""),
+                new(FieldTypes.Initials,    FieldSupport.Native,      ""),
                 new(FieldTypes.Relation,    FieldSupport.Unsupported, "relation picker not supported in terminal"),
             },
 
@@ -182,6 +188,8 @@ public static class RendererCapabilities
                 new(FieldTypes.Geo,         FieldSupport.Native,      ""),
                 new(FieldTypes.Image,       FieldSupport.Native,      ""),
                 new(FieldTypes.Attachment,  FieldSupport.Native,      ""),
+                new(FieldTypes.Signature,   FieldSupport.Native,      ""),
+                new(FieldTypes.Initials,    FieldSupport.Native,      ""),
                 new(FieldTypes.Relation,    FieldSupport.Unsupported, "relation columns are dropped — the web renderer has no record-lookup picker; capture in the app"),
             },
         };

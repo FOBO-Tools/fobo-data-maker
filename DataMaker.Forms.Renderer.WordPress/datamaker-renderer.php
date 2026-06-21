@@ -7,8 +7,8 @@
  * Requires at least: 6.4
  * Requires PHP:      8.1
  * Author:            FOBO
- * License:           BSD-3-Clause
- * License URI:       https://opensource.org/license/bsd-3-clause
+ * License:           GPLv2 or later
+ * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:       datamaker-renderer
  * Domain Path:       /languages
  */
@@ -77,11 +77,10 @@ function dm_renderer_user_can_manage(): bool {
     return current_user_can('manage_datamaker_forms') || current_user_can('manage_options');
 }
 
-// Load plugin translations from /languages so __() / esc_html__() pick up
-// .mo files matching the active site locale. Text domain = plugin slug.
-add_action('init', function () {
-    load_plugin_textdomain('datamaker-renderer', false, dirname(plugin_basename(__FILE__)) . '/languages');
-});
+// Translations load automatically: since WordPress 4.6, plugins hosted on
+// WordPress.org have their /languages .mo files loaded on demand by core, so
+// an explicit load_plugin_textdomain() call is no longer needed (and Plugin
+// Check flags it as discouraged).
 
 // Map our meta cap to itself so role grants are honored verbatim. Hosts
 // that want a different mapping can add their own higher-priority filter.

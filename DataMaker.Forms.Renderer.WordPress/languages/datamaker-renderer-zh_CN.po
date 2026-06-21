@@ -970,3 +970,15 @@ msgstr "Slug："
 #: assets/block.js:90
 msgid "Pick a form from the sidebar."
 msgstr "从侧边栏选择一个表单。"
+
+#: includes/Shortcode.php
+msgid "Back"
+msgstr "上一步"
+
+#: includes/Shortcode.php
+msgid "Next"
+msgstr "下一步"
+
+#: includes/Shortcode.php
+msgid "Please complete the required fields on this step."
+msgstr "请填写此步骤的必填字段。"

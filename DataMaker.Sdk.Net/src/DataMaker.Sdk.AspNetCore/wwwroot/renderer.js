@@ -245,6 +245,15 @@ function mount(rootArg, bundleArg, hooksArg) {
   // open already covered in "Required" chips on every empty field.
   const touched  = {};
 
+  // Multi-step wizard state. Declared here (not by the helpers below) so it's
+  // out of the temporal-dead-zone when renderForm runs during initial mount.
+  let wizardStepEls    = [];   // one <div class="dm-step"> per step
+  let wizardCurrent    = 0;    // index of the visible step
+  let wizardBarEl      = null; // the numbered step bar
+  let wizardBackBtn    = null;
+  let wizardPrimaryBtn = null; // Next on inner steps, Submit on the last
+  let wizardNavStatus  = null; // inline "complete the required fields" hint
+
   // Compile every expression once. eval is acceptable here because the
   // bundle was produced by C# JsCompiler from a signed form schema, not
   // from untrusted browser input.
@@ -378,7 +387,7 @@ function mount(rootArg, bundleArg, hooksArg) {
   // same valid/invalid status the other surfaces show. Skipped when the
   // schema declares its own ButtonColumn(s) — those drive submit/save/reset
   // themselves and ownership of the action surface belongs to the author.
-  if (!hasSchemaButton(form)) {
+  if (!hasSchemaButton(form) && (form.steps || []).length <= 1) {
     const submitRow = document.createElement('div');
     submitRow.className = 'dm-submit-row';
     const submitStatus = document.createElement('span');
@@ -415,14 +424,10 @@ function mount(rootArg, bundleArg, hooksArg) {
     '<span class="dm-form-issues-text">Please fix the highlighted fields before submitting.</span>';
   insertBannerAfterSubmit(root, issuesBanner);
 
-  evaluateAll();
+  // Multi-step wizard: append the Back/Next nav and reveal the first step.
+  if ((form.steps || []).length > 1) initWizardNav();
 
-  // Theme-toggle button only exists on the Wasm designer preview shell.
-  // Hosts (WordPress) render the form without it; guard so the listener
-  // attach doesn't throw (and silently kill the rest of bootstrap,
-  // including the Tab override below).
-  const themeToggleBtn = document.getElementById('theme-toggle');
-  if (themeToggleBtn) themeToggleBtn.addEventListener('click', toggleTheme);
+  evaluateAll();
 
   // ─── Tab navigation ─────────────────────────────────────────
   // WKWebView on macOS yields Tab to its parent responder when the OS
@@ -484,17 +489,162 @@ function mount(rootArg, bundleArg, hooksArg) {
     if (css) el.setAttribute('style', css);
   }
 
+  // ─── Multi-step wizard ───────────────────────────────────────
+  // Each step renders into its own <div class="dm-step">; only the current
+  // one is shown. A numbered bar navigates; Back/Next gate forward moves on
+  // per-step validation (same rule set as the final submit).
+
+  function buildStepBar(steps) {
+    const bar = document.createElement('div');
+    bar.className = 'dm-step-bar';
+    steps.forEach((step, i) => {
+      if (i > 0) {
+        const conn = document.createElement('span');
+        conn.className = 'dm-step-conn';
+        bar.appendChild(conn);
+      }
+      const tab = document.createElement('button');
+      tab.type = 'button';
+      tab.className = 'dm-step-tab';
+      const badge = document.createElement('span');
+      badge.className = 'dm-step-badge';
+      badge.textContent = String(i + 1);
+      const label = document.createElement('span');
+      label.className = 'dm-step-label';
+      label.textContent = (step.title && step.title.trim()) ? step.title : ('Step ' + (i + 1));
+      tab.appendChild(badge);
+      tab.appendChild(label);
+      tab.addEventListener('click', () => goToStep(i));
+      bar.appendChild(tab);
+    });
+    wizardBarEl = bar;
+    return bar;
+  }
+
+  function initWizardNav() {
+    const nav = document.createElement('div');
+    nav.className = 'dm-step-nav';
+
+    wizardBackBtn = document.createElement('button');
+    wizardBackBtn.type = 'button';
+    wizardBackBtn.className = 'dm-step-back dm-btn dm-btn-secondary';
+    applyElementCss(wizardBackBtn, 'buttonvariant/Secondary');
+    wizardBackBtn.textContent = t('step_back', 'Back');
+    wizardBackBtn.addEventListener('click', () => { if (wizardCurrent > 0) showStep(wizardCurrent - 1); });
+
+    wizardNavStatus = document.createElement('span');
+    wizardNavStatus.className = 'dm-step-status';
+
+    wizardPrimaryBtn = document.createElement('button');
+    wizardPrimaryBtn.type = 'button';
+    wizardPrimaryBtn.className = 'dm-step-next dm-btn dm-btn-primary';
+    applyElementCss(wizardPrimaryBtn, 'buttonvariant/Primary');
+    wizardPrimaryBtn.addEventListener('click', onWizardPrimary);
+
+    nav.appendChild(wizardBackBtn);
+    nav.appendChild(wizardNavStatus);
+    nav.appendChild(wizardPrimaryBtn);
+    root.appendChild(nav);
+    showStep(0);
+  }
+
+  function onWizardPrimary() {
+    if (wizardCurrent >= wizardStepEls.length - 1) {
+      // Last step → real submit. Surface the first invalid field on its step
+      // first (it may live on a step that isn't currently shown).
+      markStepTouched(-1);
+      evaluateAll();
+      const firstInvalid = root.querySelector('.dm-field.dm-invalid');
+      if (firstInvalid) showStepContaining(firstInvalid);
+      runSchemaAction('submit', null, wizardNavStatus);
+    } else {
+      goToStep(wizardCurrent + 1);
+    }
+  }
+
+  function goToStep(target) {
+    target = Math.max(0, Math.min(target, wizardStepEls.length - 1));
+    if (target > wizardCurrent) {
+      for (let i = wizardCurrent; i < target; i++)
+        if (!validateStep(i)) {
+          showStep(i);   // clears the status hint, so (re)set it afterwards
+          if (wizardNavStatus)
+            wizardNavStatus.textContent = t('please_fix_step', 'Please complete the required fields on this step.');
+          return;
+        }
+    }
+    showStep(target);
+  }
+
+  function showStep(i) {
+    wizardCurrent = Math.max(0, Math.min(i, wizardStepEls.length - 1));
+    wizardStepEls.forEach((el, idx) => { el.hidden = idx !== wizardCurrent; });
+    if (wizardNavStatus) wizardNavStatus.textContent = '';
+    updateWizardChrome();
+  }
+
+  function updateWizardChrome() {
+    if (wizardBarEl) {
+      const tabs = wizardBarEl.querySelectorAll('.dm-step-tab');
+      tabs.forEach((tab, idx) => {
+        tab.classList.toggle('dm-step-current', idx === wizardCurrent);
+        tab.classList.toggle('dm-step-done',    idx <  wizardCurrent);
+      });
+    }
+    if (wizardBackBtn) wizardBackBtn.disabled = wizardCurrent === 0;
+    if (wizardPrimaryBtn) {
+      const last = wizardCurrent >= wizardStepEls.length - 1;
+      wizardPrimaryBtn.textContent = last ? t('submit', 'Submit') : t('step_next', 'Next');
+    }
+  }
+
+  function markStepTouched(stepIndex) {
+    const within = stepIndex < 0 ? null : wizardStepEls[stepIndex];
+    for (const f of (form.fields || [])) {
+      const wrap = fieldEls[f.id];
+      if (!wrap) continue;
+      if (within && !within.contains(wrap)) continue;
+      const el = fieldInputEls[f.id];
+      if (el) values[f.name] = readValue(el, f);
+      touched[f.name] = true;
+    }
+  }
+
+  function validateStep(i) {
+    markStepTouched(i);
+    evaluateAll();
+    const stepEl = wizardStepEls[i];
+    return !(stepEl && stepEl.querySelector('.dm-field.dm-invalid'));
+  }
+
+  function showStepContaining(el) {
+    for (let p = el; p; p = p.parentElement)
+      if (p.classList && p.classList.contains('dm-step')) {
+        showStep(parseInt(p.dataset.stepIndex, 10) || 0);
+        return;
+      }
+  }
+
   function renderForm(host, form) {
-    // Form-level Style (background, gradient, image, padding, border, ...)
-    // applies to the sheet container itself — that's the surface the form
-    // paints onto. Mirrors the Uno renderer's contract: "consumer applies
-    // Form.Style to whatever container they render the form inside".
+    // Form-level Style applies to the sheet container itself — the surface the
+    // form paints onto (mirrors the Uno renderer's contract).
     applyElementCss(host, 'form/' + form.id);
-    // form.name + form.description are metadata only (page chrome, form
-    // list, search). Visible titles inside the form belong on explicit
-    // HeadingColumn / RichTextColumn instances so they participate in the
-    // themed style cascade — same contract as the Uno desktop renderer.
-    for (const step of (form.steps || [])) renderStep(host, step);
+    // form.name/description are metadata only; visible titles live in
+    // HeadingColumn / RichTextColumn entries inside the themed cascade.
+    const steps = form.steps || [];
+    if (steps.length > 1) {
+      host.appendChild(buildStepBar(steps));
+      steps.forEach((step, i) => {
+        const stepEl = document.createElement('div');
+        stepEl.className = 'dm-step';
+        stepEl.dataset.stepIndex = i;
+        renderStep(stepEl, step);
+        host.appendChild(stepEl);
+        wizardStepEls.push(stepEl);
+      });
+    } else {
+      for (const step of steps) renderStep(host, step);
+    }
   }
 
   function renderStep(host, step) {
@@ -590,9 +740,21 @@ function mount(rootArg, bundleArg, hooksArg) {
       img.className = 'dm-layout-img';
       img.src = col.source || '';
       img.alt = col.altText || '';
-      if (col.maxHeight) img.style.maxHeight = col.maxHeight + 'px';
       stampCol(img, 'image', col);
+      // applyElementCss replaces the whole style attribute (setAttribute), so
+      // it MUST run BEFORE the size/placement styles below — otherwise it wipes
+      // the inline maxHeight/maxWidth/margins. Setting them after appends to the
+      // element's existing style (e.g. a border-radius from the image's Style).
       applyElementCss(img, 'image/' + col.id);
+      if (col.maxHeight) img.style.maxHeight = col.maxHeight + 'px';
+      if (col.maxWidth) img.style.maxWidth = col.maxWidth + 'px';
+      // Placement within the column (block image, max-width: 100% by default).
+      // Fill keeps the default left flow; Left/Center/Right use auto margins
+      // once a max-width caps the image narrower than the column.
+      const imgAlign = col.align || 'Fill';
+      if (imgAlign === 'Center')     { img.style.marginLeft = 'auto'; img.style.marginRight = 'auto'; }
+      else if (imgAlign === 'Right') { img.style.marginLeft = 'auto'; img.style.marginRight = '0'; }
+      else if (imgAlign === 'Left')  { img.style.marginLeft = '0';    img.style.marginRight = 'auto'; }
       colEl.appendChild(img);
       if (col.id) columnEls['image/' + col.id] = img;
     } else if (kind === 'divider') {
@@ -859,7 +1021,7 @@ function mount(rootArg, bundleArg, hooksArg) {
     host.appendChild(wrap);
   }
 
-  function renderControl(f) {
+  function renderControl(f, fieldWrap) {
     const ph = f.placeholder || '';
     // Default-value seeding lives inside each case so the value is set as
     // part of construction (not bolted on after) — this matters for chip-
@@ -1042,6 +1204,84 @@ function mount(rootArg, bundleArg, hooksArg) {
           }
         });
         return i;
+      }
+      case 'scale': {
+        // Single-pick rating / Likert / NPS — a row of figures (Circle / Square
+        // / Rounded / Diamond / Star, matching the wizard step bar). Stores the
+        // chosen integer point; cumulative fills up to it (star-rating feel).
+        const sc   = f.scale || {};
+        const min  = (typeof sc.min === 'number') ? sc.min : 1;
+        let   max  = (typeof sc.max === 'number') ? sc.max : 5;
+        if (max <= min) max = min + 1;
+        const shape = String(sc.shape || 'Circle').toLowerCase();
+        const cumulative = !!sc.cumulative;
+        const align = String(sc.alignment || 'Left').toLowerCase();
+
+        const wrap = document.createElement('div');
+        wrap.className = 'dm-scale dm-scale-' + shape;
+        if (sc.highlightColor)  wrap.style.setProperty('--dm-scale-hl', sc.highlightColor);
+        if (sc.unselectedColor) wrap.style.setProperty('--dm-scale-un', sc.unselectedColor);
+        if (sc.labelColor && fieldWrap) {
+          const _lbl = fieldWrap.querySelector('.dm-label');
+          if (_lbl) _lbl.style.color = sc.labelColor;
+        }
+        let selected = (typeof f.defaultValue === 'number') ? f.defaultValue : null;
+
+        const rowEl = document.createElement('div');
+        rowEl.className = 'dm-scale-row';
+        rowEl.style.gap = (typeof sc.spacing === 'number' ? sc.spacing : 6) + 'px';
+        if (align !== 'left') { wrap.style.width = '100%'; wrap.style.alignItems = align === 'center' ? 'center' : 'flex-end'; }
+        const pts = [];
+        for (let v = min; v <= max; v++) {
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'dm-scale-point';
+          b.dataset.value = v;
+          b.setAttribute('aria-label', String(v));
+          const fig = document.createElement('span');
+          fig.className = 'dm-scale-fig';
+          b.appendChild(fig);
+          if (shape !== 'star') {
+            const num = document.createElement('span');
+            num.className = 'dm-scale-num';
+            num.textContent = String(v);
+            b.appendChild(num);   // upright number on top of the (maybe-rotated) figure
+          }
+          b.addEventListener('click', () => {
+            selected = (selected === v) ? null : v;   // re-tap to clear
+            paint();
+            wrap.dispatchEvent(new Event('change', { bubbles: false }));
+          });
+          pts.push(b);
+          rowEl.appendChild(b);
+        }
+        wrap.appendChild(rowEl);
+
+        if (sc.minLabel || sc.maxLabel) {
+          const labels = document.createElement('div');
+          labels.className = 'dm-scale-labels';
+          const a = document.createElement('span'); a.className = 'dm-scale-min'; a.textContent = sc.minLabel || '';
+          const z = document.createElement('span'); z.className = 'dm-scale-max'; z.textContent = sc.maxLabel || '';
+          if (sc.minLabelColor) a.style.color = sc.minLabelColor;
+          if (sc.maxLabelColor) z.style.color = sc.maxLabelColor;
+          labels.appendChild(a); labels.appendChild(z);
+          wrap.appendChild(labels);
+        }
+
+        function paint() {
+          for (const b of pts) {
+            const v = Number(b.dataset.value);
+            const on = selected != null && (cumulative ? v <= selected : v === selected);
+            b.classList.toggle('dm-scale-on', on);
+          }
+        }
+        paint();
+
+        Object.defineProperty(wrap, 'value', {
+          get: () => selected == null ? '' : String(selected),
+          set: x => { selected = (x === '' || x == null) ? null : Number(x); paint(); },
+        });
+        return wrap;
       }
       case 'choice': {
         const choices = f.choice?.choices || [];
@@ -1544,6 +1784,214 @@ function mount(rootArg, bundleArg, hooksArg) {
               sizeBytes: dv.sizeBytes ?? null,
             };
           }
+        }
+        return wrap;
+      }
+      case 'signature':
+      case 'initials': {
+        // Canvas signature pad — the signer draws with mouse / touch / pen.
+        // Strokes are flattened to a transparent PNG data URI and stashed on
+        // wrap._dmValue as a SignatureRef shape ({dataUri, mime, sizeBytes}),
+        // matching SignatureRef.cs so the values bag gets the right shape.
+        const compact = (f.kind || '').toLowerCase() === 'initials';
+        const wrap = document.createElement('div');
+        wrap.className = 'dm-signature-control';
+        const pad = document.createElement('div');
+        pad.className = 'dm-signature-pad';
+        pad.style.position = 'relative';
+        pad.style.width  = (compact ? 160 : 340) + 'px';
+        pad.style.height = (compact ? 80 : 120) + 'px';
+
+        const canvas = document.createElement('canvas');
+        const cw = compact ? 160 : 340, ch = compact ? 80 : 120;
+        // Render at 2× for crisp ink on HiDPI; CSS box stays logical size.
+        const scale = (window.devicePixelRatio || 1);
+        canvas.width  = Math.round(cw * scale);
+        canvas.height = Math.round(ch * scale);
+        canvas.style.width  = cw + 'px';
+        canvas.style.height = ch + 'px';
+        canvas.style.touchAction = 'none';
+        canvas.className = 'dm-signature-canvas';
+
+        const hint = document.createElement('span');
+        hint.className = 'dm-signature-hint';
+        hint.textContent = compact ? t('initials_here', 'Initials') : t('sign_here', 'Sign here');
+
+        const clear = document.createElement('button');
+        clear.type = 'button';
+        clear.className = 'dm-signature-clear';
+        clear.textContent = '✕';
+        clear.hidden = true;
+        clear.setAttribute('aria-label', t('clear_signature', 'Clear signature'));
+
+        pad.append(canvas, hint, clear);
+        wrap.append(pad);
+
+        const ctx = canvas.getContext('2d');
+        ctx.scale(scale, scale);
+        ctx.lineWidth = 2.5;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        // Display ink follows the theme — light on a dark pad, dark on a light
+        // pad — mirroring the desktop SignatureFieldEditor. The persisted PNG
+        // is ALWAYS rasterised in black (see commit()), so a signature captured
+        // in dark mode still reads on the light design / PDF.
+        const isDark = () => document.documentElement.classList.contains('dm-dark');
+        const displayInk = () => {
+          const v = getComputedStyle(document.documentElement)
+            .getPropertyValue('--dm-ink').trim();
+          return v || (isDark() ? '#e6e6e6' : '#000');
+        };
+        ctx.strokeStyle = displayInk();
+
+        // Printed name (→ SignatureRef.typedName) + auto-stamped signed date.
+        const nameInput = document.createElement('input');
+        nameInput.type = 'text';
+        nameInput.className = 'dm-signature-name';
+        nameInput.maxLength = 120;
+        nameInput.placeholder = t('printed_name', 'Printed name');
+        nameInput.style.width = cw + 'px';
+        const dateLine = document.createElement('div');
+        dateLine.className = 'dm-signature-date';
+        dateLine.hidden = true;
+        wrap.append(nameInput, dateLine);
+
+        let drawing = false, hasInk = false, last = null;
+        let inkDataUri = null, inkUrl = null;
+        // Captured stroke geometry (arrays of {x,y} logical px). Kept so the
+        // committed PNG can be re-rasterised in black regardless of the on-
+        // screen display ink — the desktop control does the same split.
+        const strokes = [];
+        let current = null;
+
+        function pos(e) {
+          const r = canvas.getBoundingClientRect();
+          const pt = (e.touches && e.touches[0]) || e;
+          return { x: pt.clientX - r.left, y: pt.clientY - r.top };
+        }
+        // Rasterise the captured strokes into a transparent black-ink PNG.
+        function commit() {
+          if (!strokes.length) { inkDataUri = null; inkUrl = null; return; }
+          const off = document.createElement('canvas');
+          off.width = canvas.width; off.height = canvas.height;
+          const octx = off.getContext('2d');
+          octx.scale(scale, scale);
+          octx.lineWidth = 2.5;
+          octx.lineCap = 'round';
+          octx.lineJoin = 'round';
+          octx.strokeStyle = '#000';
+          for (const s of strokes) {
+            if (!s.length) continue;
+            octx.beginPath();
+            octx.moveTo(s[0].x, s[0].y);
+            if (s.length === 1) octx.lineTo(s[0].x + 0.01, s[0].y);  // a tap → dot
+            else for (let i = 1; i < s.length; i++) octx.lineTo(s[i].x, s[i].y);
+            octx.stroke();
+          }
+          inkDataUri = off.toDataURL('image/png');
+          inkUrl = null;
+        }
+        // Combine ink + printed name into one SignatureRef, stamp the date.
+        function rebuild() {
+          const name = (nameInput.value || '').trim();
+          if (!inkDataUri && !inkUrl && !name) {
+            wrap._dmValue = null;
+            dateLine.hidden = true;
+          } else {
+            const signedAt = new Date().toISOString();
+            wrap._dmValue = {
+              dataUri:   inkDataUri,
+              url:       inkUrl,
+              mime:      (inkDataUri || inkUrl) ? 'image/png' : null,
+              sizeBytes: inkDataUri ? Math.round(inkDataUri.length * 0.75) : null,
+              typedName: name || null,
+              signedAt,
+            };
+            dateLine.textContent = t('signed', 'Signed') + ' ' + signedAt.slice(0, 10);
+            dateLine.hidden = false;
+          }
+          wrap.dispatchEvent(new Event('change', { bubbles: false }));
+        }
+        function start(e) {
+          e.preventDefault();
+          drawing = true; hint.hidden = true; clear.hidden = false;
+          ctx.strokeStyle = displayInk();
+          last = pos(e);
+          current = [last];
+          strokes.push(current);
+        }
+        function move(e) {
+          if (!drawing) return;
+          e.preventDefault();
+          const p = pos(e);
+          ctx.beginPath();
+          ctx.moveTo(last.x, last.y);
+          ctx.lineTo(p.x, p.y);
+          ctx.stroke();
+          last = p; hasInk = true;
+          if (current) current.push(p);
+        }
+        function end() {
+          if (!drawing) return;
+          drawing = false;
+          if (hasInk) commit();
+          current = null;
+          rebuild();
+        }
+        canvas.addEventListener('mousedown', start);
+        window.addEventListener('mousemove', move);
+        window.addEventListener('mouseup', end);
+        canvas.addEventListener('touchstart', start, { passive: false });
+        canvas.addEventListener('touchmove', move, { passive: false });
+        canvas.addEventListener('touchend', end);
+        nameInput.addEventListener('input', rebuild);
+
+        // The Clear ✕ is revealed mid-gesture (start() sets clear.hidden=false),
+        // and the browser then dispatches the gesture's own click to it as well
+        // as to the canvas — a phantom click whose target is the button even
+        // though the pointer is nowhere near it. Unguarded, that wiped the
+        // signature (and re-hid the button) the instant the pen lifted. Arm the
+        // wipe only from a real pointerdown ON the button, so synthetic clicks
+        // that never pressed it are ignored.
+        let clearArmed = false;
+        clear.addEventListener('pointerdown', () => { clearArmed = true; });
+        clear.addEventListener('click', () => {
+          if (!clearArmed) return;
+          clearArmed = false;
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          strokes.length = 0; current = null;
+          hasInk = false; inkDataUri = null; inkUrl = null;
+          hint.hidden = false; clear.hidden = true;
+          rebuild();   // keeps a typed name; nulls the value only if name is empty too
+        });
+
+        // Seed default — schema may carry a SignatureRef object or a bare
+        // data-URI string.
+        if (f.defaultValue) {
+          const dv = typeof f.defaultValue === 'string' ? { dataUri: f.defaultValue } : f.defaultValue;
+          const src = dv.url || dv.dataUri;
+          if (src) {
+            // Stored PNG carries black ink; on a dark pad RGB-invert it
+            // (black → white) for display, preserving alpha — matches the
+            // desktop InvertPng path. The stored value stays black.
+            const img = new Image();
+            img.onload = () => {
+              if (isDark()) {
+                ctx.save();
+                ctx.filter = 'invert(1)';
+                ctx.drawImage(img, 0, 0, cw, ch);
+                ctx.restore();
+              } else {
+                ctx.drawImage(img, 0, 0, cw, ch);
+              }
+            };
+            img.src = src;
+            hasInk = true; hint.hidden = true; clear.hidden = false;
+            inkDataUri = dv.dataUri ?? null;
+            inkUrl = dv.url ?? null;
+          }
+          if (dv.typedName) nameInput.value = dv.typedName;
+          if (src || dv.typedName) rebuild();
         }
         return wrap;
       }
@@ -2193,6 +2641,7 @@ function mount(rootArg, bundleArg, hooksArg) {
     if (!el) return null;
     const k = (f.kind || '').toLowerCase();
     if (k === 'boolean') return el.checked;
+    if (k === 'scale') { const v = el.value; return (v === '' || v == null) ? null : Number(v); }
     if (k === 'multi-choice') {
       return Array.from(el.querySelectorAll('input[type="checkbox"]'))
         .filter(c => c.checked)
@@ -2220,6 +2669,10 @@ function mount(rootArg, bundleArg, hooksArg) {
       // Typed object shape — see ImageRef.cs / AttachmentRef.cs converters.
       // Both accept a legacy bare-string data URI on read, but writes always
       // emit the object form, so we always return an object (or null).
+      return el._dmValue ?? null;
+    }
+    if (k === 'signature' || k === 'initials') {
+      // SignatureRef object shape ({dataUri, mime, sizeBytes}) — see SignatureRef.cs.
       return el._dmValue ?? null;
     }
     if (k === 'date' || k === 'datetime') {
@@ -2257,6 +2710,7 @@ function mount(rootArg, bundleArg, hooksArg) {
     if (!el || value == null) return;
     const k = (f.kind || '').toLowerCase();
     if (k === 'boolean') { el.checked = !!value; return; }
+    if (k === 'scale') { el.value = (value == null ? '' : value); return; }
     if (k === 'multi-choice') {
       const arr = Array.isArray(value) ? value.map(String) : [];
       el.querySelectorAll('input[type="checkbox"]').forEach(cb => {
@@ -2869,24 +3323,5 @@ function mount(rootArg, bundleArg, hooksArg) {
     chip.className = 'dm-server-only-hint';
     chip.textContent = 'evaluated server-side';
     wrap.querySelector('.dm-label')?.appendChild(chip);
-  }
-
-  // ─── Theme ───────────────────────────────────────────────────
-
-  function toggleTheme() {
-    // Class toggles on <html> so :root tokens (paper / ink / page-bg etc)
-    // resolve consistently for both <html> and <body> backgrounds — body-
-    // only theming caused html to keep the light variant and leak grey.
-    // FA Solid:  = sun,  = moon. Same codepoints the WASM
-    // renderer uses; the toggle shows what you'll switch TO.
-    const root = document.documentElement;
-    const btn  = document.getElementById('theme-toggle');
-    if (root.classList.contains('dm-dark')) {
-      root.classList.remove('dm-dark');
-      btn.textContent = ''; // moon — switch back to dark
-    } else {
-      root.classList.add('dm-dark');
-      btn.textContent = ''; // sun — switch to light
-    }
   }
 }

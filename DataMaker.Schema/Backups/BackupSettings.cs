@@ -13,12 +13,29 @@ public sealed record BackupSettings
     public bool Enabled { get; init; }
 
     /// <summary>
-    /// Absolute path of the folder where .dmbak files are written. Empty
-    /// until the user picks one. Scheduler is a no-op while empty even if
-    /// <see cref="Enabled"/> is true (we don't fall back to LocalAppData —
-    /// surprises in disk usage would burn the user).
+    /// Resolved absolute path of the folder where .dmbak files are written —
+    /// the built-in <see cref="DefaultFolder"/> when <see cref="FolderMode"/> is
+    /// <see cref="BackupFolderMode.Default"/>, otherwise <see cref="CustomFolder"/>.
+    /// Kept as the effective path so the scheduler/service/cache read one field.
+    /// Empty only when the user chose Custom but hasn't picked a folder yet; the
+    /// scheduler is a no-op while empty.
     /// </summary>
     public string TargetFolder { get; init; } = "";
+
+    /// <summary>Whether backups go to the built-in default folder or one the
+    /// user picked.</summary>
+    public BackupFolderMode FolderMode { get; init; } = BackupFolderMode.Default;
+
+    /// <summary>The user's chosen folder, remembered even while Default is active
+    /// so switching back to Custom restores it. Only takes effect when
+    /// <see cref="FolderMode"/> is <see cref="BackupFolderMode.Custom"/>.</summary>
+    public string CustomFolder { get; init; } = "";
+
+    /// <summary>The built-in default backup folder:
+    /// <c>{LocalAppData}/FOBO/DataMaker/backups</c>.</summary>
+    public static string DefaultFolder() => Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "FOBO", "DataMaker", "backups");
 
     public BackupCadence Cadence { get; init; } = BackupCadence.Daily;
 
@@ -80,6 +97,14 @@ public enum BackupCadence
     Daily,
     Hourly,
     Weekly,
+}
+
+/// <summary>Where backups are written: the built-in default folder, or a
+/// folder the user picks.</summary>
+public enum BackupFolderMode
+{
+    Default,
+    Custom,
 }
 
 /// <summary>

@@ -972,3 +972,15 @@ msgstr "Slug : "
 #: assets/block.js:90
 msgid "Pick a form from the sidebar."
 msgstr "Choisissez un formulaire dans la barre latérale."
+
+#: includes/Shortcode.php
+msgid "Back"
+msgstr "Précédent"
+
+#: includes/Shortcode.php
+msgid "Next"
+msgstr "Suivant"
+
+#: includes/Shortcode.php
+msgid "Please complete the required fields on this step."
+msgstr "Veuillez remplir les champs obligatoires de cette étape."

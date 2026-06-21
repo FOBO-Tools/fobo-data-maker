@@ -15,10 +15,14 @@ namespace DataMaker.Schema.Backups;
 public sealed record AgentSettings
 {
     /// <summary>
-    /// Master switch. When true the Settings page has registered the
-    /// agent with the OS scheduler; when false the registration is removed.
+    /// Master switch. When true the agent is registered with the OS scheduler;
+    /// when false the registration is removed. Defaults <c>true</c>: the agent
+    /// powers backups, submission drain + cloud uploads while the app is closed,
+    /// so it's provisioned by default (see <c>AgentProvisioner</c>). The only
+    /// thing that suppresses auto-install is the user turning this off in
+    /// Settings → Background, which persists <c>false</c>.
     /// </summary>
-    public bool Enabled { get; init; }
+    public bool Enabled { get; init; } = true;
 
     /// <summary>
     /// Wake interval in minutes. Each tick runs sync drain + backup-due

@@ -26,7 +26,7 @@
        320–1600 range exercises the responsive grid; below 1600 the sheet
        grows with the viewport, above it the sheet caps for readability. */
   --sheet-max-width:      1600px;
-  --sheet-padding:        32px 32px 40px;
+  --sheet-padding:        24px;  /* match the Uno designer's preview card (Padding=24) */
   --spacing-step:         20px;   /* gap between steps                    */
   --spacing-section:      12px;   /* gap inside a section, between rows   */
   --spacing-row:          12px;   /* row top/bottom margin                */
@@ -75,23 +75,10 @@ html.dm-preview body {
   transition: background .15s ease, color .15s ease;
 }
 
-/* Floating top-right of the render canvas, taken out of flow so the form
- * sheet starts at the same Y across every renderer (Uno / Wasm / Web).
- * The toggle is allowed to float on top of the sheet's top-right corner —
- * that overlap is intentional, not something the layout reserves room for. */
-.dm-page-chrome {
-  position: fixed;
-  top: 0;
-  right: 0;
-  z-index: 100;
-  padding: 12px 16px;
-  background: transparent;
-}
 /* Font Awesome 5 Pro Solid — same .ttf the desktop app and the WASM
-   renderer ship. Used today only for the theme-toggle glyph (sun / moon)
-   so the WebForm and WASM previews share an identical icon. Loaded with
-   font-display:block so the toggle button doesn't briefly show garbage
-   characters before the font arrives.
+   renderer ship. Drives the glyph-bearing controls (date/time picker icons,
+   submit-button glyphs, etc.). Loaded with font-display:block so buttons
+   don't briefly show garbage characters before the font arrives.
    The src is a placeholder filled by WebRenderer.Render — the .ttf bytes
    get base64-encoded into a data URI so this stylesheet stays self-
    contained when fed to WebView2.NavigateToString (no base URL → no
@@ -103,24 +90,6 @@ html.dm-preview body {
   font-style: normal;
   font-display: block;
 }
-
-#theme-toggle {
-  -webkit-appearance: none;
-  appearance: none;
-  background: var(--dm-field-fill);
-  color: var(--dm-ink);
-  border: 1px solid var(--dm-field-border);
-  border-radius: 6px;
-  padding: 6px 10px;
-  cursor: pointer;
-  font-family: "FontAwesome", sans-serif;
-  font-size: 14px;
-  width: 36px;
-  height: 36px;
-  line-height: 1;
-  user-select: none;
-}
-#theme-toggle:hover { filter: brightness(1.05); }
 
 /* ─── Sheet ───────────────────────────────────────────────────── */
 .dm-sheet {
@@ -255,6 +224,16 @@ h3.section-title { margin: var(--spacing-section) 0 6px; font-size: var(--sectio
   outline: none;
   border-color: var(--dm-field-focus);
 }
+/* Placeholders match the Uno form renderer, which sets
+   TextControlPlaceholderForeground = the theme MutedInk colour at full
+   strength. Without this, browsers default to the input's own colour at
+   ~54% opacity — far too faint on dark palettes. opacity:1 is required
+   because Firefox dims placeholders independently of colour. */
+.dm-field input::placeholder,
+.dm-field textarea::placeholder {
+  color: var(--dm-muted-ink);
+  opacity: 1;
+}
 .dm-field textarea {
   resize: vertical;
   min-height: 80px;
@@ -320,7 +299,7 @@ h3.section-title { margin: var(--spacing-section) 0 6px; font-size: var(--sectio
 }
 .dm-rich-text-toggle {
   align-self: flex-end;
-  background: transparent;
+  background: var(--dm-field-fill);
   color: var(--dm-ink);
   border: 1px solid var(--dm-field-border);
   border-radius: 4px;
@@ -611,6 +590,66 @@ h3.section-title { margin: var(--spacing-section) 0 6px; font-size: var(--sectio
   align-items: flex-start;
   gap: 8px;
 }
+/* ── Signature / initials pad ─────────────────────────────────── */
+.dm-signature-pad {
+  background: var(--dm-field-fill);
+  border: 1px solid var(--dm-field-border);
+  border-radius: 6px;
+  overflow: hidden;
+  cursor: crosshair;
+}
+.dm-signature-canvas {
+  display: block;
+}
+.dm-signature-hint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  color: var(--dm-muted-ink);
+  font-size: 12px;
+  font-family: inherit;
+}
+/* The class sets display:flex, which outranks the UA [hidden] rule —
+   without this the "Sign here" hint never hides once drawing starts. */
+.dm-signature-hint[hidden] { display: none; }
+.dm-signature-clear {
+  -webkit-appearance: none;
+  appearance: none;
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 11px;
+  background: rgba(0,0,0,.5);
+  color: #fff;
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+}
+.dm-signature-name {
+  display: block;
+  margin-top: 6px;
+  box-sizing: border-box;
+  padding: 6px 8px;
+  background: var(--dm-field-fill);
+  border: 1px solid var(--dm-field-border);
+  border-radius: 6px;
+  color: inherit;
+  font-family: inherit;
+  font-size: 13px;
+}
+.dm-signature-date {
+  margin-top: 4px;
+  color: var(--dm-muted-ink);
+  font-size: 11px;
+}
+
 .dm-image-slot {
   /* WebKit / Blink apply default button rendering that paints the
      system-default white face and ignores `background` in some
@@ -969,7 +1008,7 @@ h3.section-title { margin: var(--spacing-section) 0 6px; font-size: var(--sectio
 }
 .dm-btn-subtle:hover  { background: rgba(4, 200, 255, 0.10); }
 .dm-btn-subtle:active { background: rgba(4, 200, 255, 0.18); }
-.dm-btn-glyph { font-size: 14px; }
+.dm-btn-glyph { font-family: "FontAwesome", sans-serif; font-weight: 900; font-size: 14px; }
 
 /* ─── Heading column (themed sizes — without styles.css the browser
  *      defaults h1-h4 take over). */
@@ -991,3 +1030,104 @@ h3.section-title { margin: var(--spacing-section) 0 6px; font-size: var(--sectio
   margin-left: 4px;
   vertical-align: middle;
 }
+
+/* ─── Multi-step wizard ─────────────────────────────────────────────
+   Numbered step bar + Back/Next nav. Accent fill mirrors .dm-submit
+   (var(--dm-accent) with the FOBO-cyan fallback). */
+.dm-step-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+.dm-step-conn {
+  width: 24px;
+  height: 2px;
+  background: var(--dm-divider);
+}
+.dm-step-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--dm-muted-ink);
+  cursor: pointer;
+}
+.dm-step-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1.5px solid var(--dm-muted-ink);
+  font-size: 12px;
+  line-height: 1;
+}
+.dm-step-tab.dm-step-current { color: var(--dm-ink); font-weight: 600; }
+.dm-step-tab.dm-step-current .dm-step-badge,
+.dm-step-tab.dm-step-done .dm-step-badge {
+  background: var(--dm-accent, #04c8ff);
+  border-color: var(--dm-accent, #04c8ff);
+  color: var(--dm-on-accent, #0e1520);
+}
+.dm-step-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+}
+.dm-step-status {
+  flex: 1;
+  font-size: 13px;
+  color: var(--dm-error);
+  text-align: center;
+}
+/* Nav buttons carry .dm-btn .dm-btn-{variant} for appearance (matching the
+   Button-defaults drawer); these rules only handle nav-row layout. */
+.dm-step-back, .dm-step-next { min-width: 96px; cursor: pointer; }
+.dm-step-back:disabled { opacity: 0.5; cursor: default; }
+
+/* ─── Scale / rating field ──────────────────────────────────────────── */
+.dm-scale { display: inline-flex; flex-direction: column; gap: 6px; }
+.dm-scale-row { display: flex; gap: 8px; }
+.dm-scale-point {
+  position: relative;
+  width: 34px; height: 34px;
+  padding: 0; border: 0; background: transparent; cursor: pointer; font: inherit;
+}
+.dm-scale-fig {
+  position: absolute; left: 4px; top: 4px; right: 4px; bottom: 4px;
+  border: 1.5px solid var(--dm-scale-un, var(--dm-muted-ink));
+  background: transparent;
+  box-sizing: border-box;
+  transition: background 100ms ease, border-color 100ms ease;
+}
+.dm-scale-num {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; line-height: 1; color: var(--dm-scale-un, var(--dm-muted-ink));
+}
+.dm-scale-circle  .dm-scale-fig { border-radius: 50%; }
+.dm-scale-rounded .dm-scale-fig { border-radius: 7px; }
+.dm-scale-square  .dm-scale-fig { border-radius: 0; }
+.dm-scale-diamond .dm-scale-fig { border-radius: 3px; left: 6px; top: 6px; right: 6px; bottom: 6px; transform: rotate(45deg); }
+.dm-scale-star .dm-scale-fig {
+  border: 0;
+  background: var(--dm-scale-un, var(--dm-muted-ink));
+  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+}
+.dm-scale-point.dm-scale-on .dm-scale-fig {
+  background: var(--dm-scale-hl, var(--dm-accent, #04c8ff));
+  border-color: var(--dm-scale-hl, var(--dm-accent, #04c8ff));
+}
+.dm-scale-point.dm-scale-on .dm-scale-num { color: var(--dm-on-accent, #0e1520); }
+.dm-scale-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--dm-muted-ink); }
+.dm-scale-max { text-align: right; }

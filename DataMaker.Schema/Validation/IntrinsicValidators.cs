@@ -114,6 +114,7 @@ public static class IntrinsicValidators
         null                                                 => true,
         string s when string.IsNullOrEmpty(s)                => true,
         System.Collections.ICollection c when c.Count == 0   => true,
+        SignatureRef sig when sig.IsBlank                    => true,
         _                                                    => false,
     };
 

@@ -49,6 +49,7 @@ final class FormSettingsPage
 
         // Re-fetch by id (FormStore exposes by slug; reuse list_all + filter for now).
         global $wpdb;
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- custom plugin table; id is placeholdered via prepare(), table name is a code constant, single admin read.
         $row = $wpdb->get_row($wpdb->prepare("SELECT * FROM " . FormStore::table() . " WHERE id = %d", $form_id), ARRAY_A);
         if (!$row) {
             echo '<div class="wrap"><h1>' . esc_html__('Form settings', 'datamaker-renderer') . '</h1><p>' . esc_html__('Form not found.', 'datamaker-renderer') . '</p></div>';
@@ -64,13 +65,13 @@ final class FormSettingsPage
             // After-submit target: radio picks the kind, the matching value
             // is the source. URL kind validates as a real URL; page kind
             // validates the page exists. Stay-on-page = empty string.
-            $kind = sanitize_text_field((string)($_POST['after_submit_kind'] ?? 'none'));
+            $kind = sanitize_text_field(wp_unslash($_POST['after_submit_kind'] ?? 'none'));
             $stored = '';
             if ($kind === 'page') {
-                $pid = (int)($_POST['after_submit_page'] ?? 0);
+                $pid = absint(wp_unslash($_POST['after_submit_page'] ?? 0));
                 if ($pid > 0) $stored = 'page:' . $pid;
             } elseif ($kind === 'url') {
-                $url = esc_url_raw((string)($_POST['after_submit_url'] ?? ''));
+                $url = esc_url_raw(wp_unslash($_POST['after_submit_url'] ?? ''));
                 if ($url) $stored = $url;
             }
             FormStore::set_after_submit($form_id, $stored);
@@ -98,32 +99,35 @@ final class FormSettingsPage
             // Per-form message overrides — only persist the non-empty
             // textboxes; FormStore sanitises the rest (drops empty / unknown
             // shape entries).
+            // Nested {field:{msgId:text}} map; each leaf is sanitized in
+            // FormStore::set_message_overrides (sanitize_message_overrides).
             $msg_in = isset($_POST['msg']) && is_array($_POST['msg'])
-                ? wp_unslash($_POST['msg'])
+                ? wp_unslash($_POST['msg']) // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- each leaf value sanitized in FormStore::set_message_overrides().
                 : [];
             FormStore::set_message_overrides($form_id, is_array($msg_in) ? $msg_in : []);
 
             // Privacy / consent / anti-abuse / integrations
-            $privacy_kind = sanitize_text_field((string)($_POST['privacy_kind'] ?? 'none'));
+            $privacy_kind = sanitize_text_field(wp_unslash($_POST['privacy_kind'] ?? 'none'));
             $privacy_value = '';
             if ($privacy_kind === 'page') {
-                $pid = (int)($_POST['privacy_page'] ?? 0);
+                $pid = absint(wp_unslash($_POST['privacy_page'] ?? 0));
                 if ($pid > 0) $privacy_value = 'page:' . $pid;
             } elseif ($privacy_kind === 'url') {
-                $privacy_value = (string)($_POST['privacy_url'] ?? '');
+                $privacy_value = esc_url_raw(wp_unslash($_POST['privacy_url'] ?? ''));
             }
             FormStore::set_privacy_url($form_id, $privacy_value);
-            FormStore::set_privacy_link_text($form_id, (string)($_POST['privacy_link_text'] ?? ''));
+            FormStore::set_privacy_link_text($form_id, sanitize_text_field(wp_unslash($_POST['privacy_link_text'] ?? '')));
             FormStore::set_consent_required(
                 $form_id,
                 !empty($_POST['consent_required']),
-                sanitize_text_field((string)($_POST['consent_label'] ?? ''))
+                sanitize_text_field(wp_unslash($_POST['consent_label'] ?? ''))
             );
-            FormStore::set_webhook_url($form_id, (string)($_POST['webhook_url'] ?? ''));
+            FormStore::set_webhook_url($form_id, esc_url_raw(wp_unslash($_POST['webhook_url'] ?? '')));
             FormStore::set_honeypot($form_id, !empty($_POST['honeypot_on']));
-            FormStore::set_rate_limit($form_id, (int)($_POST['rate_limit_per_min'] ?? 0));
+            FormStore::set_rate_limit($form_id, absint(wp_unslash($_POST['rate_limit_per_min'] ?? 0)));
             FormStore::set_turnstile($form_id, !empty($_POST['turnstile_on']));
 
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- custom plugin table; id is placeholdered via prepare(), table name is a code constant, single admin read.
             $row = $wpdb->get_row($wpdb->prepare("SELECT * FROM " . FormStore::table() . " WHERE id = %d", $form_id), ARRAY_A);
             $notice = __('Saved.', 'datamaker-renderer');
         }
@@ -265,7 +269,6 @@ final class FormSettingsPage
                     <?php if (!$items): ?>
                         <tr><td colspan="4"><?php esc_html_e('No layout elements found.', 'datamaker-renderer'); ?></td></tr>
                     <?php else: foreach ($items as $it):
-                        $idAttr  = esc_attr($it['id']);
                         $required = !empty($it['required']);
                         // Render: checked = visible (matches user mental
                         // model). On submit the JS below inverts so the form
@@ -277,7 +280,7 @@ final class FormSettingsPage
                             <td>
                                 <input type="checkbox"
                                     name="hidden[]"
-                                    value="<?php echo $idAttr; ?>"
+                                    value="<?php echo esc_attr($it['id']); ?>"
                                     <?php echo $visible ? 'checked' : ''; ?>
                                     <?php echo $required ? 'disabled' : 'data-invert="1"'; ?>
                                     >
