@@ -1,0 +1,83 @@
+name: "Publish: Terminal renderer (GitHub Release)"
+
+# Builds the `datamaker-form` terminal renderer as a self-contained single-file
+# binary for every supported platform and attaches them to a GitHub Release.
+# This runs in the PUBLIC mirror (FOBO-Tools/fobo-data-maker); the private
+# monorepo is source-of-truth and syncs here via scripts/sync-public.sh.
+#
+# Unlike the SDKs (npm/PyPI/NuGet/Packagist), the terminal renderer ships as
+# downloadable binaries straight off the repo's Releases page — that's the
+# download link the docs point at.
+#
+# Each matrix leg builds on its own native runner so ReadyToRun compilation is
+# native (no cross-gen surprises), then uploads its asset to the same Release
+# keyed by the pushed tag.
+#
+# Release flow:
+#   1. (optional) bump <Version> in the terminal csproj (private repo), commit
+#   2. run scripts/sync-public.sh, commit + push in the public repo
+#   3. in the public repo: git tag renderer-terminal-v<version> && git push --tags
+#      -> this workflow builds all platforms and publishes the Release.
+
+on:
+  push:
+    tags:
+      - "renderer-terminal-v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write   # create the Release and upload binaries
+
+jobs:
+  build:
+    name: "build ${{ matrix.rid }}"
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - rid: osx-arm64
+            os: macos-14
+            asset: datamaker-form-osx-arm64
+            ext: ""
+          - rid: osx-x64
+            os: macos-13
+            asset: datamaker-form-osx-x64
+            ext: ""
+          - rid: linux-x64
+            os: ubuntu-latest
+            asset: datamaker-form-linux-x64
+            ext: ""
+          - rid: linux-arm64
+            os: ubuntu-24.04-arm
+            asset: datamaker-form-linux-arm64
+            ext: ""
+          - rid: win-x64
+            os: windows-latest
+            asset: datamaker-form-win-x64.exe
+            ext: ".exe"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "9.0.x"
+
+      - name: Publish single-file binary
+        shell: bash
+        run: >
+          dotnet publish DataMaker.Forms.Renderer.Terminal/DataMaker.Forms.Renderer.Terminal.csproj
+          -c Release -r ${{ matrix.rid }} --self-contained
+          -o out
+
+      - name: Stage asset
+        shell: bash
+        run: |
+          mkdir -p dist
+          cp "out/datamaker-form${{ matrix.ext }}" "dist/${{ matrix.asset }}"
+
+      - name: Attach to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/${{ matrix.asset }}
+          fail_on_unmatched_files: true
