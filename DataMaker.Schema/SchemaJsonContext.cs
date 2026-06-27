@@ -37,6 +37,7 @@ namespace DataMaker.Schema;
     PropertyNameCaseInsensitive = true)]
 [JsonSerializable(typeof(Form))]
 [JsonSerializable(typeof(FieldDefinition))]
+[JsonSerializable(typeof(DataMaker.Schema.Cards.CardLayout))]
 [JsonSerializable(typeof(FormStep))]
 [JsonSerializable(typeof(Section))]
 [JsonSerializable(typeof(Row))]

@@ -234,11 +234,12 @@ owner, so a clear error message helps them see *why* you rejected the request.
 | `_reason` | When |
 |---|---|
 | `insert` | Record was just created. |
-| `update` | Record edited after creation. The webhook adapter does **not** send update events today. |
-| `delete` | Record deleted. The webhook adapter does **not** send delete events today. |
+| `update` | Record edited after creation — delivered with `_reason: "update"`. |
+| `delete` | Record deleted — **consumed but not delivered**: the webhook adapter no-ops deletes (no HTTP call). |
 
-For now every webhook fire is `insert`. The other two values are reserved on the
-wire so you can future-proof your parser.
+The form owner chooses which live events fire (create / update / delete) per
+outegration. `insert` and `update` produce real webhook calls when enabled;
+`delete` is currently never sent over the wire even if enabled.
 
 ## Idempotency
 

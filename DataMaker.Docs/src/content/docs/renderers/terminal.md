@@ -58,8 +58,9 @@ On launch it:
 |---|---|
 | `<path-or-url>` | the `.dmf` to fill (positional) |
 | `--submit-endpoint <url>` | override the submissions API base |
-| `--trust` | trust handling for the TOFU prompt |
-| `--template` | terminal color template |
+| `--trust <fingerprint>` | pre-trust a signer fingerprint (skips the TOFU prompt) |
+| `--template`, `-t <name>` | terminal color template: `dark`, `green`, or `light` |
+| `--help`, `-h` | show usage |
 
 The submit path uses the [.NET SDK](/fobo-data-maker/sdks/dotnet/) (`DataMakerClient`) under the
 hood, so the terminal ships only the client subset — no signing/keygen code.

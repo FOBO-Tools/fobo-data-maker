@@ -1,5 +1,4 @@
 using System.Security.Cryptography;
-using System.Text;
 using System.Text.Json;
 using DataMaker.Schema.Fields;
 
@@ -15,9 +14,9 @@ namespace DataMaker.Schema.Forms;
 /// <para>
 /// <b>Counted as structural</b> — change bumps the version:
 /// Id, Name, Kind, Required, Validation rules, kind-specific option blocks
-/// (Text / Number / Money / Choice / Relation / Attachment / Date — Choice
-/// option lists matter because adding/removing a choice changes what a
-/// "valid" value is).
+/// (Text / Number / Money / Choice / Relation / Attachment / Date / Scale —
+/// Choice option lists matter because adding/removing a choice changes what a
+/// "valid" value is; a Scale Min/Max edit likewise changes the valid range).
 /// </para>
 ///
 /// <para>
@@ -66,7 +65,8 @@ public static class FormStructuralHash
         Choice:     f.Choice,
         Relation:   f.Relation,
         Attachment: f.Attachment,
-        Date:       f.Date);
+        Date:       f.Date,
+        Scale:      f.Scale);
 
     /// <summary>
     /// Hash input — only the structural slice of a field. Order of
@@ -86,5 +86,6 @@ public static class FormStructuralHash
         ChoiceOptions?          Choice,
         RelationOptions?        Relation,
         AttachmentOptions?      Attachment,
-        DateOptions?            Date);
+        DateOptions?            Date,
+        ScaleOptions?           Scale);
 }

@@ -26,7 +26,7 @@ from .fields import normalize_kind, is_input_kind, coerce_value, KINDS, ALL_KIND
 from .crypto import seal, sha256_hex, verify_ed25519
 from .errors import DataMakerError, DmfError, ValidationError, SubmissionError
 
-__version__ = "0.1.0"
+__version__ = "0.1.3"
 
 __all__ = [
     "read_form",

@@ -114,6 +114,42 @@ public static class LayoutCalculator
         }
         return spans;
     }
+
+    /// <summary>
+    /// Even column distribution: split <paramref name="budget"/> grid slots
+    /// across <paramref name="count"/> columns as evenly as possible. The
+    /// remainder (when <paramref name="budget"/> isn't divisible) is handed to
+    /// the leftmost columns, so a 12-slot row of 5 columns becomes 3/3/2/2/2.
+    /// The returned spans always sum to <paramref name="budget"/> — or to
+    /// <paramref name="count"/> when the budget can't give every column its
+    /// 1-slot minimum (the renderer stacks at narrow widths anyway).
+    ///
+    /// <para>
+    /// This is the canonical "drop a field into a row → the row rebalances"
+    /// behaviour: deterministic, order-independent, and it never overflows or
+    /// leaves dead grid space. Intentional non-even widths come from the drag
+    /// handle (<see cref="ResolveBoundaryResize"/>); a structural add/remove
+    /// re-evens.
+    /// </para>
+    /// </summary>
+    /// <param name="count">Number of columns to distribute across (≥ 0).</param>
+    /// <param name="budget">Total slots in the row (<see cref="Row.ColumnsPerRow"/>).</param>
+    public static int[] DistributeEven(int count, int budget)
+    {
+        if (count <= 0) return Array.Empty<int>();
+
+        // Every column needs at least one slot. If the row can't hold them all
+        // (count > budget), floor the budget at count so each gets 1 — the
+        // responsive renderer stacks the row at narrow widths regardless.
+        budget = Math.Max(count, budget);
+
+        var baseSpan  = budget / count;
+        var remainder = budget % count;
+        var spans = new int[count];
+        for (var i = 0; i < count; i++)
+            spans[i] = baseSpan + (i < remainder ? 1 : 0);
+        return spans;
+    }
 }
 
 /// <summary>

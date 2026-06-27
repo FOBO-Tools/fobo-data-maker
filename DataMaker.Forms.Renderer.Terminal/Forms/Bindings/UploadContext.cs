@@ -1,5 +1,3 @@
-using System.Net.Http;
-
 namespace DataMaker.Forms.Renderer.Terminal.Forms.Bindings;
 
 /// <summary>

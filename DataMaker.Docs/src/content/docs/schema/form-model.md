@@ -15,11 +15,13 @@ they're arranged). A minimal renderer only needs `fields`; a full one walks
   "id": "contact_form",
   "name": "Contact form",
   "description": "Say hello",
-  "schemaVersion": 4,
+  "schemaVersion": 1,
   "submitPolicy": "Anonymous",
   "fields": [ /* FieldDefinition[] */ ],
   "steps": [ /* Step[] — layout */ ],
   "style": { /* FormStyle */ },
+  "cardLayout": { /* optional single-record card view */ },
+  "lockedStyleFields": [ /* style paths the author pinned */ ],
   "messages": { "<slotId>": "custom message" }
 }
 ```
@@ -29,11 +31,14 @@ they're arranged). A minimal renderer only needs `fields`; a full one walks
 | `id` | string | Stable form id (snake_case). |
 | `name` | string | Display name. |
 | `description` | string? | Optional. |
-| `schemaVersion` | int | Bumped on breaking changes. Goes into the submission `formVersion`. |
+| `schemaVersion` | int | Per-form author-managed counter, starts at `1`. Copied into the submission `formVersion`. Not a format version. |
 | `submitPolicy` | string | `"Anonymous"` or `"Authenticated"`. |
 | `fields` | array | The data model — see [field kinds](/fobo-data-maker/schema/field-kinds/). |
 | `steps` | array | Layout tree (below). |
 | `style` | object? | Form-level theme/style (see palette/elementCss in the bundle). |
+| `cardLayout` | object? | Optional layout for the single-record card / page-through view. Renderers that only render the form for submission can ignore it. |
+| `lockedStyleFields` | string[] | Style paths the author explicitly pinned (authoring hint; not needed to render). |
+| `messages` | object? | Form-level message-slot overrides (e.g. a validation banner). |
 
 ## FieldDefinition
 
@@ -46,6 +51,7 @@ Each entry in `fields[]`:
   "label": "Email",
   "description": null,
   "placeholder": null,
+  "autocomplete": "email",
   "kind": "email",
   "required": true,
   "defaultValue": null,
@@ -55,10 +61,13 @@ Each entry in `fields[]`:
   "indexed": false,
   "validation": [ /* ValidationRule[] */ ],
   "messages": { "<checkId>": "custom error" },
-  "choice":  { "allowCustom": false, "choices": [ { "value": "a", "label": "A" } ] },
+  "style": { /* per-field Style override (optional) */ },
+  "labelStyle": { /* per-field label Style override (optional) */ },
+  "choice":  { "allowCustom": false, "choices": [ { "value": "a", "label": "A" } ], "display": "Radios", "columns": 2 },
   "number":  { "min": 0, "max": 100, "decimalPlaces": 0, "format": "N0" },
   "money":   { "currency": "EUR", "decimalPlaces": 2 },
   "text":    { "minLength": 0, "maxLength": 200, "pattern": null },
+  "scale":   { "min": 1, "max": 5, "minLabel": "Low", "maxLabel": "High", "shape": "Circle" },
   "date":    { "min": "2020-01-01", "max": "2030-12-31" },
   "attachment": { "acceptedExtensions": [".pdf"], "maxSizeBytes": 5000000 },
   "relation": { "targetFormId": "...", "displayFieldId": "...", "multiple": false }
@@ -66,13 +75,16 @@ Each entry in `fields[]`:
 ```
 
 - `name` is the **storage key** used in submission `values` and expressions.
+- `autocomplete` is an optional HTML autocomplete token (e.g. `email`, `name`).
 - `kind` selects the editor + value shape — see [field kinds](/fobo-data-maker/schema/field-kinds/).
-- Exactly one kind-specific option block (`choice`/`number`/`money`/…) is
-  populated, matching `kind`.
+- Exactly one kind-specific option block (`choice`/`number`/`money`/`scale`/…)
+  is populated, matching `kind`.
 - `calculatedExpression` / `visibleWhen` are DSL strings — see
   [expressions](/fobo-data-maker/schema/expressions/).
 - `isPrimaryDisplay` marks the record's title field; `indexed` requests a DB
   index (receiver-side hint).
+- `style` / `labelStyle` are optional per-field design overrides (authoring
+  detail; a structure-only renderer can ignore them).
 
 ## Layout: steps → sections → rows → columns
 
@@ -93,12 +105,12 @@ by `kind`):
 |---|---|
 | `field` | a field, by `fieldId` → `fields[].id` |
 | `group` | a titled, optionally-collapsible container with nested `rows[]` + its own `visibleWhen` |
-| `richtext` | Markdown block |
-| `image` | a static image (`source`, `altText`, `maxHeight`) |
+| `richtext` | Markdown block (body in `markdown`) |
+| `image` | a static image (`source`, `altText`, `maxHeight`, `maxWidth`, `align`) |
 | `divider` | an `<hr>` (`thickness`, `color`) |
 | `spacer` | vertical space (`height`) |
-| `heading` | a heading (`level` 1–4) |
-| `button` | a submit/save/reset/action button (`variant`, `action`, `iconGlyph`) |
+| `heading` | a heading (`text`, `level` 1–4) |
+| `button` | a button — `name` + `label` (required), `action` (`None`/`Submit`/`Save`/`Reset`/`NextStep`/`PrevStep`), `variant`, `iconGlyph` |
 
 A field referenced by a `field` column is rendered where the column sits;
 fields not placed in any column are typically auto-appended (renderer choice).

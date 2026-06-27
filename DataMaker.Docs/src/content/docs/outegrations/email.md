@@ -30,7 +30,8 @@ Missing or empty fields resolve to an empty string.
 
 Signatures render specially: in an HTML body they become an inline image
 (delivered as a CID attachment so Gmail and iCloud don't strip them); in the
-subject and the plaintext part they render as `Name signed on: dd-MM-yyyy`.
+subject and the plaintext part they render as `Name signed on: dd-MM-yyyy` —
+or `Signed on: dd-MM-yyyy` when there's no typed name.
 
 Top-level scalars available anywhere in a template:
 

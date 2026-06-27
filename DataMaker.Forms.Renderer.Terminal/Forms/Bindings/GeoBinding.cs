@@ -1,5 +1,3 @@
-using System.Net.Http;
-using System.Net.Http.Json;
 using System.Text.Json.Serialization;
 using DataMaker.Schema.Fields;
 using Terminal.Gui;

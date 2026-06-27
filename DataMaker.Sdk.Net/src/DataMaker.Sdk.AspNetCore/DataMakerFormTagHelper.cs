@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Text;
 using System.Text.Json.Nodes;
 using DataMaker.Sdk;
@@ -57,26 +58,31 @@ public sealed class DataMakerFormTagHelper : TagHelper
     [HtmlAttributeName("apply-form-style")]
     public bool ApplyFormStyle { get; set; } = true;
 
-    public override void Process(TagHelperContext context, TagHelperOutput output)
+    // Parsed-bundle cache keyed by path + last-write time. Reading the file,
+    // parsing the ZIP, and re-verifying the Ed25519 signature on every request
+    // blocks a thread-pool thread and redoes crypto under load; the .dmf only
+    // changes when redeployed, so cache by (path, mtime) and the heavy work
+    // runs once per file version. #81c.
+    private sealed record CachedForm(string FormId, string? RecipientPublicKey, string BundleJson);
+    private static readonly ConcurrentDictionary<string, CachedForm> _cache = new();
+
+    public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
     {
         if (string.IsNullOrWhiteSpace(DmfPath))
             throw new InvalidOperationException("<datamaker-form> requires a dmf-path attribute.");
 
-        var bytes = File.ReadAllBytes(DmfPath);
-        var form = DataMakerClient.ReadForm(bytes, verify: true, includeRenderBundle: true);
-        if (form.RenderBundle is null)
-            throw new InvalidOperationException(".dmf has no render bundle (not a v3 bundle?).");
+        var cached = await LoadCachedAsync(DmfPath);
 
         var server = string.Equals(Encrypt, "server", StringComparison.OrdinalIgnoreCase);
-        if (!server && string.IsNullOrEmpty(form.RecipientPublicKey))
+        if (!server && string.IsNullOrEmpty(cached.RecipientPublicKey))
             throw new InvalidOperationException("client encrypt mode needs a recipient in the .dmf; use encrypt=\"server\" or a recipient bundle.");
 
-        var bundleJson = FormBundle.Assemble(form.RenderBundle);
+        var bundleJson = cached.BundleJson;
 
         var cfg = new JsonObject
         {
             ["encrypt"] = server ? "server" : "client",
-            ["formId"] = form.FormId,
+            ["formId"] = cached.FormId,
             ["applyFormStyle"] = ApplyFormStyle,
         };
         if (server)
@@ -85,7 +91,7 @@ public sealed class DataMakerFormTagHelper : TagHelper
         }
         else
         {
-            cfg["recipientPublicKey"] = form.RecipientPublicKey;
+            cfg["recipientPublicKey"] = cached.RecipientPublicKey;
             cfg["apiBaseUrl"] = ApiBaseUrl;
         }
 
@@ -112,4 +118,21 @@ public sealed class DataMakerFormTagHelper : TagHelper
     }
 
     private string Asset(string file) => AssetBase.TrimEnd('/') + "/" + file;
+
+    private static async Task<CachedForm> LoadCachedAsync(string path)
+    {
+        // mtime in the key means a redeploy that rewrites the .dmf is picked up
+        // without a process restart, and an unchanged file is a pure cache hit.
+        var key = path + "|" + File.GetLastWriteTimeUtc(path).Ticks;
+        if (_cache.TryGetValue(key, out var hit)) return hit;
+
+        var bytes = await File.ReadAllBytesAsync(path);
+        var form = DataMakerClient.ReadForm(bytes, verify: true, includeRenderBundle: true);
+        if (form.RenderBundle is null)
+            throw new InvalidOperationException(".dmf has no render bundle (not a v3 bundle?).");
+
+        var entry = new CachedForm(form.FormId, form.RecipientPublicKey, FormBundle.Assemble(form.RenderBundle));
+        _cache[key] = entry;
+        return entry;
+    }
 }

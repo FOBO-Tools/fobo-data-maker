@@ -2,7 +2,7 @@
   "name": "fobo/datamaker-sdk",
   "description": "Sender-side SDK for DataMaker forms: read a .dmf, verify the signature + FOBO attestation, sealed-box encrypt a submission, and POST it.",
   "type": "library",
-  "license": "MIT",
+  "license": "BSD-3-Clause",
   "keywords": ["datamaker", "fobo", "forms", "e2ee", "sealed-box"],
   "require": {
     "php": ">=8.0",

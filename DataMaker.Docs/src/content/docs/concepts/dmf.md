@@ -19,6 +19,7 @@ detectable.
 | `elementCss.json` | v3+ | Element-key → resolved CSS string. |
 | `palette.css` | v3+ | Theme palette CSS (`:root` light/dark variables). |
 | `fonts.css` | v3+ | `@font-face` rules for embedded fonts. |
+| `images/<sha256>.<ext>` | when present | Design-time images lifted out of the form. Each is bound by the manifest like any other entry; `form.json` references them with the `dmf:` scheme (e.g. `dmf:images/<sha256>.png`). |
 
 The signing scheme signs the **manifest**, not the ZIP's central directory: ZIP
 layout isn't byte-stable across producers, but the manifest is a single

@@ -8,7 +8,7 @@
     <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
 
     <PackageId>DataMaker.Sdk.AspNetCore</PackageId>
-    <Version>0.1.0</Version>
+    <Version>0.1.3</Version>
     <Authors>FOBO Tools</Authors>
     <Description>ASP.NET Core integration for Data Maker forms: a TagHelper that renders a signed .dmf form (hosting the JS renderer) and a server-side encrypt endpoint. Choose client-side end-to-end encryption or server-side sealing.</Description>
     <PackageLicenseExpression>BSD-3-Clause</PackageLicenseExpression>

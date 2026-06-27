@@ -35,7 +35,7 @@ the holder of the recipient private key can open it.
 {
   "values": { "email": "ada@example.com", "age": 37, "tags": ["a", "c"] },
   "submittedAt": "2026-05-29T12:00:00.000Z",
-  "formVersion": 4,
+  "formVersion": 1,
   "formSchema": "",
   "mode": "Create"
 }
@@ -45,9 +45,9 @@ the holder of the recipient private key can open it.
 |---|---|---|
 | `values` | object | Field **name** → value. Shapes per [field kind](/fobo-data-maker/schema/field-kinds/). |
 | `submittedAt` | string | ISO-8601 UTC. |
-| `formVersion` | int | The form's `schemaVersion`. The receiver looks up the archived schema by `(formId, formVersion)`; a mismatch quarantines the row. |
+| `formVersion` | int | The form's `schemaVersion` (per-form, starts at 1). The receiver looks up the archived schema by `(formId, formVersion)`; a mismatch quarantines the row. |
 | `formSchema` | string | Legacy; leave `""`. |
-| `mode` | string | `"Create"` (new) — the only mode for new submissions. |
+| `mode` | string | `"Create"` for a new submission. `"Update"` is used when amending an existing one through the edit-token flow. |
 
 ## SubmissionEnvelope (the request body)
 

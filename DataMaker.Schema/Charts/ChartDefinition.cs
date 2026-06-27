@@ -105,6 +105,15 @@ public sealed record ChartValue
     public required string Field { get; init; }
     public string? Label { get; init; }
     public ChartAggregate Aggregate { get; init; } = ChartAggregate.Sum;
+
+    /// <summary>
+    /// Plot this value as a cumulative running total: each axis bucket shows
+    /// the sum of itself plus all prior buckets. Applied client-side after the
+    /// ordered aggregate query (rows arrive sorted by axis), so it needs no
+    /// SQL change. Line/Bar only — meaningless for Pie/Scatter. Defaults off;
+    /// older saved charts deserialise with this false.
+    /// </summary>
+    public bool RunningTotal { get; init; }
 }
 
 /// <summary>Filter op set. Mirrors the storage layer's FilterOp; the designer

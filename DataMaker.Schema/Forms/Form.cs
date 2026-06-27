@@ -1,3 +1,4 @@
+using DataMaker.Schema.Cards;
 using DataMaker.Schema.Fields;
 using DataMaker.Schema.Styling;
 
@@ -44,6 +45,15 @@ public sealed record Form
     /// are skipped so the user's intentional overrides survive theme swaps.
     /// </summary>
     public List<string> LockedStyleFields { get; init; } = new();
+
+    /// <summary>
+    /// Display layout for the card view (the single-record, page-through
+    /// surface). <c>null</c> ⇒ the built-in FOBO default, synthesized from the
+    /// form's fields by <see cref="Cards.CardLayoutResolver"/>. Reuses the
+    /// <see cref="Layout.Section"/> model so a future card designer is a
+    /// retargeted layout editor rather than a new rendering pipeline.
+    /// </summary>
+    public CardLayout? CardLayout { get; init; }
 
     /// <summary>
     /// Who's allowed to submit this form. Default <see cref="SubmitPolicy.Anonymous"/>

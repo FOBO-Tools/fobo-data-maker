@@ -7,7 +7,7 @@
     <LangVersion>latest</LangVersion>
 
     <PackageId>DataMaker.Sdk</PackageId>
-    <Version>0.1.0</Version>
+    <Version>0.1.3</Version>
     <Authors>FOBO Tools</Authors>
     <Description>Submit records to a Data Maker form from .NET: read a signed .dmf bundle, validate values, sealed-box encrypt, and POST to the public submissions endpoint. Standalone — no dependency on the Data Maker app internals.</Description>
     <PackageLicenseExpression>BSD-3-Clause</PackageLicenseExpression>

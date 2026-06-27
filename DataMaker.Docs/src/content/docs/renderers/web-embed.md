@@ -21,9 +21,8 @@ ciphertext to `/submissions`. Your server never sees plaintext.
 
 <script>
   window.DataMakerConfig = {
-    encrypt: 'client',
     recipientPublicKey: '<base64 from manifest.recipient.publicKey>', // required — the submission destination
-    // apiBaseUrl optional — defaults to the public endpoint
+    // apiBaseUrl optional — defaults to https://datamaker-api.fobo-tools.com
   };
 </script>
 <script src="datamaker.browser.js"></script>   <!-- the SDK browser bundle -->
@@ -123,6 +122,10 @@ Publishing to `{subdomain}.hosted-forms.com`? Two settings live in the
 Everything else (header, custom CSS, hidden elements, encrypted delivery) is
 unchanged.
 
+The plain-JS embed is **always end-to-end**: it seals client-side against
+`recipientPublicKey` and posts ciphertext. There is no `encrypt` or `submitUrl`
+config — those are ASP.NET Core TagHelper attributes (below).
+
 ## ASP.NET Core (TagHelper)
 
 If you host on .NET, the `DataMaker.Sdk.AspNetCore` TagHelper does all of the
@@ -132,15 +135,20 @@ above from a `.dmf` path — see the [.NET SDK](/fobo-data-maker/sdks/dotnet/).
 <datamaker-form dmf-path="forms/contact.dmf" encrypt="client" />
 ```
 
-## Server-side encryption
+The TagHelper adds a server-side encryption option the plain-JS path doesn't
+have, via two attributes:
 
-Set `encrypt: 'server'` and a `submitUrl`. The browser posts **plaintext**
-`{ formId, values }` to your endpoint, which validates + seals + forwards. Use
-this when you don't want libsodium in the browser and your server is trusted
-with the plaintext. The .NET `MapDataMakerSubmit` endpoint implements the
-server half.
+```cshtml
+<datamaker-form dmf-path="forms/contact.dmf"
+                encrypt="server" submit-url="/datamaker/submit" />
+```
 
-| | client | server |
+With `encrypt="server"` the browser posts **plaintext** `{ formId, values }` to
+`submit-url`, and your endpoint validates + seals + forwards. The .NET
+`MapDataMakerSubmit` endpoint implements the server half. Use it when you don't
+want libsodium in the browser and your server is trusted with the plaintext.
+
+| | `encrypt="client"` (default) | `encrypt="server"` |
 |---|---|---|
 | Who encrypts | browser | your server |
 | Server sees plaintext | no | yes |

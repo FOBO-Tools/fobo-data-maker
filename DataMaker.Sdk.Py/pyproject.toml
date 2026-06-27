@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "datamaker-forms"
-version = "0.1.0"
+version = "0.1.3"
 description = "Submit records to a Data Maker form: read a signed .dmf bundle, validate values, sealed-box encrypt, and post to the public submissions endpoint."
 readme = "README.md"
 license = "BSD-3-Clause"

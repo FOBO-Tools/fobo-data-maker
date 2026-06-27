@@ -76,14 +76,16 @@
 .dm-field {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  /* gap = a field's own label / input / hint spacing (theme FieldSpacing),
+   * matching the Uno field StackPanel Spacing. Inter-field spacing is .dm-row. */
+  gap: var(--dm-field-spacing, 4px);
   min-width: 0;
 }
 .dm-field[hidden] { display: none; }
 .dm-field .dm-label  { display: block; }
 .dm-field .dm-req    { margin-left: 2px; }
-.dm-field .dm-hint   { margin: 0; font-size: 12px; }
-.dm-field .dm-err    { margin: 0; font-size: 12px; min-height: 1em; color: var(--dm-error, #c92a2a); }
+.dm-field .dm-hint   { margin: 0; font-size: inherit; }
+.dm-field .dm-err    { margin: 0; font-size: inherit; min-height: 1em; color: var(--dm-error, #c92a2a); }
 
 /* Validation affordances — kept in the structural layer (not in
  * styles.css's brand block) so submitters still see the field outlined
@@ -192,10 +194,9 @@
 .dm-money-prefix       { display: inline-flex; align-items: center; padding: 0 10px; flex: 0 0 auto; }
 .dm-money > input      { flex: 1 1 auto; min-width: 0; border: 0 !important; outline: 0 !important; background: transparent !important; box-shadow: none !important; }
 
-/* ── Multi-choice / chips (list field) ────────────────────────── */
-.dm-multi              { display: flex; flex-wrap: wrap; gap: 8px; }
-.dm-multi .dm-opt         { display: inline-flex; align-items: center; gap: 4px; }
-
+/* ── List field — chips. Multi-choice `.dm-multi` column-major layout
+ * lives in styles.css (multicol `columns:`); a `display:flex` here would
+ * defeat it (flex containers ignore `columns`). */
 .dm-chips              { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; min-height: 32px; padding: 6px 8px; border: 1px solid; border-radius: 4px; box-sizing: border-box; }
 .dm-chips-items        { display: contents; }
 .dm-chip               { display: inline-flex; align-items: center; gap: 4px; padding: 3px 4px 3px 10px; border: 1px solid; border-radius: 12px; font-size: .9em; }

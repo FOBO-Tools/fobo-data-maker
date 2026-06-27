@@ -93,15 +93,19 @@ html.dm-preview body {
 
 /* ─── Sheet ───────────────────────────────────────────────────── */
 .dm-sheet {
-  max-width: var(--sheet-max-width);
+  /* --dm-form-max-width (theme MaxWidth) overrides the responsive cap; --dm-corner-radius
+     (theme CornerRadius) overrides the card radius. Both fall back to the defaults. */
+  max-width: var(--dm-form-max-width, var(--sheet-max-width));
   margin: 0 auto 32px;
   background: var(--dm-paper);
   color: var(--dm-ink);
   border: 1px solid var(--dm-field-border);
-  border-radius: 8px;
+  border-radius: var(--dm-corner-radius, 8px);
   padding: var(--sheet-padding);
   box-shadow: var(--shadow);
 }
+/* Rich-text + description hyperlinks pick up the theme link colour. */
+.dm-sheet a { color: var(--dm-link, var(--dm-field-focus)); }
 
 h1.form-title { margin: 0 0 6px; font-size: var(--form-title-size); font-weight: 600; }
 /* Descriptions / hints use the inherited text colour at reduced opacity
@@ -109,11 +113,12 @@ h1.form-title { margin: 0 0 6px; font-size: var(--form-title-size); font-weight:
    when a Form Style sets a custom text colour (or a custom background
    like a gradient), opacity-based muting keeps hints legible against
    whatever the user picked. */
-.dm-form-desc { margin: 0 0 18px; font-style: italic; font-size: var(--description-size); }
+/* --dm-description-font-size = theme DescriptionFontSize override (falls back to --description-size). */
+.dm-form-desc { margin: 0 0 18px; font-style: italic; font-size: var(--dm-description-font-size, var(--description-size)); }
 h2.step-title { margin: var(--spacing-step) 0 6px; font-size: var(--step-title-size); }
-.dm-step-desc { margin: 0 0 12px; font-style: italic; font-size: var(--description-size); }
-h3.section-title { margin: var(--spacing-section) 0 6px; font-size: var(--section-title-size); font-weight: 600; }
-.dm-section-desc { margin: 0 0 10px; font-style: italic; font-size: var(--description-size); }
+.dm-step-desc { margin: 0 0 12px; font-style: italic; font-size: var(--dm-description-font-size, var(--description-size)); }
+h3.section-title { margin: var(--dm-section-spacing, var(--spacing-section)) 0 6px; font-size: var(--section-title-size); font-weight: 600; }
+.dm-section-desc { margin: 0 0 10px; font-style: italic; font-size: var(--dm-description-font-size, var(--description-size)); }
 
 /* ─── Layout grid ─────────────────────────────────────────────── */
 .dm-row {
@@ -127,9 +132,10 @@ h3.section-title { margin: var(--spacing-section) 0 6px; font-size: var(--sectio
 
 /* ─── Group card ──────────────────────────────────────────────── */
 .dm-group {
-  border: 1px solid var(--dm-divider);
+  /* Invisible layout container by default — no border/fill/padding. Authors
+     add chrome via the group's per-element style (applied inline). Matches the
+     Uno renderer's BuildGroupChild default. */
   border-radius: 6px;
-  padding: 12px;
   margin: 4px 0;
 }
 .dm-group[hidden] { display: none; }
@@ -155,20 +161,53 @@ h3.section-title { margin: var(--spacing-section) 0 6px; font-size: var(--sectio
 .dm-field {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  margin: 8px 0;
+  /* --dm-field-spacing = theme FieldSpacing = the gap between a field's OWN
+   * label / input / hint, matching the Uno field StackPanel Spacing (was a fixed
+   * 4px, so the label sat tighter to its input than in the designer). Inter-field
+   * spacing is the row's 12px (.dm-row) — no field margin here, it would double up. */
+  gap: var(--dm-field-spacing, 4px);
 }
 .dm-field[hidden] { display: none; }
 .dm-field .dm-label {
   font-weight: 500;
+  /* --dm-label-font-size = theme LabelFontSize override. */
+  font-size: var(--dm-label-font-size, inherit);
 }
 .dm-field .dm-req {
-  color: var(--dm-error);
+  /* --dm-required-marker = theme RequiredMarkerColor (falls back to error). */
+  color: var(--dm-required-marker, var(--dm-error));
   margin-left: 2px;
 }
+
+/* ─── Field label placement (theme LabelPosition) ─────────────────
+   Top is the default (column flow above). Left puts the label in an
+   inline column; Floating sits it on the field border (outlined look). */
+.dm-label-left .dm-field {
+  display: grid;
+  grid-template-columns: minmax(110px, 28%) 1fr;
+  align-items: center;
+  column-gap: 12px;
+}
+.dm-label-left .dm-field > .dm-label { grid-column: 1; }
+.dm-label-left .dm-field > :not(.dm-label) { grid-column: 2; }
+
+.dm-label-floating .dm-field { position: relative; padding-top: 9px; }
+.dm-label-floating .dm-field > .dm-label {
+  position: absolute;
+  top: 0;
+  left: 9px;
+  font-size: 0.72em;
+  line-height: 1;
+  padding: 0 4px;
+  background: var(--dm-field-fill);
+  color: var(--dm-placeholder, var(--dm-muted-ink));
+}
+.dm-label-floating .dm-field:focus-within > .dm-label { color: var(--dm-field-focus); }
 .dm-field .dm-hint {
   font-style: italic;
-  font-size: 12px;
+  /* font-size:inherit — Uno's typography walk sizes the hint to the field font;
+   * web was a fixed 12px. Inherit matches the designer. */
+  font-size: inherit;
   /* Honour `\n` in the description string as a line break. Default
      `white-space: normal` collapses newlines to a single space — which
      is wrong for multi-line help text the schema author intends. */
@@ -176,7 +215,8 @@ h3.section-title { margin: var(--spacing-section) 0 6px; font-size: var(--sectio
 }
 .dm-field .dm-err {
   color: var(--dm-error);
-  font-size: 12px;
+  /* font-size:inherit — error text tracks the field font (matches the designer). */
+  font-size: inherit;
   min-height: 0;
 }
 
@@ -191,14 +231,33 @@ h3.section-title { margin: var(--spacing-section) 0 6px; font-size: var(--sectio
 .dm-field textarea {
   background: var(--dm-field-fill);
   color: var(--dm-ink);
-  border: 1px solid var(--dm-field-border);
+  /* --dm-field-border-width = theme FieldBorderThickness. */
+  border: var(--dm-field-border-width, 1px) solid var(--dm-field-border);
+  /* Fixed small radius — matches the Uno TextBox's ControlCornerRadius and the
+     sibling .dm-money / .dm-chips / .dm-dt-field controls. The form/sheet
+     CornerRadius (--dm-corner-radius) rounds field CONTAINERS, not the input box;
+     applying it here made inputs read as over-rounded pills vs the designer. */
   border-radius: 4px;
   padding: 7px 9px;
   font-size: 14px;
   font-family: inherit;
   width: 100%;
   box-sizing: border-box;
-  transition: border-color .12s ease;
+  transition: border-color .12s ease, box-shadow .12s ease;
+}
+/* Hover affordance before focus — theme FieldHoverBorderColor. */
+.dm-field input:hover:not(:focus):not(:disabled),
+.dm-field select:hover:not(:focus):not(:disabled),
+.dm-field textarea:hover:not(:focus):not(:disabled) {
+  border-color: var(--dm-field-hover-border, var(--dm-field-border));
+}
+/* Disabled / read-only — theme DisabledFillColor / DisabledInkColor. */
+.dm-field input:disabled,
+.dm-field select:disabled,
+.dm-field textarea:disabled,
+.dm-field input[readonly] {
+  background: var(--dm-disabled-fill, var(--dm-field-fill));
+  color: var(--dm-disabled-ink, var(--dm-muted-ink));
 }
 /* Single-line controls get an explicit row height. <input type="date"> /
    datetime-local carry an intrinsic content height from their native
@@ -223,6 +282,8 @@ h3.section-title { margin: var(--spacing-section) 0 6px; font-size: var(--sectio
 .dm-field textarea:focus {
   outline: none;
   border-color: var(--dm-field-focus);
+  /* --dm-focus-ring-width = theme FocusRingWidth; 0 (default) = no ring, no layout shift. */
+  box-shadow: 0 0 0 var(--dm-focus-ring-width, 0px) var(--dm-field-focus);
 }
 /* Placeholders match the Uno form renderer, which sets
    TextControlPlaceholderForeground = the theme MutedInk colour at full
@@ -231,7 +292,8 @@ h3.section-title { margin: var(--spacing-section) 0 6px; font-size: var(--sectio
    because Firefox dims placeholders independently of colour. */
 .dm-field input::placeholder,
 .dm-field textarea::placeholder {
-  color: var(--dm-muted-ink);
+  /* --dm-placeholder = theme PlaceholderColor (falls back to muted ink). */
+  color: var(--dm-placeholder, var(--dm-muted-ink));
   opacity: 1;
 }
 .dm-field textarea {
@@ -298,7 +360,13 @@ h3.section-title { margin: var(--spacing-section) 0 6px; font-size: var(--sectio
   gap: 4px;
 }
 .dm-rich-text-toggle {
-  align-self: flex-end;
+  /* Float over the editor surface's top-right corner (parent is position:relative)
+     so the label→input gap stays = field-spacing, not pushed down by a toggle row.
+     Mirrors the Uno editor, where the toggle overlays the Grid top-right. */
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 1;
   background: var(--dm-field-fill);
   color: var(--dm-ink);
   border: 1px solid var(--dm-field-border);
@@ -363,18 +431,22 @@ h3.section-title { margin: var(--spacing-section) 0 6px; font-size: var(--sectio
 }
 
 /* ─── Multi-choice ────────────────────────────────────────────── */
-.dm-multi {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+/* Choice lists (multi-choice checkboxes + single-choice radios) flow
+ * column-major into --dm-choice-cols columns (default 1 = single stack). */
+.dm-multi, .dm-radios {
+  /* `columns` (not column-count) so the browser drops columns when they
+   * don't fit the min width, instead of squeezing labels. Cap = --dm-choice-cols. */
+  columns: 11rem var(--dm-choice-cols, 1);
+  column-gap: 24px;
 }
-.dm-multi .dm-opt {
+.dm-multi .dm-opt, .dm-radios .dm-opt {
   font-weight: normal;
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 6px;
   padding: 2px 0;
   cursor: pointer;
+  break-inside: avoid;   /* keep a row whole within its column */
 }
 /* Choice.Color dot + Choice.Icon glyph, used by both `multi-choice` and
  * by future custom-dropdown choice renderers. <select> can't host
@@ -425,6 +497,47 @@ h3.section-title { margin: var(--spacing-section) 0 6px; font-size: var(--sectio
 .dm-multi .dm-opt input[type="checkbox"]:focus-visible,
 .dm-multi .dm-opt input[type="checkbox"]:focus {
   outline: 2px solid var(--dm-field-focus);
+  outline-offset: 2px;
+}
+
+/* Custom-painted single-choice radio — matches the Uno renderer's drawn
+ * ring + dot (NOT the native browser radio, which ignored the form palette
+ * and rendered as a dark OS dot). Ring = muted ink; selected ring + centre
+ * dot = Choice.OptionColor, else the accent. Sized off --dm-option-size
+ * (Choice.OptionSize, default 20px); dot is half the ring (matches Uno's
+ * size * 0.5), stroke = max(1.5px, size/10). */
+.dm-radios .dm-opt input[type="radio"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: var(--dm-option-size, 20px);
+  height: var(--dm-option-size, 20px);
+  margin: 0;
+  flex-shrink: 0;
+  cursor: pointer;
+  position: relative;
+  border-radius: 50%;
+  background: transparent;
+  border-style: solid;
+  border-width: max(1.5px, calc(var(--dm-option-size, 20px) / 10));
+  border-color: var(--dm-muted-ink);
+}
+.dm-radios .dm-opt input[type="radio"]:checked {
+  border-color: var(--dm-option-color, var(--dm-field-focus));
+}
+.dm-radios .dm-opt input[type="radio"]:checked::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 50%;
+  height: 50%;
+  border-radius: 50%;
+  background: var(--dm-option-color, var(--dm-field-focus));
+}
+.dm-radios .dm-opt input[type="radio"]:focus-visible,
+.dm-radios .dm-opt input[type="radio"]:focus {
+  outline: 2px solid var(--dm-option-color, var(--dm-field-focus));
   outline-offset: 2px;
 }
 
@@ -1008,11 +1121,14 @@ h3.section-title { margin: var(--spacing-section) 0 6px; font-size: var(--sectio
 }
 .dm-btn-subtle:hover  { background: rgba(4, 200, 255, 0.10); }
 .dm-btn-subtle:active { background: rgba(4, 200, 255, 0.18); }
-.dm-btn-glyph { font-family: "FontAwesome", sans-serif; font-weight: 900; font-size: 14px; }
+/* font-size:1em so the glyph scales with the button's text (Uno sets the icon
+ * FontSize to the resolved button font size); a fixed px left a tiny star on a
+ * large-font button. */
+.dm-btn-glyph { font-family: "FontAwesome", sans-serif; font-weight: 900; font-size: 1em; }
 
 /* ─── Heading column (themed sizes — without styles.css the browser
  *      defaults h1-h4 take over). */
-.dm-heading   { margin: 12px 0 6px; line-height: 1.25; }
+.dm-heading   { margin: 12px 0 6px; line-height: inherit; }
 .dm-heading-1 { font-size: 1.85rem; font-weight: 700; color: var(--dm-heading1, var(--dm-ink)); }
 .dm-heading-2 { font-size: 1.45rem; font-weight: 700; color: var(--dm-heading2, var(--dm-ink)); }
 .dm-heading-3 { font-size: 1.2rem;  font-weight: 600; color: var(--dm-heading3, var(--dm-ink)); }
@@ -1034,29 +1150,52 @@ h3.section-title { margin: var(--spacing-section) 0 6px; font-size: var(--sectio
 /* ─── Multi-step wizard ─────────────────────────────────────────────
    Numbered step bar + Back/Next nav. Accent fill mirrors .dm-submit
    (var(--dm-accent) with the FOBO-cyan fallback). */
+/* Step-bar theme hooks. renderer.js sets the per-bar vars inline from the
+   form's StepBar style (active/inactive/connector/label colours + font); each
+   falls back to the prior hard-coded value so an unstyled bar looks unchanged.
+   Shape is a class (dm-step-shape-*); position bottom adds dm-step-bar-bottom. */
 .dm-step-bar {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  /* One row that scrolls horizontally when steps overflow (matches the Uno step
+     bar); wrapping to multiple rows drifted from the designer. */
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  /* overflow-x:auto forces overflow-y to clip too (CSS coerces the visible
+     axis to auto). Generous vertical padding keeps the rounded badge — esp.
+     the filled active one — clear of that clip box; iOS Safari otherwise
+     shaves its bottom and renders the clipped arc as a stray curve. */
+  padding-block: 10px;
   gap: 4px;
-  margin-bottom: 16px;
+  margin-bottom: var(--dm-step-margin, 16px);
+  /* The bar scrolls programmatically (scrollStepIntoView), so hide the native
+     scrollbar — with macOS "Show scroll bars: Always" a classic horizontal
+     scrollbar reserves space at the bottom and shaves the badge circles. */
+  scrollbar-width: none;        /* Firefox */
+  -ms-overflow-style: none;     /* old Edge */
 }
+.dm-step-bar::-webkit-scrollbar { display: none; }  /* Chromium / Safari */
+.dm-step-bar-bottom { margin-bottom: 0; margin-top: var(--dm-step-margin, 16px); }
 .dm-step-conn {
   width: 24px;
   height: 2px;
-  background: var(--dm-divider);
+  flex: 0 0 auto;
+  background: var(--dm-step-connector, var(--dm-divider));
 }
+.dm-step-bar-noconn .dm-step-conn { display: none; }
+.dm-step-bar-nolabels .dm-step-label { display: none; }
 .dm-step-tab {
   display: inline-flex;
   align-items: center;
+  flex: 0 0 auto;
   gap: 8px;
   padding: 4px 8px;
   background: transparent;
   border: 0;
   border-radius: 6px;
-  font-family: inherit;
-  font-size: 14px;
-  color: var(--dm-muted-ink);
+  font-family: var(--dm-step-font, inherit);
+  font-size: var(--dm-step-font-size, 14px);
+  color: var(--dm-step-inactive, var(--dm-muted-ink));
   cursor: pointer;
 }
 .dm-step-badge {
@@ -1066,16 +1205,25 @@ h3.section-title { margin: var(--spacing-section) 0 6px; font-size: var(--sectio
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  border: 1.5px solid var(--dm-muted-ink);
+  border: 1.5px solid var(--dm-step-inactive, var(--dm-muted-ink));
   font-size: 12px;
   line-height: 1;
 }
-.dm-step-tab.dm-step-current { color: var(--dm-ink); font-weight: 600; }
+/* Badge shapes. */
+.dm-step-shape-square  .dm-step-badge { border-radius: 0; }
+.dm-step-shape-rounded .dm-step-badge { border-radius: 6px; }
+.dm-step-shape-diamond .dm-step-badge { border-radius: 4px; transform: rotate(45deg); }
+.dm-step-shape-diamond .dm-step-badge > * { transform: rotate(-45deg); }
+.dm-step-shape-star    .dm-step-badge {
+  border: 0;
+  clip-path: polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);
+}
+.dm-step-tab.dm-step-current { color: var(--dm-step-label, var(--dm-ink)); font-weight: 600; }
 .dm-step-tab.dm-step-current .dm-step-badge,
 .dm-step-tab.dm-step-done .dm-step-badge {
-  background: var(--dm-accent, #04c8ff);
-  border-color: var(--dm-accent, #04c8ff);
-  color: var(--dm-on-accent, #0e1520);
+  background: var(--dm-step-active, var(--dm-accent, #04c8ff));
+  border-color: var(--dm-step-active, var(--dm-accent, #04c8ff));
+  color: var(--dm-on-accent, #ffffff);
 }
 .dm-step-nav {
   display: flex;
@@ -1092,15 +1240,24 @@ h3.section-title { margin: var(--spacing-section) 0 6px; font-size: var(--sectio
 }
 /* Nav buttons carry .dm-btn .dm-btn-{variant} for appearance (matching the
    Button-defaults drawer); these rules only handle nav-row layout. */
-.dm-step-back, .dm-step-next { min-width: 96px; cursor: pointer; }
+.dm-step-back, .dm-step-next { min-width: 96px; cursor: pointer; justify-content: center; }
 .dm-step-back:disabled { opacity: 0.5; cursor: default; }
 
 /* ─── Scale / rating field ──────────────────────────────────────────── */
-.dm-scale { display: inline-flex; flex-direction: column; gap: 6px; }
-.dm-scale-row { display: flex; gap: 8px; }
+/* Full-width (matches Uno's Stretch Root): anchor labels span the field
+ * edge-to-edge; the point row aligns left/center/right via justify-content. */
+.dm-scale { display: flex; flex-direction: column; gap: 6px; }
+.dm-scale-row { display: flex; gap: 0; overflow-x: auto; }
+/* Flexible spacer between figures — grows to the configured spacing (inline
+   max-width) on wide, shrinks to a hairline FIRST as the row narrows so the
+   figures keep their full size. */
+.dm-scale-spacer { flex: 1 1 0; min-width: 2px; }
 .dm-scale-point {
   position: relative;
-  width: 34px; height: 34px;
+  /* Spacers shrink first; then the figure shrinks toward a tappable floor
+     (aspect-ratio keeps it square); then the row scrolls (overflow-x above). */
+  width: 34px; aspect-ratio: 1; height: auto;
+  flex: 0 1 34px; min-width: 28px;
   padding: 0; border: 0; background: transparent; cursor: pointer; font: inherit;
 }
 .dm-scale-fig {

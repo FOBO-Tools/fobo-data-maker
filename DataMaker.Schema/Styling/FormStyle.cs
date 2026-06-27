@@ -43,12 +43,48 @@ public sealed record FormStyle : Style
     public double? LabelFontSize       { get; init; }
     public double? DescriptionFontSize { get; init; }
 
+    /// <summary>
+    /// Form-wide default style for every field's label (font / size / weight /
+    /// colour / margin / alignment). A field's <see cref="DataMaker.Schema.Fields.FieldDefinition.LabelStyle"/>
+    /// merges on top per-property (the heading-defaults pattern). Null = no
+    /// opinion; renderers fall back to <see cref="LabelFontSize"/> then their
+    /// built-in label defaults. <see cref="Style.FontSize"/> here, when set,
+    /// supersedes the legacy <see cref="LabelFontSize"/>.
+    /// </summary>
+    public Style? LabelStyle { get; init; }
+
     // ── Spacing defaults ──
     public double? FieldSpacing   { get; init; }
     public double? SectionSpacing { get; init; }
 
     // ── Shape defaults ──
     public double? FieldBorderThickness { get; init; }
+
+    // ── Field label placement ──
+    //
+    // Where a field's label sits relative to its input. Top = stacked (default,
+    // current behaviour). Left = inline label column. Floating = label rides
+    // inside the field and lifts on focus/fill (Material-style). Null = Top.
+    public FieldLabelPosition? LabelPosition { get; init; }
+
+    // ── Field-state shape ──
+
+    /// <summary>Focus ring thickness in px. Null = renderer default (~2).</summary>
+    public double? FocusRingWidth { get; init; }
+
+    /// <summary>Marker drawn after required-field labels. Null = "*". Empty string hides it.</summary>
+    public string? RequiredMarkerGlyph { get; init; }
+
+    // ── Layout ──
+
+    /// <summary>Max width of the form card in px (content is centred). Null = renderer default.</summary>
+    public double? MaxWidth { get; init; }
+
+    /// <summary>
+    /// Control density — scales field padding + row spacing as one knob.
+    /// Compact / Comfortable / Spacious. Null = Comfortable (current spacing).
+    /// </summary>
+    public FormDensity? Density { get; init; }
 
     // ── Heading defaults (per level, 1 = largest, 4 = smallest) ──
     //
@@ -101,7 +137,6 @@ public sealed record FormStyle : Style
         TextColor     = TextColor,
         TextAlignment = TextAlignment,
         LineHeight    = LineHeight,
-        LetterSpacing = LetterSpacing,
     };
 }
 
@@ -131,6 +166,9 @@ public sealed record StepBarStyle
     /// <summary>Active step's label text color. Null = palette ink.</summary>
     public string? LabelColor { get; init; }
 
+    /// <summary>Color of the number / check drawn inside the current + completed badges. Null = palette paper.</summary>
+    public string? OnActiveColor { get; init; }
+
     /// <summary>Label + number font family. Null = inherit the form font.</summary>
     public string? FontFamily { get; init; }
 
@@ -157,6 +195,14 @@ public enum StepBarPosition { Top, Bottom }
 /// <summary>Figure drawn around each step number on the wizard step bar.</summary>
 [JsonConverter(typeof(JsonStringEnumConverter<StepFigureShape>))]
 public enum StepFigureShape { Circle, Square, Rounded, Diamond, Star }
+
+/// <summary>Where a field's label sits relative to its input control.</summary>
+[JsonConverter(typeof(JsonStringEnumConverter<FieldLabelPosition>))]
+public enum FieldLabelPosition { Top, Left, Floating }
+
+/// <summary>Control-density preset — one knob over field padding + row spacing.</summary>
+[JsonConverter(typeof(JsonStringEnumConverter<FormDensity>))]
+public enum FormDensity { Compact, Comfortable, Spacious }
 
 /// <summary>
 /// Color palette for one mode (light or dark). Hex strings so the JSON stays
@@ -210,4 +256,40 @@ public sealed record StylePalette
     public string? Heading2Color { get; init; }
     public string? Heading3Color { get; init; }
     public string? Heading4Color { get; init; }
+
+    // ── Field-state tokens (mode-specific) ────────────────────────────
+    //
+    // Each is an optional override on top of a renderer fallback so a theme
+    // only ships what it wants to brand. Null → the renderer derives a sane
+    // value (focus = accent, placeholder = muted ink, required = error, etc.)
+    // so older themes keep their look.
+
+    /// <summary>Placeholder text colour. Null → falls back to MutedInkColor.</summary>
+    public string? PlaceholderColor { get; init; }
+
+    /// <summary>Input focus ring / focus border colour. Null → AccentColor.</summary>
+    public string? FocusRingColor { get; init; }
+
+    /// <summary>Field border on hover (pre-focus affordance). Null → AccentColor.</summary>
+    public string? FieldHoverBorderColor { get; init; }
+
+    /// <summary>Required-field marker (asterisk) colour. Null → ErrorColor.</summary>
+    public string? RequiredMarkerColor { get; init; }
+
+    /// <summary>Disabled / read-only field fill. Null → FieldFillColor.</summary>
+    public string? DisabledFillColor { get; init; }
+
+    /// <summary>Disabled / read-only field text. Null → MutedInkColor.</summary>
+    public string? DisabledInkColor { get; init; }
+
+    // ── Layout + extra colours ────────────────────────────────────────
+
+    /// <summary>Page surface behind the form card. Null → PaperColor (card == page).</summary>
+    public string? PageBackgroundColor { get; init; }
+
+    /// <summary>Success / valid-state colour (validation OK ticks, success banners). Null → renderer green.</summary>
+    public string? SuccessColor { get; init; }
+
+    /// <summary>Hyperlink colour in rich-text + descriptions. Null → AccentColor.</summary>
+    public string? LinkColor { get; init; }
 }

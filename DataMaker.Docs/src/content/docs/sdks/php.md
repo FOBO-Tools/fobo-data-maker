@@ -125,7 +125,9 @@ try {
 Errors all extend `DataMaker\Sdk\DataMakerError` and carry a stable string in
 `->errorCode` (PHP's `Exception::getCode()` is an int, so the machine-readable
 code lives on `->errorCode`): `DMF_INVALID`, `VALIDATION_FAILED` (with
-`->issues`), `SUBMISSION_REJECTED` (with `->status`, `->body`).
+`->issues`), `SUBMISSION_REJECTED` (with `->status`, `->body`), `NO_RECIPIENT`
+(share-only bundle — can't receive submissions), `NO_FORM` (`submit` called with
+neither a form nor `.dmf` bytes).
 
 ## Scope
 

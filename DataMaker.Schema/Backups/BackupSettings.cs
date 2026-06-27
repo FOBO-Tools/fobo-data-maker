@@ -33,9 +33,7 @@ public sealed record BackupSettings
 
     /// <summary>The built-in default backup folder:
     /// <c>{LocalAppData}/FOBO/DataMaker/backups</c>.</summary>
-    public static string DefaultFolder() => Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "FOBO", "DataMaker", "backups");
+    public static string DefaultFolder() => DataMaker.Schema.AppPaths.InData("backups");
 
     public BackupCadence Cadence { get; init; } = BackupCadence.Daily;
 

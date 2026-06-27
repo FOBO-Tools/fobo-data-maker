@@ -9,20 +9,57 @@
  * except Column carries a custom-converter "Kind" (capitalised). We read
  * both casings to be tolerant of either.
  */
-// Surface uncaught errors in a visible banner so issues during dev (and on
-// recipient devices we can't attach a debugger to) actually show up
-// instead of producing a white screen.
-window.addEventListener('error', e => showBootError(
-  (e.error && e.error.stack) || (e.message + ' @ ' + e.filename + ':' + e.lineno + ':' + e.colno)
-));
-window.addEventListener('unhandledrejection', e =>
-  showBootError('Unhandled rejection: ' + (e.reason && e.reason.stack || e.reason)));
+// Report a genuine client-side error. On the hosted product this beacons to the
+// Sync Lambda, which logs it to CloudWatch under [client-error]; self-hosted
+// embeds (WordPress, ASP.NET) leave errorBeaconUrl unset, so it's a no-op (the
+// browser console still carries the error for the site owner). End users are
+// shown NOTHING: a form-filler should never see a stack trace, and most window
+// 'error' events on mobile come from injected browser/extension scripts we can't
+// act on anyway.
+function dmReportError(where, info) {
+  try {
+    const url = (window.DataMakerConfig || {}).errorBeaconUrl;
+    if (!url) return;
+    const body = JSON.stringify({
+      where: where,
+      message: String((info && info.message) || '').slice(0, 1000),
+      stack: String((info && info.stack) || '').slice(0, 4000),
+      source: (info && info.source) || '',
+      page: location.href,
+      ua: navigator.userAgent,
+    });
+    if (navigator.sendBeacon) navigator.sendBeacon(url, body);
+    else fetch(url, { method: 'POST', body: body, keepalive: true, headers: { 'Content-Type': 'application/json' } });
+  } catch (e) { /* error reporting must never throw */ }
+}
 
-function showBootError(msg) {
-  const el = document.getElementById('boot-error');
-  if (!el) return;
-  el.hidden = false;
-  el.textContent = (el.textContent ? el.textContent + '\n\n' : '') + msg;
+window.addEventListener('error', e => {
+  // Drop WebKit's masked cross-origin error — the bare "Script error." with a
+  // null e.error and no location. On Firefox iOS the browser injects its own
+  // content scripts; their exceptions surface here masked exactly like this,
+  // with nothing we can attribute or fix (Safari iOS, injecting nothing, never
+  // raises it). Not ours, not actionable — neither shown nor logged.
+  if (!e.error && (!e.filename || e.message === 'Script error.')) return;
+  dmReportError('window.onerror', {
+    message: e.message,
+    stack: e.error && e.error.stack,
+    source: (e.filename || '?') + ':' + e.lineno + ':' + e.colno,
+  });
+});
+window.addEventListener('unhandledrejection', e =>
+  dmReportError('unhandledrejection', {
+    message: String((e.reason && e.reason.message) || e.reason),
+    stack: e.reason && e.reason.stack,
+  }));
+
+// Wrap an event handler so a throw inside it is reported with its REAL stack
+// (the local catch sees the true Error object, unlike the masked window 'error'
+// event) and swallowed, so one bad handler can't white-screen the form.
+function dmGuard(where, fn) {
+  return function () {
+    try { return fn.apply(this, arguments); }
+    catch (err) { dmReportError(where, { message: err && err.message, stack: err && err.stack }); }
+  };
 }
 
 // Normalize a button's iconGlyph for DOM text content. Canonical wire format
@@ -58,7 +95,7 @@ function resolveIconGlyph(raw) {
     const q = ns._pending; ns._pending = null;
     for (const args of q) {
       try { mount.apply(null, args); }
-      catch (e) { showBootError(e && e.stack || String(e)); }
+      catch (e) { dmReportError('mount', { message: e && e.message, stack: e && e.stack }); }
     }
   }
 
@@ -69,7 +106,7 @@ function resolveIconGlyph(raw) {
     const r = document.getElementById('form-root');
     const b = document.getElementById('form-bundle');
     if (r && b) mount(r, b);
-  } catch (e) { showBootError(e && e.stack || String(e)); }
+  } catch (e) { dmReportError('mount', { message: e && e.message, stack: e && e.stack }); }
 })();
 
 /**
@@ -167,6 +204,7 @@ function mount(rootArg, bundleArg, hooksArg) {
       if (inp) inp.setAttribute('aria-invalid', 'true');
       if (!first) first = wrap;
     }
+    validationCtx = 'submit';   // server rejected a submit — keep the boxed banner shown
     const banner = root.querySelector('.dm-form-issues');
     if (banner) banner.hidden = !first;
     if (first) {
@@ -253,6 +291,11 @@ function mount(rootArg, bundleArg, hooksArg) {
   let wizardBackBtn    = null;
   let wizardPrimaryBtn = null; // Next on inner steps, Submit on the last
   let wizardNavStatus  = null; // inline "complete the required fields" hint
+  // Gates the form-level issues banner: null until the user clicks Next/Submit,
+  // then 'step' (Next on an invalid step) or 'submit' (Submit). The SAME boxed
+  // banner carries either message. Without this the banner popped on every blur
+  // and doubled up with a separate inline step hint.
+  let validationCtx    = null;
 
   // Compile every expression once. eval is acceptable here because the
   // bundle was produced by C# JsCompiler from a signed form schema, not
@@ -494,9 +537,30 @@ function mount(rootArg, bundleArg, hooksArg) {
   // one is shown. A numbered bar navigates; Back/Next gate forward moves on
   // per-step validation (same rule set as the final submit).
 
+  // Apply the form's StepBar theme (shape, colours, font, show-flags) to a
+  // freshly built bar element. Mirrors the Uno step-bar renderer; every value
+  // is optional and falls back to the CSS default via the var() fallbacks.
+  function applyStepBarStyle(bar, sbStyle) {
+    if (!sbStyle) return;
+    const shape = (sbStyle.shape || 'Circle').toLowerCase();
+    bar.classList.add('dm-step-shape-' + shape);
+    if (sbStyle.showConnectors === false) bar.classList.add('dm-step-bar-noconn');
+    if (sbStyle.showLabels === false)     bar.classList.add('dm-step-bar-nolabels');
+    const setVar = (name, val) => { if (val) bar.style.setProperty(name, val); };
+    setVar('--dm-step-active',    sbStyle.activeColor);
+    setVar('--dm-step-inactive',  sbStyle.inactiveColor);
+    setVar('--dm-step-connector', sbStyle.connectorColor);
+    setVar('--dm-step-label',     sbStyle.labelColor);
+    setVar('--dm-step-font',      sbStyle.fontFamily);
+    if (sbStyle.fontSize != null) bar.style.setProperty('--dm-step-font-size', sbStyle.fontSize + 'px');
+    if (sbStyle.margin   != null) bar.style.setProperty('--dm-step-margin', sbStyle.margin + 'px');
+  }
+
   function buildStepBar(steps) {
+    const sbStyle = (form.style && form.style.stepBar) || null;
     const bar = document.createElement('div');
     bar.className = 'dm-step-bar';
+    applyStepBarStyle(bar, sbStyle);
     steps.forEach((step, i) => {
       if (i > 0) {
         const conn = document.createElement('span');
@@ -530,7 +594,7 @@ function mount(rootArg, bundleArg, hooksArg) {
     wizardBackBtn.className = 'dm-step-back dm-btn dm-btn-secondary';
     applyElementCss(wizardBackBtn, 'buttonvariant/Secondary');
     wizardBackBtn.textContent = t('step_back', 'Back');
-    wizardBackBtn.addEventListener('click', () => { if (wizardCurrent > 0) showStep(wizardCurrent - 1); });
+    wizardBackBtn.addEventListener('click', () => { if (wizardCurrent > 0) { validationCtx = null; showStep(wizardCurrent - 1); evaluateAll(); } });
 
     wizardNavStatus = document.createElement('span');
     wizardNavStatus.className = 'dm-step-status';
@@ -552,6 +616,7 @@ function mount(rootArg, bundleArg, hooksArg) {
     if (wizardCurrent >= wizardStepEls.length - 1) {
       // Last step → real submit. Surface the first invalid field on its step
       // first (it may live on a step that isn't currently shown).
+      validationCtx = 'submit';
       markStepTouched(-1);
       evaluateAll();
       const firstInvalid = root.querySelector('.dm-field.dm-invalid');
@@ -567,13 +632,15 @@ function mount(rootArg, bundleArg, hooksArg) {
     if (target > wizardCurrent) {
       for (let i = wizardCurrent; i < target; i++)
         if (!validateStep(i)) {
-          showStep(i);   // clears the status hint, so (re)set it afterwards
-          if (wizardNavStatus)
-            wizardNavStatus.textContent = t('please_fix_step', 'Please complete the required fields on this step.');
+          showStep(i);
+          validationCtx = 'step';   // boxed banner carries the step message
+          evaluateAll();
           return;
         }
     }
+    validationCtx = null;           // clean navigation clears any prior error banner
     showStep(target);
+    evaluateAll();
   }
 
   function showStep(i) {
@@ -591,11 +658,32 @@ function mount(rootArg, bundleArg, hooksArg) {
         tab.classList.toggle('dm-step-done',    idx <  wizardCurrent);
       });
     }
-    if (wizardBackBtn) wizardBackBtn.disabled = wizardCurrent === 0;
+    // De-dup with author-placed nav: if this step already has a button with
+    // the matching action, hide the auto one (mirrors the Uno renderer) — the
+    // author owns that slot, otherwise both show and overlap.
+    const present = stepNavActions(wizardCurrent);
+    const last = wizardCurrent >= wizardStepEls.length - 1;
+    if (wizardBackBtn) wizardBackBtn.hidden = wizardCurrent === 0 || present.has('prevstep');
     if (wizardPrimaryBtn) {
-      const last = wizardCurrent >= wizardStepEls.length - 1;
+      wizardPrimaryBtn.hidden = present.has(last ? 'submit' : 'nextstep');
       wizardPrimaryBtn.textContent = last ? t('submit', 'Submit') : t('step_next', 'Next');
     }
+    scrollStepIntoView();
+  }
+
+  // Keep the active step chip visible in the (horizontally scrollable) bar so a
+  // Next/Back move always reveals which step you're on, even when the bar is
+  // wider than the viewport. Centres the chip; scrolls only the bar, not the page.
+  function scrollStepIntoView() {
+    if (!wizardBarEl) return;
+    const tab = wizardBarEl.querySelectorAll('.dm-step-tab')[wizardCurrent];
+    if (!tab) return;
+    const barRect = wizardBarEl.getBoundingClientRect();
+    const tabRect = tab.getBoundingClientRect();
+    const delta = (tabRect.left - barRect.left) - (wizardBarEl.clientWidth - tabRect.width) / 2;
+    const left = Math.max(0, wizardBarEl.scrollLeft + delta);
+    try { wizardBarEl.scrollTo({ left: left, behavior: 'smooth' }); }
+    catch (_) { wizardBarEl.scrollLeft = left; }
   }
 
   function markStepTouched(stepIndex) {
@@ -629,11 +717,22 @@ function mount(rootArg, bundleArg, hooksArg) {
     // Form-level Style applies to the sheet container itself — the surface the
     // form paints onto (mirrors the Uno renderer's contract).
     applyElementCss(host, 'form/' + form.id);
+
+    // Field-label placement (theme LabelPosition) — a class on the sheet drives
+    // the layout in styles.css. Top is the default (no class needed).
+    const labelPos = (form.style && form.style.labelPosition) || 'Top';
+    if (labelPos === 'Left')     host.classList.add('dm-label-left');
+    if (labelPos === 'Floating') host.classList.add('dm-label-floating');
+
     // form.name/description are metadata only; visible titles live in
     // HeadingColumn / RichTextColumn entries inside the themed cascade.
     const steps = form.steps || [];
     if (steps.length > 1) {
-      host.appendChild(buildStepBar(steps));
+      const sbStyle = (form.style && form.style.stepBar) || null;
+      const showBar = !sbStyle || sbStyle.showBar !== false;
+      const atBottom = sbStyle && sbStyle.position === 'Bottom';
+      // Top bar renders before the steps; bottom bar after them.
+      if (showBar && !atBottom) host.appendChild(buildStepBar(steps));
       steps.forEach((step, i) => {
         const stepEl = document.createElement('div');
         stepEl.className = 'dm-step';
@@ -642,6 +741,11 @@ function mount(rootArg, bundleArg, hooksArg) {
         host.appendChild(stepEl);
         wizardStepEls.push(stepEl);
       });
+      if (showBar && atBottom) {
+        const bar = buildStepBar(steps);
+        bar.classList.add('dm-step-bar-bottom');
+        host.appendChild(bar);
+      }
     } else {
       for (const step of steps) renderStep(host, step);
     }
@@ -747,7 +851,11 @@ function mount(rootArg, bundleArg, hooksArg) {
       // element's existing style (e.g. a border-radius from the image's Style).
       applyElementCss(img, 'image/' + col.id);
       if (col.maxHeight) img.style.maxHeight = col.maxHeight + 'px';
-      if (col.maxWidth) img.style.maxWidth = col.maxWidth + 'px';
+      // Cap at maxWidth OR the column width, whichever is smaller — the inline
+      // value overrides the stylesheet's `max-width:100%`, so without min() the
+      // image keeps its fixed px width and overflows its column (drifting right)
+      // once the viewport shrinks the column below maxWidth.
+      if (col.maxWidth) img.style.maxWidth = 'min(' + col.maxWidth + 'px, 100%)';
       // Placement within the column (block image, max-width: 100% by default).
       // Fill keeps the default left flow; Left/Center/Right use auto margins
       // once a max-width caps the image narrower than the column.
@@ -944,7 +1052,16 @@ function mount(rootArg, bundleArg, hooksArg) {
     const labelId = wrapId + '-label';
     const inputId = wrapId + '-input';
 
-    const wrap = document.createElement('label');
+    // Multi-control fields (radio group, checkbox group, scale, signature, list)
+    // must NOT be a <label>: per HTML a label wrapping several controls binds to
+    // the FIRST one, so hovering/clicking anywhere in the field fired :hover and
+    // selection on the first radio. Single-input fields stay a <label> so clicking
+    // the title focuses the input.
+    const multiControl =
+      (f.kind === 'choice' && f.choice && f.choice.display === 'Radios') ||
+      f.kind === 'multi-choice' || f.kind === 'scale' ||
+      f.kind === 'signature'   || f.kind === 'list';
+    const wrap = document.createElement(multiControl ? 'div' : 'label');
     wrap.className = 'dm-field';
     wrap.id = wrapId;
     wrap.dataset.fieldId   = f.id;
@@ -958,13 +1075,23 @@ function mount(rootArg, bundleArg, hooksArg) {
     labelRow.id = labelId;
     labelRow.textContent = f.label || f.name || f.id;
     if (f.required) {
-      const req = document.createElement('span');
-      req.className = 'dm-req';
-      req.setAttribute('aria-hidden', 'true');
-      req.textContent = ' *';
-      labelRow.appendChild(req);
+      // Marker glyph is theme-configurable (RequiredMarkerGlyph); default "*",
+      // empty string hides it entirely.
+      const glyph = (form.style && form.style.requiredMarkerGlyph != null)
+        ? form.style.requiredMarkerGlyph : '*';
+      if (glyph !== '') {
+        const req = document.createElement('span');
+        req.className = 'dm-req';
+        req.setAttribute('aria-hidden', 'true');
+        req.textContent = ' ' + glyph;
+        labelRow.appendChild(req);
+      }
     }
     wrap.appendChild(labelRow);
+    // Per-field label styling (form-wide LabelStyle merged with the field's
+    // LabelStyle), emitted by FormBundleBuilder under "label/<id>". Independent
+    // of the field/value styling on the wrap.
+    applyElementCss(labelRow, 'label/' + f.id);
 
     const input = renderControl(f, wrap);
     const errId = wrapId + '-err';
@@ -1001,9 +1128,9 @@ function mount(rootArg, bundleArg, hooksArg) {
       // 'input' fires per keystroke — used for live visibility/calculated
       // updates. 'change' / 'blur' mark the field as touched, which is
       // what gates validation-error display.
-      input.addEventListener('input',  () => onValueChanged(f, readValue(input, f), false));
-      input.addEventListener('change', () => onValueChanged(f, readValue(input, f), true));
-      input.addEventListener('blur',   () => { touched[f.name] = true; evaluateAll(); }, true);
+      input.addEventListener('input',  dmGuard('input/' + f.kind,  () => onValueChanged(f, readValue(input, f), false)));
+      input.addEventListener('change', dmGuard('change/' + f.kind, () => onValueChanged(f, readValue(input, f), true)));
+      input.addEventListener('blur',   dmGuard('blur/' + f.kind,   () => { touched[f.name] = true; evaluateAll(); }), true);
       // Per-field own-level container styles (background, border, padding)
       applyElementCss(wrap, 'field/' + f.id);
       wrap.appendChild(input);
@@ -1229,10 +1356,19 @@ function mount(rootArg, bundleArg, hooksArg) {
 
         const rowEl = document.createElement('div');
         rowEl.className = 'dm-scale-row';
-        rowEl.style.gap = (typeof sc.spacing === 'number' ? sc.spacing : 6) + 'px';
-        if (align !== 'left') { wrap.style.width = '100%'; wrap.style.alignItems = align === 'center' ? 'center' : 'flex-end'; }
+        // Spacing is a flexible spacer between figures (capped at the configured
+        // value): as the row narrows the spacers shrink FIRST (figures keep full
+        // size), then the figures shrink to a floor, then the row scrolls.
+        const scaleGap = (typeof sc.spacing === 'number' ? sc.spacing : 6);
+        rowEl.style.justifyContent = align === 'center' ? 'center' : (align === 'right' ? 'flex-end' : 'flex-start');
         const pts = [];
         for (let v = min; v <= max; v++) {
+          if (v > min) {
+            const sp = document.createElement('span');
+            sp.className = 'dm-scale-spacer';
+            sp.style.maxWidth = scaleGap + 'px';
+            rowEl.appendChild(sp);
+          }
           const b = document.createElement('button');
           b.type = 'button';
           b.className = 'dm-scale-point';
@@ -1317,6 +1453,49 @@ function mount(rootArg, bundleArg, hooksArg) {
           i.addEventListener('change', () => wrap.dispatchEvent(new Event('change', { bubbles: false })));
           return wrap;
         }
+        // Radios mode: an inline radio list (column-major via --dm-choice-cols)
+        // instead of the dropdown. Exposes `.value` so readValue/setValue treat
+        // it exactly like the <select>.
+        if (f.choice?.display === 'Radios') {
+          const wrap = document.createElement('div');
+          wrap.className = 'dm-radios';
+          const cols = f.choice.columns;
+          if (typeof cols === 'number' && cols > 1) wrap.style.setProperty('--dm-choice-cols', cols);
+          // Indicator size + selected colour drive the custom radio ring/dot
+          // (styles.css), matching the Uno renderer's Choice.OptionSize/OptionColor.
+          if (typeof f.choice.optionSize === 'number') wrap.style.setProperty('--dm-option-size', f.choice.optionSize + 'px');
+          if (f.choice.optionColor) wrap.style.setProperty('--dm-option-color', f.choice.optionColor);
+          const name = 'dm-radio-' + sanitizeIdToken(f.name || f.id);
+          for (const opt of choices) {
+            const lab = document.createElement('label');
+            lab.className = 'dm-opt';
+            const rb = document.createElement('input');
+            rb.type = 'radio';
+            rb.name = name;
+            rb.value = opt.value;
+            if (f.defaultValue != null && String(f.defaultValue) === opt.value) rb.checked = true;
+            lab.appendChild(rb);
+            if (opt.color) {
+              const dot = document.createElement('span');
+              dot.className = 'dm-choice-dot';
+              dot.style.background = opt.color;
+              lab.appendChild(dot);
+            }
+            if (opt.icon) {
+              const ic = document.createElement('span');
+              ic.className = 'dm-choice-icon';
+              ic.textContent = opt.icon;
+              lab.appendChild(ic);
+            }
+            lab.appendChild(document.createTextNode(' ' + opt.label));
+            wrap.appendChild(lab);
+          }
+          Object.defineProperty(wrap, 'value', {
+            get: () => { const c = wrap.querySelector('input[type="radio"]:checked'); return c ? c.value : ''; },
+            set: v => { wrap.querySelectorAll('input[type="radio"]').forEach(r => { r.checked = (String(v) === r.value); }); },
+          });
+          return wrap;
+        }
         const s = document.createElement('select');
         const blank = document.createElement('option');
         blank.value = '';
@@ -1335,6 +1514,9 @@ function mount(rootArg, bundleArg, hooksArg) {
         const wrap = document.createElement('div');
         wrap.className = 'dm-multi';
         wrap.tabIndex = -1;
+        // Column-major layout into Choice.Columns columns (1 = single stack).
+        const mcCols = f.choice?.columns;
+        if (typeof mcCols === 'number' && mcCols > 1) wrap.style.setProperty('--dm-choice-cols', mcCols);
         const seeds = Array.isArray(f.defaultValue) ? f.defaultValue : null;
         for (const opt of (f.choice?.choices || [])) {
           const lab = document.createElement('label');
@@ -1345,13 +1527,13 @@ function mount(rootArg, bundleArg, hooksArg) {
           cb.value = opt.value;
           cb.dataset.optValue = opt.value;
           if (seeds && seeds.includes(opt.value)) cb.checked = true;
-          cb.addEventListener('keydown', e => {
+          cb.addEventListener('keydown', dmGuard('multi-keydown', e => {
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault();
               cb.checked = !cb.checked;
               cb.dispatchEvent(new Event('change', { bubbles: true }));
             }
-          });
+          }));
           lab.appendChild(cb);
           // Optional Choice.Color renders as an 8px dot, Choice.Icon as a
           // text glyph (FA codepoint or any unicode char). Both before the
@@ -2793,6 +2975,29 @@ function mount(rootArg, bundleArg, hooksArg) {
   /// True iff the form schema declares at least one ButtonColumn anywhere
   /// in its layout. When true, the renderer skips its auto-injected Submit
   /// row — the author owns the action surface.
+  // Wizard nav actions the author already placed in a step (lowercased set of
+  // 'prevstep' / 'nextstep' / 'submit'), so the auto Back/Next/Submit can skip
+  // the ones they own. Mirrors the Uno renderer's NavActionsInStep.
+  function stepNavActions(stepIndex) {
+    const set = new Set();
+    const step = (form.steps || [])[stepIndex];
+    if (!step) return set;
+    const scan = (row) => {
+      for (const col of (row.columns || [])) {
+        const k = (col.kind || col.Kind || '').toLowerCase();
+        if (k === 'button') {
+          const a = (col.action || col.Action || 'None').toLowerCase();
+          if (a === 'prevstep' || a === 'nextstep' || a === 'submit') set.add(a);
+        } else if (k === 'group') {
+          for (const r of (col.rows || [])) scan(r);
+        }
+      }
+    };
+    for (const sec of (step.sections || []))
+      for (const row of (sec.rows || [])) scan(row);
+    return set;
+  }
+
   function hasSchemaButton(f) {
     for (const step of (f.steps || []))
       for (const sec of (step.sections || []))
@@ -2859,6 +3064,20 @@ function mount(rootArg, bundleArg, hooksArg) {
   /// is optional — if present, a one-line status string is written to it.
   function runSchemaAction(action, col, statusSink) {
     const a = (action || 'none').toLowerCase();
+
+    // Wizard step navigation — author-placed Next/Prev buttons drive the same
+    // nav the auto buttons do. Handled up front: PrevStep must NOT gate on
+    // validation (matches the auto Back); NextStep validates via goToStep.
+    if (a === 'nextstep') {
+      if ((wizardStepEls || []).length > 1) goToStep(wizardCurrent + 1);
+      if (statusSink) statusSink.textContent = '';
+      return;
+    }
+    if (a === 'prevstep') {
+      if (wizardCurrent > 0) { validationCtx = null; showStep(wizardCurrent - 1); evaluateAll(); }
+      if (statusSink) statusSink.textContent = '';
+      return;
+    }
     // Storage v2: block submit/save while any image/attachment field is
     // still uploading bytes to its pre-signed S3 slot. Without this the
     // submission would carry a half-populated value (or null) and the
@@ -2903,10 +3122,12 @@ function mount(rootArg, bundleArg, hooksArg) {
       values[f.name] = readValue(el, f);
       touched[f.name] = true;
     }
+    if (a === 'submit' || a === 'save') validationCtx = 'submit';
     evaluateAll();
     const firstInvalid = root.querySelector('.dm-field.dm-invalid');
     if (firstInvalid) {
-      if (statusSink) statusSink.textContent = t('please_fix_highlighted', 'Please fix the highlighted fields.');
+      // The boxed form-level banner (shown by evaluateAll) carries the message —
+      // no inline duplicate here.
       // A11y: move keyboard focus + scroll to the first invalid input so
       // screen-reader and keyboard users land at the actual problem,
       // not the unchanged submit button. Prefer the registered input
@@ -3032,14 +3253,20 @@ function mount(rootArg, bundleArg, hooksArg) {
     const banner = root.querySelector('.dm-form-issues');
     if (banner) {
       const anyError = root.querySelectorAll('.dm-field.dm-invalid').length > 0;
-      banner.hidden = !anyError;
-      if (anyError) {
+      // Only after a Next/Submit attempt (validationCtx) — never on plain blur —
+      // and the SAME boxed banner carries the step or the submit message.
+      banner.hidden = !(validationCtx && anyError);
+      if (validationCtx && anyError) {
         const text = banner.querySelector('.dm-form-issues-text');
         if (text) {
-          const custom = form.messages && form.messages.validationBanner;
-          text.textContent = (typeof custom === 'string' && custom.trim().length > 0)
-            ? custom
-            : t('validation_banner_default', 'Please fix the highlighted fields before submitting.');
+          if (validationCtx === 'step') {
+            text.textContent = t('please_fix_step', 'Please complete the required fields on this step.');
+          } else {
+            const custom = form.messages && form.messages.validationBanner;
+            text.textContent = (typeof custom === 'string' && custom.trim().length > 0)
+              ? custom
+              : t('validation_banner_default', 'Please fix the highlighted fields before submitting.');
+          }
         }
       }
     }

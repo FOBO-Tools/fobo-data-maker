@@ -389,8 +389,7 @@ internal sealed class FormRenderer
     /// </summary>
     private int RenderDividerColumn(View host, DividerColumn column, int y, Style? ancestor)
     {
-        var rule = new string('─', 200);   // capped by host width via Dim.Fill()
-        var label = new Label(rule)
+        var label = new Label(SingleRule)   // capped by host width via Dim.Fill()
         {
             X           = 0,
             Y           = y,

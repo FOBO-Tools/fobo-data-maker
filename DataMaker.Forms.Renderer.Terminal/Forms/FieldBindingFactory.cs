@@ -42,6 +42,8 @@ internal static class FieldBindingFactory
 
         FieldTypes.Boolean  => new BooleanBinding(def, state),
 
+        FieldTypes.Scale    => new ScaleBinding(def, state),
+
         FieldTypes.Choice       => new ChoiceBinding(def, state),
         FieldTypes.MultiChoice  => new MultiChoiceBinding(def, state),
 

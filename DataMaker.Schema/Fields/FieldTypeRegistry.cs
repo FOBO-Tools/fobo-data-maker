@@ -27,6 +27,7 @@ public static class FieldTypeRegistry
         // text family — all map to SQLite TEXT, expression parameter string.
         Register(new(FieldTypes.Text,        "Text",            typeof(string),                 "TEXT"));
         Register(new(FieldTypes.LongText,    "Long text",       typeof(string),                 "TEXT"));
+        Register(new(FieldTypes.RichText,    "Rich text",       typeof(string),                 "TEXT"));
         Register(new(FieldTypes.Email,       "Email",           typeof(string),                 "TEXT"));
         Register(new(FieldTypes.Phone,       "Phone",           typeof(string),                 "TEXT"));
         Register(new(FieldTypes.Url,         "URL",             typeof(string),                 "TEXT"));

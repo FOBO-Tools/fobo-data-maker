@@ -33,6 +33,15 @@ export interface SignerInfo {
   identity: { email?: string; name?: string; company?: string } | null;
 }
 
+/** A verified FOBO attestation binding the signer's key to an email/company. */
+export interface FoboVerification {
+  isVerified: true;
+  email: string | null;
+  company: string | null;
+  sub: string | null;
+  expiresAt: string | null;
+}
+
 export interface FormDescriptor {
   formId: string;
   name: string;
@@ -45,6 +54,9 @@ export interface FormDescriptor {
   envelopeVersion: number;
   fields: FieldDescriptor[];
   verified: boolean;
+  /** Present + non-null only when the signer carries a valid FOBO attestation. */
+  foboVerification: FoboVerification | null;
+  isFoboVerified: boolean;
 }
 
 export interface SubmissionEnvelope {

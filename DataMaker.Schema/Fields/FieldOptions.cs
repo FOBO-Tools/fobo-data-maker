@@ -26,7 +26,33 @@ public sealed record ChoiceOptions
 {
     public IReadOnlyList<Choice> Choices { get; init; } = Array.Empty<Choice>();
     public bool AllowCustom { get; init; }
+
+    /// <summary>
+    /// Number of columns the choice list lays out in (column-major: top-to-bottom
+    /// then next column). Null / 1 = a single vertical stack. Applies to a
+    /// multi-choice checkbox list always, and to a single-choice field only when
+    /// <see cref="Display"/> is <see cref="ChoiceDisplay.Radios"/>.
+    /// </summary>
+    public int? Columns { get; init; }
+
+    /// <summary>
+    /// How a single-choice field renders its options. Null / <see cref="ChoiceDisplay.Dropdown"/>
+    /// = the classic dropdown (select). <see cref="ChoiceDisplay.Radios"/> = an
+    /// inline radio list honouring <see cref="Columns"/>. Ignored by multi-choice
+    /// (always a checkbox list).
+    /// </summary>
+    public ChoiceDisplay? Display { get; init; }
+
+    /// <summary>Diameter (px) of the radio indicator in <see cref="ChoiceDisplay.Radios"/> mode. Null = renderer default (~20). Option labels follow the field's typography.</summary>
+    public double? OptionSize { get; init; }
+
+    /// <summary>Colour (hex) of the radio indicator, independent of the option-label text colour. Null = the form's accent colour.</summary>
+    public string? OptionColor { get; init; }
 }
+
+/// <summary>How a single-choice field renders its options.</summary>
+[System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter<ChoiceDisplay>))]
+public enum ChoiceDisplay { Dropdown, Radios }
 
 /// <summary>
 /// Settings for a <c>scale</c> field — a single-pick rating / Likert / NPS
@@ -62,6 +88,9 @@ public sealed record ScaleOptions
     /// <summary>Fill colour (hex) of the selected / highlighted point(s). Null = the form's accent colour.</summary>
     public string? HighlightColor { get; init; }
 
+    /// <summary>Colour (hex) of the number drawn inside a highlighted point. Null = the form's paper colour. (Star figures carry no inner number, so this is ignored for them.)</summary>
+    public string? HighlightTextColor { get; init; }
+
     /// <summary>Outline / fill colour (hex) of the un-selected points. Null = the form's muted-ink colour.</summary>
     public string? UnselectedColor { get; init; }
 
@@ -79,6 +108,15 @@ public sealed record ScaleOptions
 
     /// <summary>Gap (px) between points. Null = renderer default (~6).</summary>
     public double? Spacing { get; init; }
+
+    // Per-side margin (px) around the figure row, on top of the field's base
+    // spacing. The common use is FigureMarginTop, to push the figures down away
+    // from the field label; the other sides are exposed for full control. Null
+    // on a side = 0.
+    public double? FigureMarginTop { get; init; }
+    public double? FigureMarginRight { get; init; }
+    public double? FigureMarginBottom { get; init; }
+    public double? FigureMarginLeft { get; init; }
 }
 
 /// <summary>Horizontal placement of a <see cref="ScaleOptions"/> point row.</summary>

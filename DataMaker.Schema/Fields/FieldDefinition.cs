@@ -116,4 +116,12 @@ public sealed record FieldDefinition
 
     /// <summary>Field-level style overrides. Null properties inherit from the nearest ancestor.</summary>
     public Style? Style { get; init; }
+
+    /// <summary>
+    /// Per-field override for the field's label, merged on top of the form-wide
+    /// <see cref="DataMaker.Schema.Styling.FormStyle.LabelStyle"/> (null props
+    /// inherit it). Independent of <see cref="Style"/>, which targets the field
+    /// container / input. Null = use the form-wide label default.
+    /// </summary>
+    public Style? LabelStyle { get; init; }
 }

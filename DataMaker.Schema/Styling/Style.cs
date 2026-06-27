@@ -60,7 +60,6 @@ public record Style
     public StyleShadow?    Shadow        { get; init; }
     public StyleAlignment? TextAlignment { get; init; }
     public double?         LineHeight    { get; init; }
-    public double?         LetterSpacing { get; init; }
     public double?         Opacity       { get; init; }
 }
 

@@ -93,10 +93,10 @@ try {
 
 ## API
 
-- **`readForm(dmfBytes, { verify = true })`** → form descriptor (`formId`,
-  `name`, `schemaVersion`, `submitPolicy`, `recipientUserId`,
-  `recipientPublicKey`, `signer`, `fields`, `verified`). Throws `DmfError` on
-  tampering.
+- **`readForm(dmfBytes, { verify = true })`** → `Promise` of a form descriptor
+  (`formId`, `name`, `schemaVersion`, `submitPolicy`, `envelopeVersion`,
+  `recipientUserId`, `recipientPublicKey`, `signer`, `fields`, `verified`).
+  Throws `DmfError` on tampering.
 - **`submit({ form | dmf, values, ...opts })`** → `{ submissionId, editToken,
   formId }`. Options: `apiBaseUrl`, `submitterId` (default `null`), `validate`
   (default `true`), `allowUnknown`, `verify`, `fetch`.
