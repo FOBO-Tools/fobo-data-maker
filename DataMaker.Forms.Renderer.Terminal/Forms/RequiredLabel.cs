@@ -21,6 +21,10 @@ internal static class RequiredLabel
 {
     public static (View Container, Label? Asterisk) Build(string text, bool required)
     {
+        // Collapse line breaks to spaces — a stray \r renders as a literal ␍
+        // glyph in Terminal.Gui, and a single-line label can't show breaks.
+        text = text.Replace("\r\n", " ").Replace('\r', ' ').Replace('\n', ' ');
+
         if (!required)
         {
             // AutoSize=true lets the label size to its text instead of

@@ -1,5 +1,5 @@
-PLUGIN     := datamaker-renderer
-VERSION    := $(shell awk -F"'" '/DM_RENDERER_VERSION/{print $$4}' datamaker-renderer.php)
+PLUGIN     := fobo-data-maker-forms
+VERSION    := $(shell awk -F"'" '/FOBO_DATA_MAKER_FORMS_VERSION/{print $$4}' fobo-data-maker-forms.php)
 RENDERER_SRC := ../DataMaker.Forms.Renderer.Web/wwwroot
 DIST       := dist
 ZIP        := $(DIST)/$(PLUGIN)-$(VERSION).zip
@@ -38,15 +38,18 @@ vendor-crypto:
 sync-assets:
 	cp $(RENDERER_SRC)/renderer.js       assets/renderer.js
 	cp $(RENDERER_SRC)/fn.js             assets/fn.js
-	cp $(RENDERER_SRC)/fa-solid-900.ttf  assets/fa-solid-900.ttf
 	cp $(RENDERER_SRC)/layout.css        assets/layout.css
 	cp $(RENDERER_SRC)/styles.css        assets/styles.css
+	# NOTE: fa-solid-900.ttf is deliberately NOT synced. The desktop/WASM
+	# renderers ship Font Awesome 5 *Pro* (licensed), which is not permitted
+	# in a GPL WordPress.org plugin. assets/fa-solid-900.ttf here is the FA5
+	# *Free* Solid webfont (SIL OFL 1.1) and is committed independently.
 	# C# WebRenderer substitutes __FA_SOLID_DATA_URI__ with a base64
 	# data: URI at render time so the WebView2 page is fully self-contained.
 	# WP loads styles.css as a static file, so the substitution never runs —
-	# rewrite the placeholder to a relative URL pointing at the ttf we just
-	# copied alongside the stylesheet.
-	@sed -i.bak 's|__FA_SOLID_DATA_URI__|fa-solid-900.ttf|g' assets/styles.css && rm assets/styles.css.bak
+	# rewrite the placeholder to a relative URL pointing at the ttf, and
+	# relabel the Pro comment to Free so the synced CSS stays compliant.
+	@sed -i.bak 's|__FA_SOLID_DATA_URI__|fa-solid-900.ttf|g; s|Font Awesome 5 Pro|Font Awesome 5 Free|g' assets/styles.css && rm assets/styles.css.bak
 	@echo "Synced renderer assets from $(RENDERER_SRC)"
 
 minify: sync-assets
@@ -77,9 +80,9 @@ package: minify
 	@mkdir -p $(DIST)
 	@rm -f $(ZIP)
 	# Stage into a folder named after the plugin so WP installer unpacks
-	# into wp-content/plugins/datamaker-renderer/.
+	# into wp-content/plugins/fobo-data-maker-forms/.
 	@rm -rf $(DIST)/staging && mkdir -p $(DIST)/staging/$(PLUGIN)
-	@cp -R datamaker-renderer.php includes assets languages readme.txt license.txt $(DIST)/staging/$(PLUGIN)/
+	@cp -R fobo-data-maker-forms.php includes assets languages readme.txt license.txt $(DIST)/staging/$(PLUGIN)/
 	cd $(DIST)/staging && zip -r ../../$(ZIP) $(PLUGIN) >/dev/null
 	@rm -rf $(DIST)/staging
 	@echo "Built $(ZIP)"
@@ -116,7 +119,7 @@ json:
 	@echo "Generated languages/*.json (block-editor JS)"
 
 check:
-	@php -l datamaker-renderer.php
+	@php -l fobo-data-maker-forms.php
 	@find includes -name '*.php' -print -exec php -l {} \;
 
 clean:
@@ -147,5 +150,5 @@ wp-install:
 		curl -sS -o /usr/local/bin/wp https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && chmod +x /usr/local/bin/wp; \
 		wp core install --url=http://localhost:8089 --title="DataMaker Renderer Dev" \
 			--admin_user=admin --admin_password=admin --admin_email=admin@example.com --skip-email --allow-root || true; \
-		wp plugin activate datamaker-renderer --allow-root; \
+		wp plugin activate fobo-data-maker-forms --allow-root; \
 	'

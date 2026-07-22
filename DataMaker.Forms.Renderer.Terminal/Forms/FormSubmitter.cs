@@ -1,5 +1,9 @@
+using System.Buffers;
+using System.Text.Json;
 using System.Net.Http.Headers;
 using DataMaker.Forms.Signing;
+using DataMaker.Schema;
+using DataMaker.Schema.Fields;
 using DataMaker.Sdk;
 using FOBO.Auth;
 
@@ -55,7 +59,7 @@ internal static class FormSubmitter
         var client = new DataMakerClient(http, submitEndpoint);
         try
         {
-            var result = await client.SubmitAsync(descriptor, state.Snapshot(), new SubmitOptions { Validate = false }, ct);
+            var result = await client.SubmitAsync(descriptor, NormalizeForWire(state.Snapshot()), new SubmitOptions { Validate = false }, ct);
             return SubmitResult.Ok(result.SubmissionId);
         }
         catch (SubmissionException ex)
@@ -71,6 +75,45 @@ internal static class FormSubmitter
         {
             return SubmitResult.Fail($"Network error: {ex.Message}");
         }
+    }
+
+    // Schema value types (SignatureRef / ImageRef / AttachmentRef / Geo) aren't
+    // known to the standalone SDK's source-gen JSON context, so handing one to
+    // the SDK throws "no JsonTypeInfo metadata for SignatureRef". Pre-serialise
+    // each via its own converter to a JsonElement (which the SDK context now
+    // accepts) — so the wire JSON is exactly the shape the receiver parses.
+    private static readonly SignatureRefJsonConverter  SigConv = new();
+    private static readonly ImageRefJsonConverter      ImgConv = new();
+    private static readonly AttachmentRefJsonConverter AttConv = new();
+    private static readonly JsonSerializerOptions      WireOpts = new(JsonSerializerDefaults.Web);
+
+    private static IReadOnlyDictionary<string, object?> NormalizeForWire(IReadOnlyDictionary<string, object?> snapshot)
+    {
+        Dictionary<string, object?>? copy = null;
+        foreach (var kv in snapshot)
+        {
+            var wire = ToWire(kv.Value);
+            if (!ReferenceEquals(wire, kv.Value))
+                (copy ??= new Dictionary<string, object?>(snapshot))[kv.Key] = wire;
+        }
+        return copy ?? snapshot;
+    }
+
+    private static object? ToWire(object? v) => v switch
+    {
+        SignatureRef s  => Element(w => SigConv.Write(w, s, WireOpts)),
+        ImageRef i      => Element(w => ImgConv.Write(w, i, WireOpts)),
+        AttachmentRef a => Element(w => AttConv.Write(w, a, WireOpts)),
+        Geo g           => Element(w => JsonSerializer.Serialize(w, g, SchemaJsonContext.Default.Geo)),
+        _               => v, // primitives / string / string[] — the SDK serialises these directly
+    };
+
+    private static JsonElement Element(Action<Utf8JsonWriter> write)
+    {
+        var buffer = new ArrayBufferWriter<byte>();
+        using (var writer = new Utf8JsonWriter(buffer)) write(writer);
+        using var doc = JsonDocument.Parse(buffer.WrittenMemory);
+        return doc.RootElement.Clone();
     }
 }
 

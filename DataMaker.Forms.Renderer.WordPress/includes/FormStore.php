@@ -1,10 +1,10 @@
 <?php
-namespace DataMaker\Forms\Renderer\WordPress;
+namespace Fobo\DataMakerForms;
 
 if (!defined('ABSPATH')) exit;
 
 // This class is the plugin's sole data-access layer for the custom
-// `{prefix}_dm_forms` table. Every read/write is inherently a direct DB call;
+// `{prefix}_fobo_data_maker_forms` table. Every read/write is inherently a direct DB call;
 // all values go through $wpdb->prepare()/update()/insert()/delete() (auto-
 // escaped), and the only string interpolation is the table name, which is a
 // code constant (self::table()), never user input. Caching is intentionally
@@ -29,7 +29,7 @@ final class FormStore
     public static function table(): string
     {
         global $wpdb;
-        return $wpdb->prefix . 'dm_forms';
+        return $wpdb->prefix . 'fobo_data_maker_forms';
     }
 
     public static function install_table(): void
@@ -78,7 +78,7 @@ final class FormStore
 
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';
         dbDelta($sql);
-        update_option('dm_renderer_db_version', self::DB_VERSION);
+        update_option('fobo_data_maker_forms_db_version', self::DB_VERSION);
     }
 
     /**
@@ -87,7 +87,7 @@ final class FormStore
      */
     public static function maybe_upgrade(): void
     {
-        if ((int)get_option('dm_renderer_db_version', 0) >= self::DB_VERSION) return;
+        if ((int)get_option('fobo_data_maker_forms_db_version', 0) >= self::DB_VERSION) return;
         self::install_table();
     }
 
@@ -243,7 +243,7 @@ final class FormStore
     public static function resolve_success_message(?string $stored): string
     {
         $s = trim((string)($stored ?? ''));
-        return $s !== '' ? $s : __('## Thanks for your submission.', 'datamaker-renderer');
+        return $s !== '' ? $s : __('## Thanks for your submission.', 'fobo-data-maker-forms');
     }
 
     /**

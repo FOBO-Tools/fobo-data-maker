@@ -128,6 +128,51 @@ public class DataMakerSdkTests
         Assert.That(values.GetProperty("tags").EnumerateArray().Select(e => e.GetString()), Is.EqualTo(new[] { "a", "c" }));
     }
 
+    // The terminal renderer submits with Validate = false (it validates itself),
+    // so array values reach serialization as the raw string[] the form stored —
+    // not the List<string> the coercion path produces. Guards that the array
+    // still survives the sealed-payload round-trip on that path.
+    [Test]
+    public void BuildSubmission_without_validation_preserves_array_values()
+    {
+        var (bytes, recipient) = MakeDmf();
+        var form = DataMakerClient.ReadForm(bytes);
+
+        var built = DataMakerClient.BuildSubmission(form, new Dictionary<string, object?>
+        {
+            ["email"] = "a@b.com",
+            ["tags"]  = new[] { "a", "c" },   // string[], exactly what the terminal stores
+        }, new SubmitOptions { Validate = false });
+
+        using var opened = OpenSealed(built.Envelope.Ciphertext, recipient);
+        var values = opened.RootElement.GetProperty("values");
+        Assert.That(values.GetProperty("tags").EnumerateArray().Select(e => e.GetString()),
+            Is.EqualTo(new[] { "a", "c" }));
+    }
+
+    // Callers (e.g. the terminal) pre-serialise complex field types the SDK
+    // doesn't know — signature / image refs — into a JsonElement via their own
+    // converter, then hand that through. Guards that a JsonElement value seals
+    // and re-opens verbatim (regressed once: "no metadata for JsonElement").
+    [Test]
+    public void BuildSubmission_passes_jsonelement_values_through_verbatim()
+    {
+        var (bytes, recipient) = MakeDmf();
+        var form = DataMakerClient.ReadForm(bytes);
+
+        using var doc = System.Text.Json.JsonDocument.Parse("{\"typedName\":\"Ada\",\"owned\":true}");
+        var built = DataMakerClient.BuildSubmission(form, new Dictionary<string, object?>
+        {
+            ["email"]     = "a@b.com",
+            ["signature"] = doc.RootElement.Clone(),
+        }, new SubmitOptions { Validate = false });
+
+        using var opened = OpenSealed(built.Envelope.Ciphertext, recipient);
+        var sig = opened.RootElement.GetProperty("values").GetProperty("signature");
+        Assert.That(sig.GetProperty("typedName").GetString(), Is.EqualTo("Ada"));
+        Assert.That(sig.GetProperty("owned").GetBoolean(), Is.True);
+    }
+
     [Test]
     public void Validation_rejects_missing_required_unknown_readonly_and_bad_choice()
     {

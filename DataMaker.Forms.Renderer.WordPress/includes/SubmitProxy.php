@@ -1,5 +1,5 @@
 <?php
-namespace DataMaker\Forms\Renderer\WordPress;
+namespace Fobo\DataMakerForms;
 
 if (!defined('ABSPATH')) exit;
 
@@ -22,12 +22,12 @@ final class SubmitProxy
 {
     public static function register_routes(): void
     {
-        register_rest_route('datamaker/v1', '/submit', [
+        register_rest_route('fobo-data-maker/v1', '/submit', [
             'methods'             => 'POST',
             'callback'            => [self::class, 'handle_submit'],
             'permission_callback' => '__return_true',
         ]);
-        register_rest_route('datamaker/v1', '/update', [
+        register_rest_route('fobo-data-maker/v1', '/update', [
             'methods'             => 'POST',
             'callback'            => [self::class, 'handle_update'],
             'permission_callback' => '__return_true',
@@ -40,7 +40,7 @@ final class SubmitProxy
         // uploads bytes directly to S3 — the WP plugin never handles
         // the binary payload, so PHP body limits don't apply.
         // See docs/PLAN-STORAGE-V2.md §#18a phase 4.
-        register_rest_route('datamaker/v1', '/upload-slot', [
+        register_rest_route('fobo-data-maker/v1', '/upload-slot', [
             'methods'             => 'POST',
             'callback'            => [self::class, 'handle_upload_slot'],
             'permission_callback' => '__return_true',
@@ -78,42 +78,42 @@ final class SubmitProxy
         $size   = isset($params['sizeBytes']) ? (int)$params['sizeBytes'] : null;
 
         if (!$slug || !$hash) {
-            return new \WP_REST_Response(['error' => __('slug + hash required.', 'datamaker-renderer')], 400);
+            return new \WP_REST_Response(['error' => __('slug + hash required.', 'fobo-data-maker-forms')], 400);
         }
         // Hash format guard — Lambda would reject too, but a fast
         // local check avoids a billable round-trip on bot traffic.
         if (!preg_match('/^[0-9a-f]{64}$/', $hash)) {
-            return new \WP_REST_Response(['error' => __('hash must be 64-char lowercase hex SHA-256.', 'datamaker-renderer')], 400);
+            return new \WP_REST_Response(['error' => __('hash must be 64-char lowercase hex SHA-256.', 'fobo-data-maker-forms')], 400);
         }
 
         $row = FormStore::find_by_slug($slug);
         if (!$row) {
-            return new \WP_REST_Response(['error' => __('form not found.', 'datamaker-renderer')], 404);
+            return new \WP_REST_Response(['error' => __('form not found.', 'fobo-data-maker-forms')], 404);
         }
         if (empty($row['recipient_user_id'])) {
-            return new \WP_REST_Response(['error' => __('form has no recipient configured.', 'datamaker-renderer')], 400);
+            return new \WP_REST_Response(['error' => __('form has no recipient configured.', 'fobo-data-maker-forms')], 400);
         }
 
         // Reuse the submit endpoint's per-IP per-form rate limiter so a
         // bot can't churn upload-slot tokens.
         $rateLimit = (int)($row['rate_limit_per_min'] ?? 0);
         if ($rateLimit <= 0) {
-            $rateLimit = (int)apply_filters('dm_renderer_default_rate_limit_per_min', 60);
+            $rateLimit = (int)apply_filters('fobo_data_maker_forms_default_rate_limit_per_min', 60);
         }
         if ($rateLimit > 0) {
             $ip = self::client_ip();
             $window = (int)floor(time() / 60);
-            $key = 'dm_rl_slot_' . $slug . '_' . md5($ip) . '_' . $window;
+            $key = 'fobo_data_maker_forms_rl_slot_' . $slug . '_' . md5($ip) . '_' . $window;
             $count = (int)get_transient($key);
             if ($count >= $rateLimit) {
-                return new \WP_REST_Response(['error' => __('Too many uploads. Please wait a moment.', 'datamaker-renderer')], 429);
+                return new \WP_REST_Response(['error' => __('Too many uploads. Please wait a moment.', 'fobo-data-maker-forms')], 429);
             }
             set_transient($key, $count + 1, 90);
         }
 
-        $api_base = rtrim(\dm_renderer_sync_api_url(), '/');
+        $api_base = rtrim(\fobo_data_maker_forms_sync_api_url(), '/');
         if (!$api_base || !self::url_is_safe_outbound($api_base)) {
-            return new \WP_REST_Response(['error' => __('Data Maker API URL not configured.', 'datamaker-renderer')], 500);
+            return new \WP_REST_Response(['error' => __('Data Maker API URL not configured.', 'fobo-data-maker-forms')], 500);
         }
 
         $body = [
@@ -146,35 +146,35 @@ final class SubmitProxy
      * DynamoDB — the WP → Lambda hop still ships the full envelope
      * inline). 6 MB plaintext → ~8 MB envelope → fits with headroom.
      * Hosts can shrink (anti-DoS) or grow via the
-     * `dm_renderer_max_submit_bytes` filter. Set to 0 to disable.
+     * `fobo_data_maker_forms_max_submit_bytes` filter. Set to 0 to disable.
      */
     private const MAX_BODY_BYTES_DEFAULT = 6 * 1024 * 1024;
 
     private static function dispatch(\WP_REST_Request $req, bool $update): \WP_REST_Response
     {
         if (!function_exists('sodium_crypto_box_seal')) {
-            return new \WP_REST_Response(['error' => __('libsodium PHP extension required.', 'datamaker-renderer')], 500);
+            return new \WP_REST_Response(['error' => __('libsodium PHP extension required.', 'fobo-data-maker-forms')], 500);
         }
 
-        $max_bytes = (int)apply_filters('dm_renderer_max_submit_bytes', self::MAX_BODY_BYTES_DEFAULT);
+        $max_bytes = (int)apply_filters('fobo_data_maker_forms_max_submit_bytes', self::MAX_BODY_BYTES_DEFAULT);
         $body_raw = $req->get_body();
         if (is_string($body_raw) && $max_bytes > 0 && strlen($body_raw) > $max_bytes) {
-            return new \WP_REST_Response(['error' => __('Submission too large.', 'datamaker-renderer')], 413);
+            return new \WP_REST_Response(['error' => __('Submission too large.', 'fobo-data-maker-forms')], 413);
         }
 
         $params = $req->get_json_params();
         $slug   = isset($params['slug'])   ? sanitize_title((string)$params['slug']) : '';
         $values = isset($params['values']) && is_array($params['values']) ? $params['values'] : null;
         if (!$slug || $values === null) {
-            return new \WP_REST_Response(['error' => __('slug + values required.', 'datamaker-renderer')], 400);
+            return new \WP_REST_Response(['error' => __('slug + values required.', 'fobo-data-maker-forms')], 400);
         }
 
         $row = FormStore::find_by_slug($slug);
         if (!$row) {
-            return new \WP_REST_Response(['error' => __('form not found.', 'datamaker-renderer')], 404);
+            return new \WP_REST_Response(['error' => __('form not found.', 'fobo-data-maker-forms')], 404);
         }
         if (empty($row['recipient_user_id']) || empty($row['recipient_pubkey'])) {
-            return new \WP_REST_Response(['error' => __('form has no recipient configured; submissions are not supported.', 'datamaker-renderer')], 400);
+            return new \WP_REST_Response(['error' => __('form has no recipient configured; submissions are not supported.', 'fobo-data-maker-forms')], 400);
         }
 
         // ── Anti-abuse gate ──────────────────────────────────────────────
@@ -185,14 +185,14 @@ final class SubmitProxy
         if (!empty($row['honeypot_on'])) {
             $hp = isset($params['hp']) ? trim((string)$params['hp']) : '';
             if ($hp !== '') {
-                return new \WP_REST_Response(['error' => __('Submission rejected.', 'datamaker-renderer')], 422);
+                return new \WP_REST_Response(['error' => __('Submission rejected.', 'fobo-data-maker-forms')], 422);
             }
         }
 
         // GDPR consent gate: when required, the bridge sends consent=true
         // alongside the values. Bail with a 422 if missing.
         if (!empty($row['consent_required']) && empty($params['consent'])) {
-            return new \WP_REST_Response(['error' => __('Consent is required before submitting.', 'datamaker-renderer')], 422);
+            return new \WP_REST_Response(['error' => __('Consent is required before submitting.', 'fobo-data-maker-forms')], 422);
         }
 
         // Cloudflare Turnstile gate. Per-form `turnstile_on` flag + a
@@ -206,7 +206,7 @@ final class SubmitProxy
             if ($secret !== '') {
                 $token = isset($params['captcha_token']) ? (string)$params['captcha_token'] : '';
                 if ($token === '' || !self::verify_turnstile($token, $secret, self::client_ip())) {
-                    return new \WP_REST_Response(['error' => __('Challenge verification failed. Please try again.', 'datamaker-renderer')], 422);
+                    return new \WP_REST_Response(['error' => __('Challenge verification failed. Please try again.', 'fobo-data-maker-forms')], 422);
                 }
             }
         }
@@ -214,29 +214,29 @@ final class SubmitProxy
         // Rate limit per IP per form. Soft throttle via WP transients —
         // misses Lambda quota costs, doesn't require an external store.
         // Per-form value of 0 falls through to a plugin-wide default
-        // (filter `dm_renderer_default_rate_limit_per_min`, default 60).
+        // (filter `fobo_data_maker_forms_default_rate_limit_per_min`, default 60).
         // Set the filter to 0 to disable globally.
         $rateLimit = (int)($row['rate_limit_per_min'] ?? 0);
         if ($rateLimit <= 0) {
-            $rateLimit = (int)apply_filters('dm_renderer_default_rate_limit_per_min', 60);
+            $rateLimit = (int)apply_filters('fobo_data_maker_forms_default_rate_limit_per_min', 60);
         }
         if ($rateLimit > 0) {
             $ip = self::client_ip();
             $window = (int)floor(time() / 60);    // bucket per minute
-            $key = 'dm_rl_' . $slug . '_' . md5($ip) . '_' . $window;
+            $key = 'fobo_data_maker_forms_rl_' . $slug . '_' . md5($ip) . '_' . $window;
             $count = (int)get_transient($key);
             if ($count >= $rateLimit) {
-                return new \WP_REST_Response(['error' => __('Too many submissions. Please wait a moment.', 'datamaker-renderer')], 429);
+                return new \WP_REST_Response(['error' => __('Too many submissions. Please wait a moment.', 'fobo-data-maker-forms')], 429);
             }
             set_transient($key, $count + 1, 90); // expire shortly after the bucket window
         }
 
-        $api_base = rtrim(\dm_renderer_sync_api_url(), '/');
+        $api_base = rtrim(\fobo_data_maker_forms_sync_api_url(), '/');
         if (!$api_base) {
-            return new \WP_REST_Response(['error' => __('Data Maker API URL not configured.', 'datamaker-renderer')], 500);
+            return new \WP_REST_Response(['error' => __('Data Maker API URL not configured.', 'fobo-data-maker-forms')], 500);
         }
         if (!self::url_is_safe_outbound($api_base)) {
-            return new \WP_REST_Response(['error' => __('Data Maker API URL is not allowed.', 'datamaker-renderer')], 500);
+            return new \WP_REST_Response(['error' => __('Data Maker API URL is not allowed.', 'fobo-data-maker-forms')], 500);
         }
 
         $form          = json_decode($row['form_json'], true) ?: [];
@@ -344,7 +344,7 @@ final class SubmitProxy
          * @param string $submission_id UUID of the new (or updated) submission.
          * @param array  $meta          { formId, formSlug, formName, updated, receivedAtUtc, submitterIp }.
          */
-        do_action('dm_renderer_submission_received', (string)$row['form_id'], (string)($meta['submissionId']), $meta);
+        do_action('fobo_data_maker_forms_submission_received', (string)$row['form_id'], (string)($meta['submissionId']), $meta);
 
         return new \WP_REST_Response($decoded, $code ?: 200);
     }
@@ -356,14 +356,14 @@ final class SubmitProxy
      * immediate peer (REMOTE_ADDR) is in the site's trusted-proxy list.
      *
      * Hosts behind Cloudflare / a load balancer wire their trusted ranges
-     * via the `dm_renderer_trusted_proxies` filter. Accepts IPs ("1.2.3.4"),
+     * via the `fobo_data_maker_forms_trusted_proxies` filter. Accepts IPs ("1.2.3.4"),
      * CIDRs ("10.0.0.0/8") or the wildcard "*" (trust any peer — only
      * use when the WP host is unreachable except through a known proxy).
      * Default: empty array — always use REMOTE_ADDR, never trust headers.
      */
     private static function client_ip(): string {
         $remote = isset($_SERVER['REMOTE_ADDR']) ? sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'])) : '0.0.0.0';
-        $trusted = (array)apply_filters('dm_renderer_trusted_proxies', []);
+        $trusted = (array)apply_filters('fobo_data_maker_forms_trusted_proxies', []);
         if (!self::peer_is_trusted_proxy($remote, $trusted)) {
             return $remote;
         }
@@ -413,12 +413,12 @@ final class SubmitProxy
      *   4. Any address in RFC1918 private / reserved (loopback, link-local,
      *      cloud metadata 169.254.169.254, multicast, broadcast) is rejected.
      *
-     * Hosts can opt a specific URL back in via the `dm_renderer_url_is_safe`
+     * Hosts can opt a specific URL back in via the `fobo_data_maker_forms_url_is_safe`
      * filter — needed for localhost dev / internal webhooks where the
      * default policy is too strict.
      */
     private static function url_is_safe_outbound(string $url): bool {
-        $override = apply_filters('dm_renderer_url_is_safe', null, $url);
+        $override = apply_filters('fobo_data_maker_forms_url_is_safe', null, $url);
         if (is_bool($override)) return $override;
 
         $parts = wp_parse_url($url);

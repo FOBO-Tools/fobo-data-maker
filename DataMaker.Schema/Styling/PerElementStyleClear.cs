@@ -27,9 +27,14 @@ public static class PerElementStyleClear
         {
             Fields = form.Fields.Select(f => f with
             {
-                Style  = null,
-                Scale  = ClearScaleColors(f.Scale),
-                Choice = ClearChoiceColors(f.Choice),
+                Style      = null,
+                // Per-field label overrides are styling like Style — a label
+                // colour/font set on one field must not survive a theme apply
+                // and contradict the new theme (the same leak the scale/choice
+                // colours were stripped for).
+                LabelStyle = null,
+                Scale      = ClearScaleColors(f.Scale),
+                Choice     = ClearChoiceColors(f.Choice),
             }).ToList(),
             Steps = form.Steps.Select(step => step with
             {

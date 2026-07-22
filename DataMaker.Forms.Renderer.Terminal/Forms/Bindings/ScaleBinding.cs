@@ -44,13 +44,15 @@ internal sealed class ScaleBinding : FieldBinding
             return v.ToString();
         }).ToArray();
 
-        _field = new RadioGroup(labels.Select(NStack.ustring.Make).ToArray())
+        _field = new FocusScopedRadioGroup(labels.Select(NStack.ustring.Make).ToArray())
         {
             Width = Dim.Fill(),
         };
+        _field.WithStandardKeys(); // Enter selects (like Space) + Down-arrow moves
 
-        var selected = IndexOf(state.Get(definition.Name));
-        if (selected >= 0) _field.SelectedItem = selected;
+        // -1 when there's no stored value → nothing pre-selected (don't render a
+        // rating the user never picked, which would also pass a required check).
+        _field.SelectedItem = IndexOf(state.Get(definition.Name));
 
         _field.SelectedItemChanged += args =>
         {

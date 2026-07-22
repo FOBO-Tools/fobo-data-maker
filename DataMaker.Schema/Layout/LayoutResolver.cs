@@ -33,6 +33,67 @@ public static class LayoutResolver
             .ToList();
     }
 
+    /// <summary>
+    /// The designer's view of the same layout: stale field references are
+    /// still dropped (a deleted field must not leave a dead chip on the
+    /// canvas), but empty sections / rows / groups are KEPT — they are
+    /// work-in-progress drop targets, not render noise. <see cref="Resolve"/>
+    /// prunes them because the runtime has nothing to draw; pruning them on
+    /// editor load silently deleted an author's empty section on the next
+    /// re-stage (and hid sections the AI agent had just added but not yet
+    /// filled).
+    /// </summary>
+    public static IReadOnlyList<FormStep> ResolveForEditing(Form form)
+    {
+        if (form.Steps.Count == 0)
+            return new[] { SynthesizeSingleStep(form) };
+
+        var knownFieldIds = form.Fields.Select(f => f.Id).ToHashSet(StringComparer.Ordinal);
+        return form.Steps
+            .Select(step => step with
+            {
+                Sections = step.Sections
+                    .Select(s => s with { Rows = FilterRowsKeepEmpty(s.Rows, knownFieldIds) })
+                    .ToList(),
+            })
+            .ToList();
+    }
+
+    private static List<Row> FilterRowsKeepEmpty(List<Row> rows, HashSet<string> knownFieldIds) =>
+        rows
+            .Select(r => r with { Columns = FilterColumnsKeepEmpty(r.Columns, knownFieldIds) })
+            .ToList();
+
+    /// <summary>
+    /// <see cref="FilterColumns"/> minus the emptiness pruning: stale
+    /// <see cref="FieldColumn"/>s still go, but a <see cref="GroupColumn"/>
+    /// survives even when all its rows end up empty.
+    /// </summary>
+    private static List<Column> FilterColumnsKeepEmpty(List<Column> columns, HashSet<string> knownFieldIds)
+    {
+        var result = new List<Column>();
+        foreach (var c in columns)
+        {
+            switch (c)
+            {
+                case FieldColumn fc when knownFieldIds.Contains(fc.FieldId):
+                    result.Add(fc);
+                    break;
+                case FieldColumn:
+                    break;   // stale reference — dropped in the editor too
+                case GroupColumn gc:
+                    result.Add(gc with { Rows = FilterRowsKeepEmpty(gc.Rows, knownFieldIds) });
+                    break;
+                // Allow-list, not a passthrough — keep in sync with
+                // FilterColumns when adding a column kind.
+                case RichTextColumn or ImageColumn or DividerColumn or HeadingColumn or ButtonColumn or SpacerColumn:
+                    result.Add(c);
+                    break;
+            }
+        }
+        return result;
+    }
+
     private static FormStep SynthesizeSingleStep(Form form)
     {
         return new FormStep

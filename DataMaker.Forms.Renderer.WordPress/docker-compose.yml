@@ -6,7 +6,7 @@
 #
 # The plugin folder is bind-mounted into wp-content/plugins, so edits to
 # .php/.js/.css files appear without rebuilds. Activate the plugin once
-# from wp-admin/plugins.php — the wp_dm_forms table is provisioned on
+# from wp-admin/plugins.php — the wp_fobo_data_maker_forms table is provisioned on
 # activation.
 services:
   db:
@@ -46,7 +46,7 @@ services:
     volumes:
       - dm_wp_core:/var/www/html
       # Bind-mount the plugin source into the standard plugins dir.
-      - ./:/var/www/html/wp-content/plugins/datamaker-renderer:rw
+      - ./:/var/www/html/wp-content/plugins/fobo-data-maker-forms:rw
 
 volumes:
   dm_wp_db:

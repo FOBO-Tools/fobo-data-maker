@@ -1,10 +1,10 @@
 <?php
-namespace DataMaker\Forms\Renderer\WordPress;
+namespace Fobo\DataMakerForms;
 
 if (!defined('ABSPATH')) exit;
 
 /**
- * Registers `[datamaker_form id="slug"]` and the asset bundle (renderer.js,
+ * Registers `[fobo_data_maker_form id="slug"]` and the asset bundle (renderer.js,
  * fn.js, styles.css, wp-bridge.js). The shortcode resolves the slug to a
  * stored form row, emits a mount div + inline JSON bundle, and the bridge
  * script wires the renderer's submit/edit hooks to the WP REST proxy.
@@ -13,7 +13,7 @@ final class Shortcode
 {
     public static function register(): void
     {
-        add_shortcode('datamaker_form', [self::class, 'render']);
+        add_shortcode('fobo_data_maker_form', [self::class, 'render']);
     }
 
     public static function register_assets(): void
@@ -27,20 +27,20 @@ final class Shortcode
         $asset = static function (string $file) use ($useMin): string {
             if ($useMin) {
                 $minRel = 'assets/dist/' . preg_replace('/\.(js|css)$/', '.min.$1', $file);
-                if (file_exists(DM_RENDERER_DIR . $minRel)) return $minRel;
+                if (file_exists(FOBO_DATA_MAKER_FORMS_DIR . $minRel)) return $minRel;
             }
             return 'assets/' . $file;
         };
 
         // File-mtime version so any asset edit busts the browser cache
-        // without bumping DM_RENDERER_VERSION. WP_DEBUG → mtime; otherwise
+        // without bumping FOBO_DATA_MAKER_FORMS_VERSION. WP_DEBUG → mtime; otherwise
         // pin to plugin version so production caches don't churn on every
         // deploy that touches an asset file.
         $ver = static function (string $relPath): string {
-            $path = DM_RENDERER_DIR . $relPath;
+            $path = FOBO_DATA_MAKER_FORMS_DIR . $relPath;
             return (defined('WP_DEBUG') && WP_DEBUG && file_exists($path))
                 ? (string)filemtime($path)
-                : DM_RENDERER_VERSION;
+                : FOBO_DATA_MAKER_FORMS_VERSION;
         };
 
         $layoutRel = $asset('layout.css');
@@ -50,20 +50,20 @@ final class Shortcode
         $coreRel   = $asset('renderer.js');
 
         wp_register_style(
-            'datamaker-renderer-layout',
-            DM_RENDERER_URL . $layoutRel,
+            'fobo-data-maker-forms-layout',
+            FOBO_DATA_MAKER_FORMS_URL . $layoutRel,
             [],
             $ver($layoutRel)
         );
         wp_register_style(
-            'datamaker-renderer-styles',
-            DM_RENDERER_URL . $stylesRel,
-            ['datamaker-renderer-layout'],
+            'fobo-data-maker-forms-styles',
+            FOBO_DATA_MAKER_FORMS_URL . $stylesRel,
+            ['fobo-data-maker-forms-layout'],
             $ver($stylesRel)
         );
         wp_register_script(
-            'datamaker-renderer-fn',
-            DM_RENDERER_URL . $fnRel,
+            'fobo-data-maker-forms-fn',
+            FOBO_DATA_MAKER_FORMS_URL . $fnRel,
             [],
             $ver($fnRel),
             ['in_footer' => false, 'strategy' => 'defer']
@@ -75,23 +75,23 @@ final class Shortcode
         // bridge so it's defined before any upload runs.
         $blobCryptoRel = 'assets/vendor/dm-blob-crypto.min.js';
         wp_register_script(
-            'datamaker-renderer-blobcrypto',
-            DM_RENDERER_URL . $blobCryptoRel,
+            'fobo-data-maker-forms-blobcrypto',
+            FOBO_DATA_MAKER_FORMS_URL . $blobCryptoRel,
             [],
             $ver($blobCryptoRel),
             ['in_footer' => false, 'strategy' => 'defer']
         );
         wp_register_script(
-            'datamaker-renderer-bridge',
-            DM_RENDERER_URL . $bridgeRel,
-            ['datamaker-renderer-fn', 'datamaker-renderer-blobcrypto'],
+            'fobo-data-maker-forms-bridge',
+            FOBO_DATA_MAKER_FORMS_URL . $bridgeRel,
+            ['fobo-data-maker-forms-fn', 'fobo-data-maker-forms-blobcrypto'],
             $ver($bridgeRel),
             ['in_footer' => false, 'strategy' => 'defer']
         );
         wp_register_script(
-            'datamaker-renderer-core',
-            DM_RENDERER_URL . $coreRel,
-            ['datamaker-renderer-bridge'],
+            'fobo-data-maker-forms-core',
+            FOBO_DATA_MAKER_FORMS_URL . $coreRel,
+            ['fobo-data-maker-forms-bridge'],
             $ver($coreRel),
             ['in_footer' => true, 'strategy' => 'defer']
         );
@@ -105,7 +105,7 @@ final class Shortcode
         // itself (/v0/) and rejects an appended ?ver= query.
         // phpcs:disable PluginCheck.CodeAnalysis.EnqueuedResourceOffloading.OffloadedContent, WordPress.WP.EnqueuedResourceParameters.MissingVersion -- third-party CAPTCHA service; must load from challenges.cloudflare.com, versioned by Cloudflare (an appended ?ver= is rejected).
         wp_register_script(
-            'datamaker-renderer-turnstile',
+            'fobo-data-maker-forms-turnstile',
             'https://challenges.cloudflare.com/turnstile/v0/api.js',
             [],
             null,
@@ -119,16 +119,16 @@ final class Shortcode
         $atts = shortcode_atts(
             ['id' => '', 'theme' => ''],
             $atts,
-            'datamaker_form'
+            'fobo_data_maker_form'
         );
         $slug = sanitize_title($atts['id']);
         if (!$slug) {
-            return '<!-- datamaker_form: id required -->';
+            return '<!-- fobo_data_maker_form: id required -->';
         }
 
         $row = FormStore::find_by_slug($slug);
         if (!$row) {
-            return '<!-- datamaker_form: form not found: ' . esc_html($slug) . ' -->';
+            return '<!-- fobo_data_maker_form: form not found: ' . esc_html($slug) . ' -->';
         }
 
         $payload = BundleBuilder::build_payload($row);
@@ -145,7 +145,7 @@ final class Shortcode
 
         $settings  = Admin\SettingsPage::get();
         $api_base  = (string)$settings['sync_lambda_url'];
-        $rest_base = esc_url_raw(rest_url('datamaker/v1'));
+        $rest_base = esc_url_raw(rest_url('fobo-data-maker/v1'));
 
         // Per-form edit-flow: default OFF. Storing localStorage on a public
         // form is the kind of thing the publisher should opt into per form
@@ -173,13 +173,28 @@ final class Shortcode
         // it when the host wants the form's DataMaker theme. wp-bridge also
         // zeros out the palette CSS-vars + per-element brand overrides
         // baked into the bundle when theme is off.
-        wp_enqueue_style('datamaker-renderer-layout');
+        $fonts_style_html = '';
+        wp_enqueue_style('fobo-data-maker-forms-layout');
         if ($use_theme_brand) {
-            wp_enqueue_style('datamaker-renderer-styles');
+            wp_enqueue_style('fobo-data-maker-forms-styles');
+            // Designer-selected fonts as data: URIs (baked into the .dmf as
+            // fonts.css). Emitted as a self-contained <style> inside the form
+            // markup rather than via wp_add_inline_style(): the styles handle
+            // prints in <head> (block themes render the_content before
+            // wp_head), so a late inline attach on that already-printed handle
+            // is silently dropped and the fonts never load. An inline <style>
+            // in the body always renders. sanitize_fonts_css() already escapes
+            // </ for safe <style> embedding. Only shipped with the DataMaker
+            // theme — otherwise the WP theme drives the look.
+            if (!empty($row['fonts_css'])) {
+                $fonts_style_html = '<style>'
+                    . self::sanitize_fonts_css((string)$row['fonts_css'])
+                    . '</style>';
+            }
         }
-        wp_enqueue_script('datamaker-renderer-fn');
-        wp_enqueue_script('datamaker-renderer-bridge');
-        wp_enqueue_script('datamaker-renderer-core');
+        wp_enqueue_script('fobo-data-maker-forms-fn');
+        wp_enqueue_script('fobo-data-maker-forms-bridge');
+        wp_enqueue_script('fobo-data-maker-forms-core');
 
         // Translatable user-visible strings the JS reads via t(). Emit
         // before the bridge script so both bridge + renderer see them.
@@ -191,7 +206,7 @@ final class Shortcode
             JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
             | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
         wp_add_inline_script(
-            'datamaker-renderer-bridge',
+            'fobo-data-maker-forms-bridge',
             '(function(){var R=(window.DataMakerRenderer=window.DataMakerRenderer||{});R.i18n=' . $i18n_json . ';})();',
             'before'
         );
@@ -210,7 +225,7 @@ final class Shortcode
                        && !empty($settings['turnstile_secret_key']);
         $turnstile_key  = $turnstile_on ? (string)$settings['turnstile_site_key'] : '';
         if ($turnstile_on) {
-            wp_enqueue_script('datamaker-renderer-turnstile');
+            wp_enqueue_script('fobo-data-maker-forms-turnstile');
         }
         $consent_label  = (string)($row['consent_label'] ?? '');
         // privacy_url is stored as either a fully-qualified URL or
@@ -219,7 +234,7 @@ final class Shortcode
         $privacy_url       = FormStore::resolve_privacy_url($row['privacy_url'] ?? '');
         $privacy_link_text = trim((string)($row['privacy_link_text'] ?? ''));
         if ($privacy_link_text === '') {
-            $privacy_link_text = __('privacy policy', 'datamaker-renderer');
+            $privacy_link_text = __('privacy policy', 'fobo-data-maker-forms');
         }
 
         // The bridge reads these as data-* on the mount div.
@@ -256,16 +271,6 @@ final class Shortcode
             | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
         );
 
-        // Designer-selected fonts as data: URIs, baked into the .dmf as
-        // `fonts.css`. Only emit when the form is being rendered with its
-        // designer styling — without it the WP theme drives the look so
-        // shipping ~MBs of font payload would be wasted bandwidth.
-        $fonts_inline = '';
-        if ($use_theme_brand && !empty($row['fonts_css'])) {
-            $fonts_inline = '<style id="dm-fonts-' . esc_attr($mount_id) . '">'
-                          . self::sanitize_fonts_css((string)$row['fonts_css'])
-                          . '</style>';
-        }
 
         // Honeypot — hidden text input named exactly `dm_hp_email`. Bots
         // that auto-fill every input on the page tick it; real submitters
@@ -287,7 +292,7 @@ final class Shortcode
         // wire too (defence in depth).
         $consent_html = '';
         if ($consent_on) {
-            $label_template = $consent_label !== '' ? $consent_label : __('I agree to the privacy policy.', 'datamaker-renderer');
+            $label_template = $consent_label !== '' ? $consent_label : __('I agree to the privacy policy.', 'fobo-data-maker-forms');
             $linked_label   = esc_html($privacy_link_text);
             $linked_anchor  = $privacy_url !== ''
                 ? '<a href="' . esc_url($privacy_url) . '" target="_blank" rel="noopener noreferrer">' . $linked_label . '</a>'
@@ -337,7 +342,7 @@ final class Shortcode
 
         return sprintf(
             '%s<div %s><script type="application/json" id="%s">%s</script>%s%s%s<div class="dm-sheet" data-dm-form-root></div></div>%s',
-            $fonts_inline,
+            $fonts_style_html,
             $mount_attrs,
             esc_attr($bundle_id),
             $bundle_json,
@@ -378,13 +383,24 @@ final class Shortcode
             . 'C80 64.5 144.5 0 224 0s144 64.5 144 144v48h16c35.3 0 64 28.7 64 64V448c0 35.3'
             . '-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V256c0-35.3 28.7-64 64-64H80z"/></svg>';
 
-        return '<style>.dm-deliv{max-width:680px;margin:18px auto 8px;padding:0 16px;'
-            . 'display:flex;align-items:center;justify-content:center;gap:8px;'
-            . 'font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;'
-            . 'font-size:13px;line-height:1.5;color:#000;text-align:center;}'
-            . '.dm-deliv .dm-deliv-by{opacity:.6;}'
-            . '@media(prefers-color-scheme:dark){.dm-deliv{color:#fff;}}</style>'
-            . '<footer class="dm-deliv">' . $lock
+        // Footer chrome CSS goes through the enqueue pipeline (attached to the
+        // always-enqueued layout handle), added once per request rather than
+        // echoed as an inline <style>.
+        static $css_added = false;
+        if (!$css_added) {
+            wp_add_inline_style(
+                'fobo-data-maker-forms-layout',
+                '.dm-deliv{max-width:680px;margin:18px auto 8px;padding:0 16px;'
+                . 'display:flex;align-items:center;justify-content:center;gap:8px;'
+                . 'font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;'
+                . 'font-size:13px;line-height:1.5;color:#000;text-align:center;}'
+                . '.dm-deliv .dm-deliv-by{opacity:.6;}'
+                . '@media(prefers-color-scheme:dark){.dm-deliv{color:#fff;}}'
+            );
+            $css_added = true;
+        }
+
+        return '<footer class="dm-deliv">' . $lock
             . '<span>Encrypted — only ' . $who . $org
             . ' can read your submission. <span class="dm-deliv-by">Verified by FOBO.</span></span></footer>';
     }
@@ -417,50 +433,50 @@ final class Shortcode
      * wp-bridge.js. Keys are stable identifiers; values are the English
      * source strings wrapped in __() so .mo files override them at the
      * active locale. Hosts can extend / replace via the
-     * `dm_renderer_i18n` filter (e.g. to add tenant-specific copy).
+     * `fobo_data_maker_forms_i18n` filter (e.g. to add tenant-specific copy).
      */
     private static function i18n_strings(): array
     {
-        return apply_filters('dm_renderer_i18n', [
+        return apply_filters('fobo_data_maker_forms_i18n', [
             // Renderer.js
-            'submit'                    => __('Submit',                                                       'datamaker-renderer'),
-            'step_back'                 => __('Back',                                                         'datamaker-renderer'),
-            'step_next'                 => __('Next',                                                         'datamaker-renderer'),
-            'please_fix_step'           => __('Please complete the required fields on this step.',            'datamaker-renderer'),
-            'preview'                   => __('Preview',                                                      'datamaker-renderer'),
-            'edit'                      => __('Edit',                                                         'datamaker-renderer'),
-            'no_items'                  => __('No items',                                                     'datamaker-renderer'),
-            'add_and_press_enter'       => __('Add and press Enter',                                          'datamaker-renderer'),
-            'click_to_upload'           => __('Click to upload',                                              'datamaker-renderer'),
-            'no_file_selected'          => __('No file selected',                                             'datamaker-renderer'),
-            'browse'                    => __('Browse…',                                                      'datamaker-renderer'),
-            'clear'                     => __('Clear',                                                        'datamaker-renderer'),
-            'uploading'                 => __('Uploading…',                                                   'datamaker-renderer'),
-            'upload_failed'             => __('Upload failed — try again',                                    'datamaker-renderer'),
-            'still_uploading'           => __('Still uploading attachments — try again in a moment.',         'datamaker-renderer'),
-            'geo_address_placeholder'   => __('Type an address…',                                             'datamaker-renderer'),
+            'submit'                    => __('Submit',                                                       'fobo-data-maker-forms'),
+            'step_back'                 => __('Back',                                                         'fobo-data-maker-forms'),
+            'step_next'                 => __('Next',                                                         'fobo-data-maker-forms'),
+            'please_fix_step'           => __('Please complete the required fields on this step.',            'fobo-data-maker-forms'),
+            'preview'                   => __('Preview',                                                      'fobo-data-maker-forms'),
+            'edit'                      => __('Edit',                                                         'fobo-data-maker-forms'),
+            'no_items'                  => __('No items',                                                     'fobo-data-maker-forms'),
+            'add_and_press_enter'       => __('Add and press Enter',                                          'fobo-data-maker-forms'),
+            'click_to_upload'           => __('Click to upload',                                              'fobo-data-maker-forms'),
+            'no_file_selected'          => __('No file selected',                                             'fobo-data-maker-forms'),
+            'browse'                    => __('Browse…',                                                      'fobo-data-maker-forms'),
+            'clear'                     => __('Clear',                                                        'fobo-data-maker-forms'),
+            'uploading'                 => __('Uploading…',                                                   'fobo-data-maker-forms'),
+            'upload_failed'             => __('Upload failed — try again',                                    'fobo-data-maker-forms'),
+            'still_uploading'           => __('Still uploading attachments — try again in a moment.',         'fobo-data-maker-forms'),
+            'geo_address_placeholder'   => __('Type an address…',                                             'fobo-data-maker-forms'),
             // Signature / initials pad
-            'sign_here'                 => __('Sign here',                                                    'datamaker-renderer'),
-            'initials_here'             => __('Initials',                                                     'datamaker-renderer'),
-            'printed_name'              => __('Printed name',                                                 'datamaker-renderer'),
-            'signed'                    => __('Signed',                                                       'datamaker-renderer'),
-            'clear_signature'           => __('Clear signature',                                              'datamaker-renderer'),
-            'please_fix_highlighted'    => __('Please fix the highlighted fields.',                           'datamaker-renderer'),
-            'validation_banner_default' => __('Please fix the highlighted fields before submitting.',         'datamaker-renderer'),
+            'sign_here'                 => __('Sign here',                                                    'fobo-data-maker-forms'),
+            'initials_here'             => __('Initials',                                                     'fobo-data-maker-forms'),
+            'printed_name'              => __('Printed name',                                                 'fobo-data-maker-forms'),
+            'signed'                    => __('Signed',                                                       'fobo-data-maker-forms'),
+            'clear_signature'           => __('Clear signature',                                              'fobo-data-maker-forms'),
+            'please_fix_highlighted'    => __('Please fix the highlighted fields.',                           'fobo-data-maker-forms'),
+            'validation_banner_default' => __('Please fix the highlighted fields before submitting.',         'fobo-data-maker-forms'),
             // wp-bridge.js
-            'consent_required_hint'     => __('Please tick the consent box to submit.',                       'datamaker-renderer'),
-            'captcha_required_hint'     => __('Please complete the challenge to submit.',                     'datamaker-renderer'),
-            'submitted_redirecting'     => __('Submitted. Redirecting…',                                      'datamaker-renderer'),
-            'continue_editing'          => __('Continue editing',                                             'datamaker-renderer'),
-            'start_over'                => __('Start over',                                                   'datamaker-renderer'),
-            'resume_prompt'             => __('You started this form earlier on this browser. Continue editing your previous submission?', 'datamaker-renderer'),
-            'err_too_large'             => __('This submission is too large to send. Try shrinking large images or removing big attachments, then submit again.', 'datamaker-renderer'),
-            'err_network'               => __('Network error — please check your connection and try submitting again.', 'datamaker-renderer'),
-            'err_form_gone'             => __('This form is no longer available. Please contact the form owner.', 'datamaker-renderer'),
-            'err_not_accepting'         => __('This form is not accepting submissions right now.',            'datamaker-renderer'),
-            'err_server_unreachable'    => __('The form server is unreachable right now. Please try again in a moment.', 'datamaker-renderer'),
-            'err_generic_5xx'           => __('Something went wrong sending your submission. Please try again — if it keeps happening, contact the form owner.', 'datamaker-renderer'),
-            'err_generic'               => __('Submission failed',                                            'datamaker-renderer'),
+            'consent_required_hint'     => __('Please tick the consent box to submit.',                       'fobo-data-maker-forms'),
+            'captcha_required_hint'     => __('Please complete the challenge to submit.',                     'fobo-data-maker-forms'),
+            'submitted_redirecting'     => __('Submitted. Redirecting…',                                      'fobo-data-maker-forms'),
+            'continue_editing'          => __('Continue editing',                                             'fobo-data-maker-forms'),
+            'start_over'                => __('Start over',                                                   'fobo-data-maker-forms'),
+            'resume_prompt'             => __('You started this form earlier on this browser. Continue editing your previous submission?', 'fobo-data-maker-forms'),
+            'err_too_large'             => __('This submission is too large to send. Try shrinking large images or removing big attachments, then submit again.', 'fobo-data-maker-forms'),
+            'err_network'               => __('Network error — please check your connection and try submitting again.', 'fobo-data-maker-forms'),
+            'err_form_gone'             => __('This form is no longer available. Please contact the form owner.', 'fobo-data-maker-forms'),
+            'err_not_accepting'         => __('This form is not accepting submissions right now.',            'fobo-data-maker-forms'),
+            'err_server_unreachable'    => __('The form server is unreachable right now. Please try again in a moment.', 'fobo-data-maker-forms'),
+            'err_generic_5xx'           => __('Something went wrong sending your submission. Please try again — if it keeps happening, contact the form owner.', 'fobo-data-maker-forms'),
+            'err_generic'               => __('Submission failed',                                            'fobo-data-maker-forms'),
         ]);
     }
 }

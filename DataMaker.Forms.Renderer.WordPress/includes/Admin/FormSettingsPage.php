@@ -1,20 +1,20 @@
 <?php
-namespace DataMaker\Forms\Renderer\WordPress\Admin;
+namespace Fobo\DataMakerForms\Admin;
 
-use DataMaker\Forms\Renderer\WordPress\FormStore;
-use DataMaker\Forms\Renderer\WordPress\MessageCatalog;
+use Fobo\DataMakerForms\FormStore;
+use Fobo\DataMakerForms\MessageCatalog;
 
 if (!defined('ABSPATH')) exit;
 
 /**
  * Per-form settings — theme override, edit-flow toggle, per-element
- * visibility checklist. Reachable via ?page=datamaker-renderer-form
+ * visibility checklist. Reachable via ?page=fobo-data-maker-forms-form
  * &form_id={id}; the Forms list page links to it per row.
  *
  * The visibility list walks every section / row / column in the form's
  * layout plus the standalone field bag, lets the WP admin uncheck the
  * pieces they don't want shown to submitters, and persists the chosen
- * ids as a JSON array under wp_dm_forms.hidden_elements. BundleBuilder
+ * ids as a JSON array under wp_fobo_data_maker_forms.hidden_elements. BundleBuilder
  * filters those out of the bundle before the renderer ever sees them,
  * so the layout grid auto-flows around the gaps (matches the
  * relation-skip behaviour on the renderer side).
@@ -23,27 +23,27 @@ final class FormSettingsPage
 {
     public static function register_menu(): void
     {
-        // Hidden submenu — registered under the Data Maker Forms parent
+        // Hidden submenu — registered under the FOBO Data Maker Forms parent
         // so the page slug exists for permalinks, but `null` as menu
         // title keeps it out of the sidebar (it's reached via the
         // Forms list "Settings" link per row).
         add_submenu_page(
-            'datamaker-renderer',
-            __('Form settings', 'datamaker-renderer'),
+            'fobo-data-maker-forms',
+            __('Form settings', 'fobo-data-maker-forms'),
             null,
             'manage_options',
-            'datamaker-renderer-form',
+            'fobo-data-maker-forms-form',
             [self::class, 'render']
         );
     }
 
     public static function render(): void
     {
-        if (!\dm_renderer_user_can_manage()) return;
+        if (!\fobo_data_maker_forms_user_can_manage()) return;
 
         $form_id = isset($_GET['form_id']) ? (int)$_GET['form_id'] : 0;
         if ($form_id <= 0) {
-            echo '<div class="wrap"><h1>' . esc_html__('Form settings', 'datamaker-renderer') . '</h1><p>' . esc_html__('Missing or invalid form id.', 'datamaker-renderer') . '</p></div>';
+            echo '<div class="wrap"><h1>' . esc_html__('Form settings', 'fobo-data-maker-forms') . '</h1><p>' . esc_html__('Missing or invalid form id.', 'fobo-data-maker-forms') . '</p></div>';
             return;
         }
 
@@ -52,7 +52,7 @@ final class FormSettingsPage
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- custom plugin table; id is placeholdered via prepare(), table name is a code constant, single admin read.
         $row = $wpdb->get_row($wpdb->prepare("SELECT * FROM " . FormStore::table() . " WHERE id = %d", $form_id), ARRAY_A);
         if (!$row) {
-            echo '<div class="wrap"><h1>' . esc_html__('Form settings', 'datamaker-renderer') . '</h1><p>' . esc_html__('Form not found.', 'datamaker-renderer') . '</p></div>';
+            echo '<div class="wrap"><h1>' . esc_html__('Form settings', 'fobo-data-maker-forms') . '</h1><p>' . esc_html__('Form not found.', 'fobo-data-maker-forms') . '</p></div>';
             return;
         }
 
@@ -99,10 +99,10 @@ final class FormSettingsPage
             // Per-form message overrides — only persist the non-empty
             // textboxes; FormStore sanitises the rest (drops empty / unknown
             // shape entries).
-            // Nested {field:{msgId:text}} map; each leaf is sanitized in
-            // FormStore::set_message_overrides (sanitize_message_overrides).
+            // Nested {field:{msgId:text}} map; sanitize every leaf here
+            // (map_deep walks the array) before it ever reaches FormStore.
             $msg_in = isset($_POST['msg']) && is_array($_POST['msg'])
-                ? wp_unslash($_POST['msg']) // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- each leaf value sanitized in FormStore::set_message_overrides().
+                ? map_deep(wp_unslash($_POST['msg']), 'sanitize_text_field')
                 : [];
             FormStore::set_message_overrides($form_id, is_array($msg_in) ? $msg_in : []);
 
@@ -129,7 +129,7 @@ final class FormSettingsPage
 
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- custom plugin table; id is placeholdered via prepare(), table name is a code constant, single admin read.
             $row = $wpdb->get_row($wpdb->prepare("SELECT * FROM " . FormStore::table() . " WHERE id = %d", $form_id), ARRAY_A);
-            $notice = __('Saved.', 'datamaker-renderer');
+            $notice = __('Saved.', 'fobo-data-maker-forms');
         }
 
         $form           = json_decode($row['form_json'], true) ?: [];
@@ -148,15 +148,15 @@ final class FormSettingsPage
         $useThemeOn   = $row['use_theme'] === null || $row['use_theme'] === '' ? true  : (bool)(int)$row['use_theme'];
         $editFlowOn   = $row['edit_flow'] === null || $row['edit_flow'] === '' ? false : (bool)(int)$row['edit_flow'];
         $items        = self::enumerate($form);
-        $back_url     = admin_url('admin.php?page=datamaker-renderer-forms');
+        $back_url     = admin_url('admin.php?page=fobo-data-maker-forms-forms');
 
         ?>
         <div class="wrap">
             <?php PageHeader::render(
                 /* translators: %s = form name or slug */
-                sprintf(__('Form settings — %s', 'datamaker-renderer'), (string)($form['name'] ?? $row['slug']))
+                sprintf(__('Form settings — %s', 'fobo-data-maker-forms'), (string)($form['name'] ?? $row['slug']))
             ); ?>
-            <p><a href="<?php echo esc_url($back_url); ?>">← <?php esc_html_e('Back to forms', 'datamaker-renderer'); ?></a></p>
+            <p><a href="<?php echo esc_url($back_url); ?>">← <?php esc_html_e('Back to forms', 'fobo-data-maker-forms'); ?></a></p>
 
             <?php if ($notice): ?>
                 <div class="notice notice-success is-dismissible"><p><?php echo esc_html($notice); ?></p></div>
@@ -165,30 +165,30 @@ final class FormSettingsPage
             <form method="post">
                 <?php wp_nonce_field('dm_form_settings', 'dm_form_settings_nonce'); ?>
 
-                <h2><?php esc_html_e('Behaviour', 'datamaker-renderer'); ?></h2>
+                <h2><?php esc_html_e('Behaviour', 'fobo-data-maker-forms'); ?></h2>
                 <table class="form-table" role="presentation">
                     <tr>
-                        <th scope="row"><?php esc_html_e('Designer styling', 'datamaker-renderer'); ?></th>
+                        <th scope="row"><?php esc_html_e('Designer styling', 'fobo-data-maker-forms'); ?></th>
                         <td>
                             <label>
                                 <input type="checkbox" name="use_theme" value="1" <?php checked($useThemeOn); ?>>
-                                <?php esc_html_e('Apply Theme/Styling', 'datamaker-renderer'); ?>
+                                <?php esc_html_e('Apply Theme/Styling', 'fobo-data-maker-forms'); ?>
                             </label>
-                            <p class="description"><?php esc_html_e('On = render the form the way it looks in the desktop designer (palette, fonts, button variants, heading styles, per-element overrides). Off = strip all of that and let the active WordPress theme drive the look. Layout (rows, columns, spacing) is honored in both modes.', 'datamaker-renderer'); ?></p>
+                            <p class="description"><?php esc_html_e('On = render the form the way it looks in the desktop designer (palette, fonts, button variants, heading styles, per-element overrides). Off = strip all of that and let the active WordPress theme drive the look. Layout (rows, columns, spacing) is honored in both modes.', 'fobo-data-maker-forms'); ?></p>
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row"><?php esc_html_e('Edit flow', 'datamaker-renderer'); ?></th>
+                        <th scope="row"><?php esc_html_e('Edit flow', 'fobo-data-maker-forms'); ?></th>
                         <td>
                             <label>
                                 <input type="checkbox" name="edit_flow" value="1" <?php checked($editFlowOn); ?>>
-                                <?php esc_html_e('Let submitters edit their submission later (browser localStorage)', 'datamaker-renderer'); ?>
+                                <?php esc_html_e('Let submitters edit their submission later (browser localStorage)', 'fobo-data-maker-forms'); ?>
                             </label>
-                            <p class="description"><?php esc_html_e('When on, a submitter returning to the same form on the same browser sees "Continue editing?" before a fresh start.', 'datamaker-renderer'); ?></p>
+                            <p class="description"><?php esc_html_e('When on, a submitter returning to the same form on the same browser sees "Continue editing?" before a fresh start.', 'fobo-data-maker-forms'); ?></p>
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row"><?php esc_html_e('After submit', 'datamaker-renderer'); ?></th>
+                        <th scope="row"><?php esc_html_e('After submit', 'fobo-data-maker-forms'); ?></th>
                         <td>
                             <?php
                             $stored      = (string)($row['after_submit'] ?? '');
@@ -199,13 +199,13 @@ final class FormSettingsPage
                             ?>
                             <p>
                                 <label><input type="radio" name="after_submit_kind" value="none" <?php checked($kindCurrent, 'none'); ?>>
-                                <?php esc_html_e('Stay on page (default)', 'datamaker-renderer'); ?></label>
+                                <?php esc_html_e('Stay on page (default)', 'fobo-data-maker-forms'); ?></label>
                             </p>
                             <p>
                                 <label><input type="radio" name="after_submit_kind" value="page" <?php checked($kindCurrent, 'page'); ?>>
-                                <?php esc_html_e('Redirect to a WordPress page:', 'datamaker-renderer'); ?></label>
+                                <?php esc_html_e('Redirect to a WordPress page:', 'fobo-data-maker-forms'); ?></label>
                                 <select name="after_submit_page" style="margin-left:8px">
-                                    <option value="0">— <?php esc_html_e('select a page', 'datamaker-renderer'); ?> —</option>
+                                    <option value="0">— <?php esc_html_e('select a page', 'fobo-data-maker-forms'); ?> —</option>
                                     <?php foreach ($pages as $p): ?>
                                         <option value="<?php echo (int)$p->ID; ?>" <?php selected($pageCurrent, (int)$p->ID); ?>>
                                             <?php echo esc_html($p->post_title); ?>
@@ -215,18 +215,18 @@ final class FormSettingsPage
                             </p>
                             <p>
                                 <label><input type="radio" name="after_submit_kind" value="url" <?php checked($kindCurrent, 'url'); ?>>
-                                <?php esc_html_e('Redirect to a URL:', 'datamaker-renderer'); ?></label>
+                                <?php esc_html_e('Redirect to a URL:', 'fobo-data-maker-forms'); ?></label>
                                 <input type="url" class="regular-text" name="after_submit_url" value="<?php echo esc_attr($urlCurrent); ?>" placeholder="https://…" style="margin-left:8px">
                             </p>
-                            <p class="description"><?php esc_html_e('Browser navigates to the chosen target after a successful submission. "Stay on page" replaces the form with the success message below.', 'datamaker-renderer'); ?></p>
+                            <p class="description"><?php esc_html_e('Browser navigates to the chosen target after a successful submission. "Stay on page" replaces the form with the success message below.', 'fobo-data-maker-forms'); ?></p>
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row"><?php esc_html_e('Success message', 'datamaker-renderer'); ?></th>
+                        <th scope="row"><?php esc_html_e('Success message', 'fobo-data-maker-forms'); ?></th>
                         <td>
                             <?php
                             $msgStored  = (string)($row['success_message'] ?? '');
-                            $msgDefault = __('## Thanks for your submission.', 'datamaker-renderer');
+                            $msgDefault = __('## Thanks for your submission.', 'fobo-data-maker-forms');
                             $msgDisplay = $msgStored !== '' ? $msgStored : $msgDefault;
                             ?>
                             <textarea name="success_message" class="large-text code" rows="6" placeholder="<?php echo esc_attr($msgDefault); ?>"><?php echo esc_textarea($msgDisplay); ?></textarea>
@@ -234,7 +234,7 @@ final class FormSettingsPage
                                 printf(
                                     wp_kses(
                                         /* translators: %1$s-%5$s = Markdown syntax examples wrapped in <code>; %6$s = "Stay on page" wrapped in <em> */
-                                        __('Markdown allowed (%1$s, %2$s, %3$s, %4$s, %5$s). Rendered inside the form\'s container after a successful submit when "After submit" is set to %6$s; ignored for redirect modes. Leave blank for the default.', 'datamaker-renderer'),
+                                        __('Markdown allowed (%1$s, %2$s, %3$s, %4$s, %5$s). Rendered inside the form\'s container after a successful submit when "After submit" is set to %6$s; ignored for redirect modes. Leave blank for the default.', 'fobo-data-maker-forms'),
                                         ['code' => [], 'em' => []]
                                     ),
                                     '<code>## Heading</code>',
@@ -242,32 +242,32 @@ final class FormSettingsPage
                                     '<code>*italic*</code>',
                                     '<code>- bullet</code>',
                                     '<code>[link](url)</code>',
-                                    '<em>' . esc_html__('Stay on page', 'datamaker-renderer') . '</em>'
+                                    '<em>' . esc_html__('Stay on page', 'fobo-data-maker-forms') . '</em>'
                                 );
                             ?></p>
                         </td>
                     </tr>
                 </table>
 
-                <h2><?php esc_html_e('Visibility', 'datamaker-renderer'); ?></h2>
-                <p><?php esc_html_e('Uncheck any item to hide it from this form on the WordPress site. Filtering happens server-side, before the renderer reads the form, so the layout grid auto-flows around the gaps.', 'datamaker-renderer'); ?></p>
+                <h2><?php esc_html_e('Visibility', 'fobo-data-maker-forms'); ?></h2>
+                <p><?php esc_html_e('Uncheck any item to hide it from this form on the WordPress site. Filtering happens server-side, before the renderer reads the form, so the layout grid auto-flows around the gaps.', 'fobo-data-maker-forms'); ?></p>
 
                 <table class="widefat striped">
                     <thead>
                         <tr>
                             <th style="width:80px">
-                                <label title="<?php esc_attr_e('Show or hide every non-required item at once', 'datamaker-renderer'); ?>">
-                                    <input type="checkbox" id="dm-vis-all"> <?php esc_html_e('all', 'datamaker-renderer'); ?>
+                                <label title="<?php esc_attr_e('Show or hide every non-required item at once', 'fobo-data-maker-forms'); ?>">
+                                    <input type="checkbox" id="dm-vis-all"> <?php esc_html_e('all', 'fobo-data-maker-forms'); ?>
                                 </label>
                             </th>
-                            <th><?php esc_html_e('Item', 'datamaker-renderer'); ?></th>
-                            <th><?php esc_html_e('Kind', 'datamaker-renderer'); ?></th>
-                            <th><?php esc_html_e('Where', 'datamaker-renderer'); ?></th>
+                            <th><?php esc_html_e('Item', 'fobo-data-maker-forms'); ?></th>
+                            <th><?php esc_html_e('Kind', 'fobo-data-maker-forms'); ?></th>
+                            <th><?php esc_html_e('Where', 'fobo-data-maker-forms'); ?></th>
                         </tr>
                     </thead>
                     <tbody>
                     <?php if (!$items): ?>
-                        <tr><td colspan="4"><?php esc_html_e('No layout elements found.', 'datamaker-renderer'); ?></td></tr>
+                        <tr><td colspan="4"><?php esc_html_e('No layout elements found.', 'fobo-data-maker-forms'); ?></td></tr>
                     <?php else: foreach ($items as $it):
                         $required = !empty($it['required']);
                         // Render: checked = visible (matches user mental
@@ -288,7 +288,7 @@ final class FormSettingsPage
                             <td>
                                 <?php echo esc_html($it['label']); ?>
                                 <?php if ($required): ?>
-                                    <span style="color:#a8201a;font-size:11px;margin-left:6px;" title="<?php esc_attr_e('Required fields can\'t be hidden', 'datamaker-renderer'); ?>"><?php esc_html_e('required', 'datamaker-renderer'); ?></span>
+                                    <span style="color:#a8201a;font-size:11px;margin-left:6px;" title="<?php esc_attr_e('Required fields can\'t be hidden', 'fobo-data-maker-forms'); ?>"><?php esc_html_e('required', 'fobo-data-maker-forms'); ?></span>
                                 <?php endif; ?>
                             </td>
                             <td><code><?php echo esc_html($it['kind']); ?></code></td>
@@ -301,18 +301,18 @@ final class FormSettingsPage
                     printf(
                         wp_kses(
                             /* translators: %1$s = "visible" wrapped in <strong>; %2$s = hidden[] wrapped in <code> */
-                            __('A checked box = %1$s. The form posts the inverted set as %2$s so legacy fields not yet in the form definition aren\'t accidentally hidden when added later.', 'datamaker-renderer'),
+                            __('A checked box = %1$s. The form posts the inverted set as %2$s so legacy fields not yet in the form definition aren\'t accidentally hidden when added later.', 'fobo-data-maker-forms'),
                             ['strong' => [], 'code' => []]
                         ),
-                        '<strong>' . esc_html__('visible', 'datamaker-renderer') . '</strong>',
+                        '<strong>' . esc_html__('visible', 'fobo-data-maker-forms') . '</strong>',
                         '<code>hidden[]</code>'
                     );
                 ?></p>
 
-                <h2 style="margin-top:32px;"><?php esc_html_e('Privacy &amp; consent', 'datamaker-renderer'); ?></h2>
+                <h2 style="margin-top:32px;"><?php esc_html_e('Privacy &amp; consent', 'fobo-data-maker-forms'); ?></h2>
                 <table class="form-table" role="presentation">
                     <tr>
-                        <th scope="row"><?php esc_html_e('Privacy policy target', 'datamaker-renderer'); ?></th>
+                        <th scope="row"><?php esc_html_e('Privacy policy target', 'fobo-data-maker-forms'); ?></th>
                         <td>
                             <?php
                             $privacy_kind_cur = $privacy_url === ''
@@ -324,13 +324,13 @@ final class FormSettingsPage
                             ?>
                             <p>
                                 <label><input type="radio" name="privacy_kind" value="none" <?php checked($privacy_kind_cur, 'none'); ?>>
-                                <?php esc_html_e('Not set', 'datamaker-renderer'); ?></label>
+                                <?php esc_html_e('Not set', 'fobo-data-maker-forms'); ?></label>
                             </p>
                             <p>
                                 <label><input type="radio" name="privacy_kind" value="page" <?php checked($privacy_kind_cur, 'page'); ?>>
-                                <?php esc_html_e('WordPress page:', 'datamaker-renderer'); ?></label>
+                                <?php esc_html_e('WordPress page:', 'fobo-data-maker-forms'); ?></label>
                                 <select name="privacy_page" style="margin-left:8px">
-                                    <option value="0">— <?php esc_html_e('select a page', 'datamaker-renderer'); ?> —</option>
+                                    <option value="0">— <?php esc_html_e('select a page', 'fobo-data-maker-forms'); ?> —</option>
                                     <?php foreach ($pages_for_privacy as $p): ?>
                                         <option value="<?php echo (int)$p->ID; ?>" <?php selected($privacy_page_cur, (int)$p->ID); ?>>
                                             <?php echo esc_html($p->post_title); ?>
@@ -340,97 +340,97 @@ final class FormSettingsPage
                             </p>
                             <p>
                                 <label><input type="radio" name="privacy_kind" value="url" <?php checked($privacy_kind_cur, 'url'); ?>>
-                                <?php esc_html_e('External URL:', 'datamaker-renderer'); ?></label>
+                                <?php esc_html_e('External URL:', 'fobo-data-maker-forms'); ?></label>
                                 <input type="url" class="regular-text" name="privacy_url"
                                        value="<?php echo esc_attr($privacy_url_cur); ?>"
                                        placeholder="https://example.com/privacy"
                                        style="margin-left:8px;width:100%;max-width:440px;">
                             </p>
-                            <p class="description"><?php esc_html_e('Linked from the consent label below when set.', 'datamaker-renderer'); ?></p>
+                            <p class="description"><?php esc_html_e('Linked from the consent label below when set.', 'fobo-data-maker-forms'); ?></p>
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row"><?php esc_html_e('Privacy link text', 'datamaker-renderer'); ?></th>
+                        <th scope="row"><?php esc_html_e('Privacy link text', 'fobo-data-maker-forms'); ?></th>
                         <td>
                             <input type="text" name="privacy_link_text"
                                    class="regular-text"
                                    style="width:100%;max-width:560px;"
                                    value="<?php echo esc_attr($privacy_link_text); ?>"
-                                   placeholder="<?php esc_attr_e('privacy policy', 'datamaker-renderer'); ?>" />
-                            <p class="description"><?php esc_html_e('Text shown as the link to the privacy target. Empty = "privacy policy".', 'datamaker-renderer'); ?></p>
+                                   placeholder="<?php esc_attr_e('privacy policy', 'fobo-data-maker-forms'); ?>" />
+                            <p class="description"><?php esc_html_e('Text shown as the link to the privacy target. Empty = "privacy policy".', 'fobo-data-maker-forms'); ?></p>
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row"><?php esc_html_e('Require consent before submit', 'datamaker-renderer'); ?></th>
+                        <th scope="row"><?php esc_html_e('Require consent before submit', 'fobo-data-maker-forms'); ?></th>
                         <td>
                             <label>
                                 <input type="checkbox" name="consent_required" value="1"
                                        <?php checked($consent_on); ?> />
-                                <?php esc_html_e('Show a consent checkbox above the submit button; block POST until ticked.', 'datamaker-renderer'); ?>
+                                <?php esc_html_e('Show a consent checkbox above the submit button; block POST until ticked.', 'fobo-data-maker-forms'); ?>
                             </label>
                             <p style="margin-top:8px;">
                                 <input type="text" name="consent_label"
                                        class="regular-text"
                                        style="width:100%;max-width:560px;"
                                        value="<?php echo esc_attr($consent_label); ?>"
-                                       placeholder="<?php esc_attr_e('I agree to the privacy policy.', 'datamaker-renderer'); ?>" />
+                                       placeholder="<?php esc_attr_e('I agree to the privacy policy.', 'fobo-data-maker-forms'); ?>" />
                             </p>
-                            <p class="description"><?php esc_html_e('Use {privacy} as a placeholder to insert a link to the URL above.', 'datamaker-renderer'); ?></p>
+                            <p class="description"><?php esc_html_e('Use {privacy} as a placeholder to insert a link to the URL above.', 'fobo-data-maker-forms'); ?></p>
                         </td>
                     </tr>
                 </table>
 
-                <h2 style="margin-top:32px;"><?php esc_html_e('Anti-abuse', 'datamaker-renderer'); ?></h2>
+                <h2 style="margin-top:32px;"><?php esc_html_e('Anti-abuse', 'fobo-data-maker-forms'); ?></h2>
                 <table class="form-table" role="presentation">
                     <tr>
-                        <th scope="row"><?php esc_html_e('Honeypot field', 'datamaker-renderer'); ?></th>
+                        <th scope="row"><?php esc_html_e('Honeypot field', 'fobo-data-maker-forms'); ?></th>
                         <td>
                             <label>
                                 <input type="checkbox" name="honeypot_on" value="1"
                                        <?php checked($honeypot_on); ?> />
-                                <?php esc_html_e('Render a hidden field; reject submissions that fill it. Recommended.', 'datamaker-renderer'); ?>
+                                <?php esc_html_e('Render a hidden field; reject submissions that fill it. Recommended.', 'fobo-data-maker-forms'); ?>
                             </label>
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row"><?php esc_html_e('Rate limit (per minute, per IP)', 'datamaker-renderer'); ?></th>
+                        <th scope="row"><?php esc_html_e('Rate limit (per minute, per IP)', 'fobo-data-maker-forms'); ?></th>
                         <td>
                             <input type="number" name="rate_limit_per_min" min="0" max="600"
                                    value="<?php echo esc_attr((string)$rate_limit); ?>"
                                    style="width:90px;" />
-                            <p class="description"><?php esc_html_e('0 = no limit (a plugin-wide default still applies). Soft throttle enforced via WP transients.', 'datamaker-renderer'); ?></p>
+                            <p class="description"><?php esc_html_e('0 = no limit (a plugin-wide default still applies). Soft throttle enforced via WP transients.', 'fobo-data-maker-forms'); ?></p>
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row"><?php esc_html_e('Cloudflare Turnstile', 'datamaker-renderer'); ?></th>
+                        <th scope="row"><?php esc_html_e('Cloudflare Turnstile', 'fobo-data-maker-forms'); ?></th>
                         <td>
                             <label>
                                 <input type="checkbox" name="turnstile_on" value="1"
                                        <?php checked($turnstile_on); ?>
                                        <?php disabled($turnstile_site_key === ''); ?> />
-                                <?php esc_html_e('Require visitors to pass a Turnstile challenge before submitting.', 'datamaker-renderer'); ?>
+                                <?php esc_html_e('Require visitors to pass a Turnstile challenge before submitting.', 'fobo-data-maker-forms'); ?>
                             </label>
                             <?php if ($turnstile_site_key === ''): ?>
                                 <p class="description" style="color:#a8201a;">
                                     <?php
                                     printf(
                                         /* translators: %s = link to plugin settings */
-                                        esc_html__('Turnstile keys not configured. Set them in %s first.', 'datamaker-renderer'),
-                                        '<a href="' . esc_url(admin_url('admin.php?page=datamaker-renderer-settings')) . '">' . esc_html__('Data Maker Forms → Settings', 'datamaker-renderer') . '</a>'
+                                        esc_html__('Turnstile keys not configured. Set them in %s first.', 'fobo-data-maker-forms'),
+                                        '<a href="' . esc_url(admin_url('admin.php?page=fobo-data-maker-forms-settings')) . '">' . esc_html__('FOBO Data Maker Forms → Settings', 'fobo-data-maker-forms') . '</a>'
                                     );
                                     ?>
                                 </p>
                             <?php else: ?>
-                                <p class="description"><?php esc_html_e('Server verifies each token with Cloudflare before sealing the submission. Honeypot + rate limit still apply.', 'datamaker-renderer'); ?></p>
+                                <p class="description"><?php esc_html_e('Server verifies each token with Cloudflare before sealing the submission. Honeypot + rate limit still apply.', 'fobo-data-maker-forms'); ?></p>
                             <?php endif; ?>
                         </td>
                     </tr>
                 </table>
 
-                <h2 style="margin-top:32px;"><?php esc_html_e('Integrations', 'datamaker-renderer'); ?></h2>
+                <h2 style="margin-top:32px;"><?php esc_html_e('Integrations', 'fobo-data-maker-forms'); ?></h2>
                 <table class="form-table" role="presentation">
                     <tr>
-                        <th scope="row"><?php esc_html_e('Webhook URL', 'datamaker-renderer'); ?></th>
+                        <th scope="row"><?php esc_html_e('Webhook URL', 'fobo-data-maker-forms'); ?></th>
                         <td>
                             <input type="url" name="webhook_url"
                                    class="regular-text"
@@ -440,16 +440,16 @@ final class FormSettingsPage
                             <p class="description"><?php
                                 printf(
                                     /* translators: %s = action hook name */
-                                    esc_html__('POSTed with submission metadata (no plaintext field values) after a successful sealed submit. For full notification flows use the WP action hook %s — works with Post SMTP, Mailpoet, WPForms add-ons, Zapier, custom code.', 'datamaker-renderer'),
-                                    '<code>dm_renderer_submission_received</code>'
+                                    esc_html__('POSTed with submission metadata (no plaintext field values) after a successful sealed submit. For full notification flows use the WP action hook %s — works with Post SMTP, Mailpoet, WPForms add-ons, Zapier, custom code.', 'fobo-data-maker-forms'),
+                                    '<code>fobo_data_maker_forms_submission_received</code>'
                                 );
                             ?></p>
                         </td>
                     </tr>
                 </table>
 
-                <h2 style="margin-top:32px;"><?php esc_html_e('Form-wide messages', 'datamaker-renderer'); ?></h2>
-                <p class="description"><?php esc_html_e('Form-level text the renderer shows, independent of any single field. Empty box = use the form\'s default (set in the designer) or, failing that, the engine\'s English fallback.', 'datamaker-renderer'); ?></p>
+                <h2 style="margin-top:32px;"><?php esc_html_e('Form-wide messages', 'fobo-data-maker-forms'); ?></h2>
+                <p class="description"><?php esc_html_e('Form-level text the renderer shows, independent of any single field. Empty box = use the form\'s default (set in the designer) or, failing that, the engine\'s English fallback.', 'fobo-data-maker-forms'); ?></p>
 
                 <?php
                 $form_msg_overrides   = $msg_overrides['__form'] ?? [];
@@ -478,8 +478,8 @@ final class FormSettingsPage
                     </tbody>
                 </table>
 
-                <h2 style="margin-top:32px;"><?php esc_html_e('Field error messages', 'datamaker-renderer'); ?></h2>
-                <p class="description"><?php esc_html_e('Override the validation error text shown next to each field. Empty box = use the form\'s default (set in the designer) or, failing that, the engine\'s English fallback. Both are shown as placeholder text inside each box.', 'datamaker-renderer'); ?></p>
+                <h2 style="margin-top:32px;"><?php esc_html_e('Field error messages', 'fobo-data-maker-forms'); ?></h2>
+                <p class="description"><?php esc_html_e('Override the validation error text shown next to each field. Empty box = use the form\'s default (set in the designer) or, failing that, the engine\'s English fallback. Both are shown as placeholder text inside each box.', 'fobo-data-maker-forms'); ?></p>
 
                 <?php
                 $fields_for_msgs = is_array($form['fields'] ?? null) ? $form['fields'] : [];
@@ -490,7 +490,7 @@ final class FormSettingsPage
                 ?>
 
                 <?php if (!$any_slot): ?>
-                    <p class="description"><em><?php esc_html_e('No fields in this form expose customizable message slots. Toggle Required, set field options (min/max length, allowed extensions, etc.) in the designer to enable per-check overrides.', 'datamaker-renderer'); ?></em></p>
+                    <p class="description"><em><?php esc_html_e('No fields in this form expose customizable message slots. Toggle Required, set field options (min/max length, allowed extensions, etc.) in the designer to enable per-check overrides.', 'fobo-data-maker-forms'); ?></em></p>
                 <?php else: ?>
                     <table class="form-table" role="presentation">
                         <tbody>
@@ -536,10 +536,16 @@ final class FormSettingsPage
                     </table>
                 <?php endif; ?>
 
-                <?php submit_button(__('Save form settings', 'datamaker-renderer')); ?>
+                <?php submit_button(__('Save form settings', 'fobo-data-maker-forms')); ?>
             </form>
 
-            <script>
+            <?php
+            // Checkbox-invert + master-toggle behaviour, delivered through the
+            // enqueue pipeline (src-less handle carrying inline JS) instead of a
+            // hand-written <script> tag.
+            wp_register_script('fobo-data-maker-forms-form-settings', false, [], FOBO_DATA_MAKER_FORMS_VERSION, true);
+            wp_enqueue_script('fobo-data-maker-forms-form-settings');
+            wp_add_inline_script('fobo-data-maker-forms-form-settings', <<<'DMJS'
             // The visible-checkbox UX has the user CHECK to show. We persist
             // the INVERSE (hidden ids) so new elements added to the form
             // definition later default to visible. Flip every data-invert
@@ -596,7 +602,8 @@ final class FormSettingsPage
                 all.indeterminate = on > 0 && off > 0;
               });
             })();
-            </script>
+DMJS);
+            ?>
         </div>
         <?php
     }
@@ -616,10 +623,10 @@ final class FormSettingsPage
         }
         foreach (($form['steps'] ?? []) as $stepIdx => $step) {
             /* translators: %d = step number */
-            $stepLabel = $step['title'] ?? sprintf(__('Step %d', 'datamaker-renderer'), $stepIdx + 1);
+            $stepLabel = $step['title'] ?? sprintf(__('Step %d', 'fobo-data-maker-forms'), $stepIdx + 1);
             foreach (($step['sections'] ?? []) as $secIdx => $section) {
                 /* translators: %d = section number */
-                $secLabel = $section['title'] ?? sprintf(__('Section %d', 'datamaker-renderer'), $secIdx + 1);
+                $secLabel = $section['title'] ?? sprintf(__('Section %d', 'fobo-data-maker-forms'), $secIdx + 1);
                 foreach (($section['rows'] ?? []) as $rowIdx => $row) {
                     foreach (($row['columns'] ?? []) as $col) {
                         self::collect_column($col, $field_by_id, "{$stepLabel} → {$secLabel}", $out);
@@ -686,7 +693,7 @@ final class FormSettingsPage
                 }
                 break;
             case 'group':
-                $groupLabel = (string)($col['title'] ?? '') !== '' ? (string)$col['title'] : __('(group)', 'datamaker-renderer');
+                $groupLabel = (string)($col['title'] ?? '') !== '' ? (string)$col['title'] : __('(group)', 'fobo-data-maker-forms');
                 if ($id) {
                     $out[] = ['id' => $id, 'label' => $groupLabel, 'kind' => 'group', 'where' => $where];
                 }
@@ -698,26 +705,26 @@ final class FormSettingsPage
                 }
                 break;
             case 'heading':
-                if ($id) $out[] = ['id' => $id, 'label' => (string)($col['text'] ?? '') !== '' ? (string)$col['text'] : __('(heading)', 'datamaker-renderer'), 'kind' => 'heading', 'where' => $where];
+                if ($id) $out[] = ['id' => $id, 'label' => (string)($col['text'] ?? '') !== '' ? (string)$col['text'] : __('(heading)', 'fobo-data-maker-forms'), 'kind' => 'heading', 'where' => $where];
                 break;
             case 'richtext':
                 if ($id) {
                     $md = (string)($col['markdown'] ?? '');
-                    $preview = strlen($md) > 60 ? substr($md, 0, 57) . '…' : ($md ?: __('(rich text)', 'datamaker-renderer'));
+                    $preview = strlen($md) > 60 ? substr($md, 0, 57) . '…' : ($md ?: __('(rich text)', 'fobo-data-maker-forms'));
                     $out[] = ['id' => $id, 'label' => $preview, 'kind' => 'rich text', 'where' => $where];
                 }
                 break;
             case 'image':
-                if ($id) $out[] = ['id' => $id, 'label' => (string)($col['altText'] ?? $col['source'] ?? '') !== '' ? (string)($col['altText'] ?? $col['source']) : __('(image)', 'datamaker-renderer'), 'kind' => 'image', 'where' => $where];
+                if ($id) $out[] = ['id' => $id, 'label' => (string)($col['altText'] ?? $col['source'] ?? '') !== '' ? (string)($col['altText'] ?? $col['source']) : __('(image)', 'fobo-data-maker-forms'), 'kind' => 'image', 'where' => $where];
                 break;
             case 'divider':
-                if ($id) $out[] = ['id' => $id, 'label' => __('(divider)', 'datamaker-renderer'), 'kind' => 'divider', 'where' => $where];
+                if ($id) $out[] = ['id' => $id, 'label' => __('(divider)', 'fobo-data-maker-forms'), 'kind' => 'divider', 'where' => $where];
                 break;
             case 'spacer':
-                if ($id) $out[] = ['id' => $id, 'label' => __('(spacer)', 'datamaker-renderer'), 'kind' => 'spacer', 'where' => $where];
+                if ($id) $out[] = ['id' => $id, 'label' => __('(spacer)', 'fobo-data-maker-forms'), 'kind' => 'spacer', 'where' => $where];
                 break;
             case 'button':
-                if ($id) $out[] = ['id' => $id, 'label' => (string)($col['label'] ?? $col['name'] ?? '') !== '' ? (string)($col['label'] ?? $col['name']) : __('(button)', 'datamaker-renderer'), 'kind' => 'button — ' . (string)($col['action'] ?? 'None'), 'where' => $where];
+                if ($id) $out[] = ['id' => $id, 'label' => (string)($col['label'] ?? $col['name'] ?? '') !== '' ? (string)($col['label'] ?? $col['name']) : __('(button)', 'fobo-data-maker-forms'), 'kind' => 'button — ' . (string)($col['action'] ?? 'None'), 'where' => $where];
                 break;
         }
     }

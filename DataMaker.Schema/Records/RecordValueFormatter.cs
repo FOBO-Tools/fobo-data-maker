@@ -21,6 +21,12 @@ public sealed record RecordValueLabels
     public string ImageLabel     { get; init; } = "(image)";
     public string FileLabel      { get; init; } = "(file)";
     public string SignatureLabel { get; init; } = "Signed";
+    /// <summary>Shown for any non-blank initials value. Unlike a signature, an
+    /// initials cell is a flat "done" marker — no date or typed name.</summary>
+    public string InitialsLabel  { get; init; } = "Initialed";
+    /// <summary>Composite-format template for a dated signature, <c>{0}</c> = the
+    /// localized signing date.</summary>
+    public string SignedOnFormat { get; init; } = "Signed on: {0}";
 
     public static RecordValueLabels Default { get; } = new();
 }
@@ -72,11 +78,25 @@ public static class RecordValueFormatter
                                         : labels.UnknownAddress),
         ImageRef img           => img.FileName ?? labels.ImageLabel,
         AttachmentRef a        => a.FileName ?? labels.FileLabel,
-        // Signature / initials: the typed name if the signer typed one, else a
-        // generic "Signed" label; a blank ref reads as empty.
-        SignatureRef sig       => sig.TypedName ?? (sig.IsBlank ? null : labels.SignatureLabel),
+        // Initials: a flat "Initialed" marker (no date / typed name) — a blank
+        // ref reads as empty.
+        SignatureRef ini when field.Kind == FieldTypes.Initials
+                               => ini.IsBlank ? null : labels.InitialsLabel,
+        // Signature: a recovered/known signing date reads as "Signed on: <date>";
+        // else the typed name if the signer typed one; else a generic "Signed"
+        // label. A blank, undated ref reads as empty.
+        SignatureRef sig       => FormatSignature(sig, labels),
         _                      => value.ToString(),
     };
+
+    private static string? FormatSignature(SignatureRef sig, RecordValueLabels labels)
+    {
+        if (sig.SignedAt is { } when)
+            return string.Format(CultureInfo.CurrentCulture, labels.SignedOnFormat,
+                when.ToLocalTime().ToString("d", CultureInfo.CurrentCulture));
+        if (!string.IsNullOrEmpty(sig.TypedName)) return sig.TypedName;
+        return sig.IsBlank ? null : labels.SignatureLabel;
+    }
 
     /// <summary>
     /// Format a stored timestamp for display in the user's culture + timezone.

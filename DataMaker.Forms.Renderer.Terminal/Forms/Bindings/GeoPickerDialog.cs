@@ -5,32 +5,39 @@ using Terminal.Gui;
 namespace DataMaker.Forms.Renderer.Terminal.Forms.Bindings;
 
 /// <summary>
-/// Modal address-picker for <see cref="GeoBinding"/>. Three rows:
+/// Modal address-picker for <see cref="GeoBinding"/>. Two rows:
 /// <list type="number">
 ///   <item>Address TextField — debounced Nominatim autocomplete.</item>
-///   <item>Suggestion ListView — pick a result to fill all three fields.</item>
-///   <item>Latitude / Longitude TextFields — manual fine-tune.</item>
+///   <item>Suggestion ListView — pick a result to set the location.</item>
 /// </list>
-/// OK commits the working state into <see cref="Committed"/>; Cancel
-/// leaves it null. Caller (<see cref="GeoBinding"/>) reads
-/// <see cref="Committed"/> after <c>Application.Run(dialog)</c> returns.
+/// Like the other renderers, the filler only picks an address; the lat/lng come
+/// from the chosen suggestion (never typed by hand). Typing in the address box
+/// invalidates a previous pick, so OK requires a real selection. OK commits the
+/// working state into <see cref="Committed"/>; Cancel leaves it null.
 /// </summary>
 internal sealed class GeoPickerDialog : Dialog
 {
     private readonly TextField _addrField;
     private readonly ListView  _suggestions;
-    private readonly TextField _latField;
-    private readonly TextField _lngField;
 
     private List<NominatimResult> _currentResults = new();
     private CancellationTokenSource? _debounceCts;
+
+    // Coordinates come only from a picked suggestion (or the seeded existing
+    // value); null until something is selected.
+    private double? _lat;
+    private double? _lng;
+    private bool _picking;   // suppress the clear-on-type while we set text programmatically
 
     /// <summary>The Geo picked when the user clicks OK; null if Cancel.</summary>
     public Geo? Committed { get; private set; }
 
     public GeoPickerDialog(Geo current)
-        : base("Address picker", 70, 18)
+        : base("Address picker", 70, 15)
     {
+        _lat = double.IsNaN(current.Lat) ? null : current.Lat;
+        _lng = double.IsNaN(current.Lng) ? null : current.Lng;
+
         var addrLabel = new Label("Address:") { X = 1, Y = 1 };
         _addrField = new TextField(current.FormattedAddress ?? "")
         {
@@ -38,26 +45,23 @@ internal sealed class GeoPickerDialog : Dialog
             Y = 1,
             Width = Dim.Fill(2),
         };
-        _addrField.TextChanged += _ => OnAddressChanged();
+        _addrField.TextChanged += _ =>
+        {
+            if (_picking) return;
+            // Typing invalidates any prior pick — coords only come from a chosen
+            // suggestion, so OK will require the user to select again.
+            _lat = null;
+            _lng = null;
+            OnAddressChanged();
+        };
 
         _suggestions = new ListView(new List<string>())
         {
             X = 1, Y = 3,
             Width  = Dim.Fill(2),
-            Height = 8,
+            Height = 9,
         };
         _suggestions.OpenSelectedItem += OnSuggestionActivated;
-
-        var latLabel = new Label("Lat:") { X = 1, Y = 12 };
-        _latField = new TextField(double.IsNaN(current.Lat) ? "" : current.Lat.ToString("G", System.Globalization.CultureInfo.InvariantCulture))
-        {
-            X = Pos.Right(latLabel) + 1, Y = 12, Width = 20,
-        };
-        var lngLabel = new Label("Lng:") { X = Pos.Right(_latField) + 2, Y = 12 };
-        _lngField = new TextField(double.IsNaN(current.Lng) ? "" : current.Lng.ToString("G", System.Globalization.CultureInfo.InvariantCulture))
-        {
-            X = Pos.Right(lngLabel) + 1, Y = 12, Width = 20,
-        };
 
         var ok = new Button("OK", is_default: true);
         ok.Clicked += OnOk;
@@ -67,7 +71,12 @@ internal sealed class GeoPickerDialog : Dialog
         AddButton(ok);
         AddButton(cancel);
 
-        Add(addrLabel, _addrField, _suggestions, latLabel, _latField, lngLabel, _lngField);
+        Add(addrLabel, _addrField, _suggestions);
+
+        // Focus the address field as soon as the dialog lays out so the user can
+        // type immediately — without it, focus lands on the default OK button and
+        // a click is needed before the field accepts input.
+        Loaded += () => _addrField.SetFocus();
     }
 
     private void OnAddressChanged()
@@ -100,8 +109,8 @@ internal sealed class GeoPickerDialog : Dialog
             catch (OperationCanceledException) { }
             catch
             {
-                // Network / quota / rate-limit — silently swallow; manual
-                // lat/lng entry still works.
+                // Network / quota / rate-limit — silently swallow; the list just
+                // stays empty and the user can refine the query.
                 Application.MainLoop.Invoke(() =>
                 {
                     _currentResults.Clear();
@@ -115,21 +124,20 @@ internal sealed class GeoPickerDialog : Dialog
     {
         if (args.Item < 0 || args.Item >= _currentResults.Count) return;
         var r = _currentResults[args.Item];
-        _addrField.Text = r.DisplayName;
-        _latField.Text  = r.Lat.ToString("G", System.Globalization.CultureInfo.InvariantCulture);
-        _lngField.Text  = r.Lng.ToString("G", System.Globalization.CultureInfo.InvariantCulture);
+        _picking = true;
+        _addrField.Text = r.DisplayName;   // would otherwise clear the pick
+        _picking = false;
+        _lat = r.Lat;
+        _lng = r.Lng;
     }
 
     private void OnOk()
     {
-        // Parse manual lat/lng; reject the commit if either is missing or
-        // malformed — Geo struct requires both halves.
-        if (!double.TryParse(_latField.Text.ToString(), System.Globalization.NumberStyles.Float,
-                             System.Globalization.CultureInfo.InvariantCulture, out var lat) ||
-            !double.TryParse(_lngField.Text.ToString(), System.Globalization.NumberStyles.Float,
-                             System.Globalization.CultureInfo.InvariantCulture, out var lng))
+        // Require a real selection — the Geo struct needs both halves, and they
+        // only come from a picked suggestion (or the seeded existing value).
+        if (_lat is not { } lat || _lng is not { } lng)
         {
-            MessageBox.ErrorQuery("Bad coordinates", "Latitude and longitude must both be valid numbers.", "OK");
+            MessageBox.ErrorQuery("No place selected", "Pick an address from the suggestions list.", "OK");
             return;
         }
         var addr = _addrField.Text.ToString()?.Trim();

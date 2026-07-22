@@ -27,17 +27,8 @@ internal sealed class DateBinding : FieldBinding
     {
         (_label, _asterisk) = RequiredLabel.Build(definition.Label, definition.Required);
 
-        _editor = new View { Width = Dim.Fill(), Height = 1 };
-        _display = new Label(RenderDisplay(state.Get(definition.Name)))
-        {
-            X = 0, Y = 0, Width = Dim.Fill() - 12, Height = 1,
-        };
-        var pick = new Button("Set")
-        {
-            X = Pos.Right(_display) + 1, Y = 0,
-        };
-        pick.Clicked += OpenPicker;
-        _editor.Add(_display, pick);
+        (_editor, _display, _) = ActionFieldRow.Build(
+            RenderDisplay(state.Get(definition.Name)), "Set", OpenPicker);
     }
 
     private void OpenPicker()
@@ -55,7 +46,8 @@ internal sealed class DateBinding : FieldBinding
     private static string RenderDisplay(object? raw)
     {
         var parsed = ParseExisting(raw);
-        return parsed?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) ?? "(none)";
+        // Show the user's culture format (nl "28-06-2026"); storage stays ISO.
+        return parsed?.ToString("d", CultureInfo.CurrentCulture) ?? "(none)";
     }
 
     private static DateTime? ParseExisting(object? value)
@@ -73,7 +65,7 @@ internal sealed class DateBinding : FieldBinding
 
     public override View Label => _label;
     public override View Editor => _editor;
-    public override int EditorHeight => 1;
+    public override int EditorHeight => ActionFieldRow.Height;
     public override Label? RequiredAsterisk => _asterisk;
     public override Label? ErrorIndicator => _errorIndicator;
 }
@@ -101,17 +93,8 @@ internal sealed class DateTimeBinding : FieldBinding
     {
         (_label, _asterisk) = RequiredLabel.Build(definition.Label, definition.Required);
 
-        _editor = new View { Width = Dim.Fill(), Height = 1 };
-        _display = new Label(RenderDisplay(state.Get(definition.Name)))
-        {
-            X = 0, Y = 0, Width = Dim.Fill() - 12, Height = 1,
-        };
-        var pick = new Button("Set")
-        {
-            X = Pos.Right(_display) + 1, Y = 0,
-        };
-        pick.Clicked += OpenPicker;
-        _editor.Add(_display, pick);
+        (_editor, _display, _) = ActionFieldRow.Build(
+            RenderDisplay(state.Get(definition.Name)), "Set", OpenPicker);
     }
 
     private void OpenPicker()
@@ -121,9 +104,13 @@ internal sealed class DateTimeBinding : FieldBinding
         Application.Run(dlg);
         if (dlg.Committed is { } picked)
         {
-            // ISO 8601 with offset — round-trip safe for the Uno + web
-            // renderers' DateTime parsing.
-            State.Set(Definition.Name, picked.ToString("o", CultureInfo.InvariantCulture));
+            // Stamp the LOCAL offset. The picker returns a kind-less DateTime, so
+            // a bare "o" stored no offset → the receiver (FormatDateString uses
+            // AssumeUniversal) read it as UTC and shifted the wall-clock by the
+            // user's timezone. DateTimeOffset(picked) treats the kind-less value
+            // as local, so the stored ISO carries the right offset and the time
+            // the user typed survives everywhere.
+            State.Set(Definition.Name, new DateTimeOffset(picked).ToString("o", CultureInfo.InvariantCulture));
             _display.Text = RenderDisplay(picked);
         }
     }
@@ -131,7 +118,8 @@ internal sealed class DateTimeBinding : FieldBinding
     private static string RenderDisplay(object? raw)
     {
         var parsed = ParseExisting(raw);
-        return parsed?.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture) ?? "(none)";
+        // Culture short date + time (nl "28-06-2026 03:15"); storage stays ISO.
+        return parsed?.ToString("g", CultureInfo.CurrentCulture) ?? "(none)";
     }
 
     private static DateTime? ParseExisting(object? value)
@@ -148,7 +136,7 @@ internal sealed class DateTimeBinding : FieldBinding
 
     public override View Label => _label;
     public override View Editor => _editor;
-    public override int EditorHeight => 1;
+    public override int EditorHeight => ActionFieldRow.Height;
     public override Label? RequiredAsterisk => _asterisk;
     public override Label? ErrorIndicator => _errorIndicator;
 }

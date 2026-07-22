@@ -1024,6 +1024,14 @@ h3.section-title { margin: var(--dm-section-spacing, var(--spacing-section)) 0 6
   margin-bottom: 8px; border-bottom: 1px solid var(--dm-divider);
   border-radius: 0; padding: 6px;
 }
+/* Confirm button — sticks to the bottom of the time page. */
+.dm-dt-done {
+  margin-top: auto; border: 0; border-top: 1px solid var(--dm-divider);
+  background: var(--dm-field-focus); color: #fff;
+  cursor: pointer; font-family: inherit; font-size: 12px; font-weight: 600;
+  padding: 8px; border-radius: 0;
+}
+.dm-dt-done:hover { filter: brightness(1.08); }
 .dm-dt-time-cluster {
   display: flex; align-items: center; justify-content: center;
   gap: 4px; margin: auto 0;

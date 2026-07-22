@@ -85,6 +85,11 @@ internal sealed class FormRuntime : IDisposable
             _fieldErrors.TryGetValue(fieldName, out var e) ? e : null);
     }
 
+    /// <summary>The editor View for a field, or null if it has none. Used by
+    /// the window to scroll a newly-focused field into the viewport.</summary>
+    public View? EditorFor(string fieldName) =>
+        _bindingsByField.TryGetValue(fieldName, out var b) ? b.Editor : null;
+
     /// <summary>Called by the renderer for every group it emits.</summary>
     public void RegisterGroup(GroupColumn group, View frame) =>
         _viewsByGroup[group] = frame;
@@ -143,6 +148,39 @@ internal sealed class FormRuntime : IDisposable
                     indicator.SetNeedsDisplay();
                 }
             }
+        }
+    }
+
+    /// <summary>
+    /// Validate only the named fields (one wizard step) and sync their error
+    /// indicators — the gate the Next button runs before advancing. Returns
+    /// name→error for the fields that failed (empty = the step may advance).
+    /// </summary>
+    public IReadOnlyDictionary<string, string> ValidateStep(IEnumerable<string> fieldNames)
+    {
+        var errors = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var name in fieldNames)
+        {
+            if (!_fieldsByName.TryGetValue(name, out var field)) continue;
+
+            var err = _evaluator.IsFieldVisible(name) ? FirstError(field) : null;
+            _fieldErrors[name] = err;
+            SyncIndicator(name, err);
+            if (err is not null) errors[name] = err;
+        }
+        return errors;
+    }
+
+    /// <summary>Show or hide a field's inline error indicator to match its current error.</summary>
+    private void SyncIndicator(string fieldName, string? err)
+    {
+        if (!_bindingsByField.TryGetValue(fieldName, out var binding) || binding.ErrorIndicator is not { } indicator)
+            return;
+        var shouldShow = err is not null;
+        if (indicator.Visible != shouldShow)
+        {
+            indicator.Visible = shouldShow;
+            indicator.SetNeedsDisplay();
         }
     }
 

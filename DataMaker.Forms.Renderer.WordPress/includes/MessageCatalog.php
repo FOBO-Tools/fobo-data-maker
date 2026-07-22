@@ -1,5 +1,5 @@
 <?php
-namespace DataMaker\Forms\Renderer\WordPress;
+namespace Fobo\DataMakerForms;
 
 if (!defined('ABSPATH')) exit;
 
@@ -28,7 +28,7 @@ final class MessageCatalog
         $slots = [];
 
         if (!empty($field['required'])) {
-            $slots[] = ['id' => 'required', 'label' => __('Required', 'datamaker-renderer'), 'default' => __('Required', 'datamaker-renderer')];
+            $slots[] = ['id' => 'required', 'label' => __('Required', 'fobo-data-maker-forms'), 'default' => __('Required', 'fobo-data-maker-forms')];
         }
 
         // Text-options intrinsics. Parametrized labels carry the parameter so
@@ -40,9 +40,9 @@ final class MessageCatalog
                 $slots[] = [
                     'id'      => 'text.minLength',
                     /* translators: %d = minimum character count */
-                    'label'   => sprintf(__('Minimum length (%d)', 'datamaker-renderer'), $minLen),
+                    'label'   => sprintf(__('Minimum length (%d)', 'fobo-data-maker-forms'), $minLen),
                     /* translators: %d = minimum character count */
-                    'default' => sprintf(_n('Must be at least %d character.', 'Must be at least %d characters.', $minLen, 'datamaker-renderer'), $minLen),
+                    'default' => sprintf(_n('Must be at least %d character.', 'Must be at least %d characters.', $minLen, 'fobo-data-maker-forms'), $minLen),
                 ];
             }
             $maxLen = isset($text['maxLength']) ? (int)$text['maxLength'] : 0;
@@ -50,46 +50,46 @@ final class MessageCatalog
                 $slots[] = [
                     'id'      => 'text.maxLength',
                     /* translators: %d = maximum character count */
-                    'label'   => sprintf(__('Maximum length (%d)', 'datamaker-renderer'), $maxLen),
+                    'label'   => sprintf(__('Maximum length (%d)', 'fobo-data-maker-forms'), $maxLen),
                     /* translators: %d = maximum character count */
-                    'default' => sprintf(_n('Must be at most %d character.', 'Must be at most %d characters.', $maxLen, 'datamaker-renderer'), $maxLen),
+                    'default' => sprintf(_n('Must be at most %d character.', 'Must be at most %d characters.', $maxLen, 'fobo-data-maker-forms'), $maxLen),
                 ];
             }
             if (!empty($text['pattern']) && is_string($text['pattern'])) {
-                $slots[] = ['id' => 'text.pattern', 'label' => __('Pattern match', 'datamaker-renderer'), 'default' => __('Value does not match the required pattern.', 'datamaker-renderer')];
+                $slots[] = ['id' => 'text.pattern', 'label' => __('Pattern match', 'fobo-data-maker-forms'), 'default' => __('Value does not match the required pattern.', 'fobo-data-maker-forms')];
             }
         }
 
         $kind = strtolower((string)($field['kind'] ?? ''));
         switch ($kind) {
-            case 'email':         $slots[] = ['id' => 'email',         'label' => __('Email format', 'datamaker-renderer'),    'default' => __('Not a valid email address.', 'datamaker-renderer')];     break;
-            case 'url':           $slots[] = ['id' => 'url',           'label' => __('URL format', 'datamaker-renderer'),      'default' => __('Not a valid URL.', 'datamaker-renderer')];               break;
-            case 'phone':         $slots[] = ['id' => 'phone',         'label' => __('Phone format', 'datamaker-renderer'),    'default' => __('Not a valid phone number.', 'datamaker-renderer')];      break;
-            case 'number':        $slots[] = ['id' => 'number',        'label' => __('Whole number', 'datamaker-renderer'),    'default' => __('Not a whole number.', 'datamaker-renderer')];            break;
-            case 'decimal':       $slots[] = ['id' => 'decimal',       'label' => __('Decimal number', 'datamaker-renderer'),  'default' => __('Not a valid decimal number.', 'datamaker-renderer')];    break;
-            case 'money':         $slots[] = ['id' => 'money',         'label' => __('Monetary amount', 'datamaker-renderer'), 'default' => __('Not a valid monetary amount.', 'datamaker-renderer')];   break;
-            case 'date':          $slots[] = ['id' => 'date',          'label' => __('Date', 'datamaker-renderer'),            'default' => __('Not a valid date.', 'datamaker-renderer')];              break;
-            case 'datetime':      $slots[] = ['id' => 'datetime',      'label' => __('Date-time', 'datamaker-renderer'),       'default' => __('Not a valid date-time.', 'datamaker-renderer')];         break;
-            case 'boolean':       $slots[] = ['id' => 'boolean',       'label' => __('Boolean', 'datamaker-renderer'),         'default' => __('Not a boolean.', 'datamaker-renderer')];                 break;
+            case 'email':         $slots[] = ['id' => 'email',         'label' => __('Email format', 'fobo-data-maker-forms'),    'default' => __('Not a valid email address.', 'fobo-data-maker-forms')];     break;
+            case 'url':           $slots[] = ['id' => 'url',           'label' => __('URL format', 'fobo-data-maker-forms'),      'default' => __('Not a valid URL.', 'fobo-data-maker-forms')];               break;
+            case 'phone':         $slots[] = ['id' => 'phone',         'label' => __('Phone format', 'fobo-data-maker-forms'),    'default' => __('Not a valid phone number.', 'fobo-data-maker-forms')];      break;
+            case 'number':        $slots[] = ['id' => 'number',        'label' => __('Whole number', 'fobo-data-maker-forms'),    'default' => __('Not a whole number.', 'fobo-data-maker-forms')];            break;
+            case 'decimal':       $slots[] = ['id' => 'decimal',       'label' => __('Decimal number', 'fobo-data-maker-forms'),  'default' => __('Not a valid decimal number.', 'fobo-data-maker-forms')];    break;
+            case 'money':         $slots[] = ['id' => 'money',         'label' => __('Monetary amount', 'fobo-data-maker-forms'), 'default' => __('Not a valid monetary amount.', 'fobo-data-maker-forms')];   break;
+            case 'date':          $slots[] = ['id' => 'date',          'label' => __('Date', 'fobo-data-maker-forms'),            'default' => __('Not a valid date.', 'fobo-data-maker-forms')];              break;
+            case 'datetime':      $slots[] = ['id' => 'datetime',      'label' => __('Date-time', 'fobo-data-maker-forms'),       'default' => __('Not a valid date-time.', 'fobo-data-maker-forms')];         break;
+            case 'boolean':       $slots[] = ['id' => 'boolean',       'label' => __('Boolean', 'fobo-data-maker-forms'),         'default' => __('Not a boolean.', 'fobo-data-maker-forms')];                 break;
             case 'choice':
                 $choice = $field['choice'] ?? null;
                 if (is_array($choice) && !empty($choice['choices']) && empty($choice['allowCustom']))
-                    $slots[] = ['id' => 'choice', 'label' => __('Allowed choice', 'datamaker-renderer'), 'default' => __('Value is not in the allowed list.', 'datamaker-renderer')];
+                    $slots[] = ['id' => 'choice', 'label' => __('Allowed choice', 'fobo-data-maker-forms'), 'default' => __('Value is not in the allowed list.', 'fobo-data-maker-forms')];
                 break;
             case 'multi-choice':
             case 'multichoice':
                 $choice = $field['choice'] ?? null;
                 if (is_array($choice) && !empty($choice['choices']) && empty($choice['allowCustom']))
-                    $slots[] = ['id' => 'multichoice', 'label' => __('Allowed choices', 'datamaker-renderer'), 'default' => __('Some items are not in the allowed list.', 'datamaker-renderer')];
+                    $slots[] = ['id' => 'multichoice', 'label' => __('Allowed choices', 'fobo-data-maker-forms'), 'default' => __('Some items are not in the allowed list.', 'fobo-data-maker-forms')];
                 break;
             case 'geo':
-                $slots[] = ['id' => 'geo.lat', 'label' => __('Latitude range', 'datamaker-renderer'),  'default' => __('Latitude must be between -90 and 90.', 'datamaker-renderer')];
-                $slots[] = ['id' => 'geo.lng', 'label' => __('Longitude range', 'datamaker-renderer'), 'default' => __('Longitude must be between -180 and 180.', 'datamaker-renderer')];
-                $slots[] = ['id' => 'geo',     'label' => __('Geo point', 'datamaker-renderer'),       'default' => __('Not a valid geo point.', 'datamaker-renderer')];
+                $slots[] = ['id' => 'geo.lat', 'label' => __('Latitude range', 'fobo-data-maker-forms'),  'default' => __('Latitude must be between -90 and 90.', 'fobo-data-maker-forms')];
+                $slots[] = ['id' => 'geo.lng', 'label' => __('Longitude range', 'fobo-data-maker-forms'), 'default' => __('Longitude must be between -180 and 180.', 'fobo-data-maker-forms')];
+                $slots[] = ['id' => 'geo',     'label' => __('Geo point', 'fobo-data-maker-forms'),       'default' => __('Not a valid geo point.', 'fobo-data-maker-forms')];
                 break;
             case 'image':
             case 'attachment':
-                $slots[] = ['id' => 'attachment.ext', 'label' => __('File extension', 'datamaker-renderer'), 'default' => __('File extension not allowed.', 'datamaker-renderer')];
+                $slots[] = ['id' => 'attachment.ext', 'label' => __('File extension', 'fobo-data-maker-forms'), 'default' => __('File extension not allowed.', 'fobo-data-maker-forms')];
                 break;
         }
 
@@ -104,8 +104,8 @@ final class MessageCatalog
     public static function form_slots(): array
     {
         return [
-            ['id' => 'validationBanner', 'label' => __('Validation banner', 'datamaker-renderer'),
-             'default' => __('Please fix the highlighted fields before submitting.', 'datamaker-renderer')],
+            ['id' => 'validationBanner', 'label' => __('Validation banner', 'fobo-data-maker-forms'),
+             'default' => __('Please fix the highlighted fields before submitting.', 'fobo-data-maker-forms')],
         ];
     }
 }

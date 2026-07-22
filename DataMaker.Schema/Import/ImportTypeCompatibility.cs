@@ -12,14 +12,20 @@ namespace DataMaker.Schema.Import;
 public static class ImportTypeCompatibility
 {
     // A flat source has no numeric/date type — everything is text, checkbox,
-    // choice or signature — so a text source legitimately feeds most scalar
-    // DataMaker kinds. Coercion validates the actual value later.
+    // choice or signature — so a text source legitimately feeds ANY kind whose
+    // value coercion accepts a string (see ImportApplier.TryCoerce): the scalars,
+    // booleans ("yes"/"true"/…), and the collection kinds (a delimited string
+    // explodes to a list / multi-choice). Coercion validates the actual value
+    // later — an offered pairing can still fail per-value at apply. Geo is handled
+    // separately (PDF-only) because resolving a typed address needs the
+    // single-record picker. Image / attachment never accept a flat value.
     private static readonly string[] TextTargets =
     {
         FieldTypes.Text, FieldTypes.LongText, FieldTypes.RichText,
         FieldTypes.Email, FieldTypes.Phone, FieldTypes.Url,
         FieldTypes.Number, FieldTypes.Decimal, FieldTypes.Money, FieldTypes.Scale,
-        FieldTypes.Date, FieldTypes.DateTime, FieldTypes.Choice, FieldTypes.Relation,
+        FieldTypes.Boolean, FieldTypes.Date, FieldTypes.DateTime,
+        FieldTypes.Choice, FieldTypes.MultiChoice, FieldTypes.List, FieldTypes.Relation,
     };
 
     private static readonly string[] CheckboxTargets =
@@ -59,13 +65,34 @@ public static class ImportTypeCompatibility
     /// <summary>
     /// True when <paramref name="source"/> may map onto <paramref name="target"/>:
     /// the target is a real, writable field (not calculated, not a never-target
-    /// kind) and its kind is in the source's allowed set.
+    /// kind) and its kind is in the source's allowed set. Source-kind-agnostic —
+    /// excludes geo (use the <see cref="IsCompatible(ImportFieldKind,FieldDefinition,ImportSourceKind)"/>
+    /// overload to allow geo for the PDF single-record flow).
     /// </summary>
     public static bool IsCompatible(ImportFieldKind source, FieldDefinition target)
     {
         if (target is null) return false;
         if (!IsMappableTarget(target)) return false;
         return AllowedTargetKinds(source).Contains(target.Kind, StringComparer.Ordinal);
+    }
+
+    /// <summary>
+    /// As <see cref="IsCompatible(ImportFieldKind,FieldDefinition)"/>, but also
+    /// allows a geo target for a <see cref="ImportSourceKind.Pdf"/> source: a PDF
+    /// is one record, so a typed address can be geocoded with the ambiguity picker
+    /// at import. A spreadsheet imports many rows and can't prompt per row, so geo
+    /// stays unmappable there — exactly as image / attachment do everywhere.
+    /// </summary>
+    public static bool IsCompatible(ImportFieldKind source, FieldDefinition target, ImportSourceKind sourceKind)
+    {
+        if (target is null) return false;
+        if (!string.IsNullOrWhiteSpace(target.CalculatedExpression)) return false;
+
+        if (target.Kind == FieldTypes.Geo)
+            return sourceKind == ImportSourceKind.Pdf
+                && source is ImportFieldKind.Text or ImportFieldKind.Unknown;
+
+        return IsCompatible(source, target);
     }
 
     /// <summary>A field is a mappable target unless it's computed (its value is

@@ -6,8 +6,8 @@
  * Three jobs:
  *  1. Move the bundle JSON from the inline <script id="dm-bundle-..."> into
  *     the renderer's expected <script id="form-bundle"> slot.
- *  2. Wire submit/save/reset to the WP REST proxy (POST → /datamaker/v1/submit,
- *     PUT-style update → /datamaker/v1/update).
+ *  2. Wire submit/save/reset to the WP REST proxy (POST → /fobo-data-maker/v1/submit,
+ *     PUT-style update → /fobo-data-maker/v1/update).
  *  3. Manage the localStorage edit flow: stash the editToken returned by
  *     POST; on a subsequent visit show a "Continue editing?" banner.
  */
@@ -252,15 +252,15 @@
   }
 
   function postSubmit(restBase, isUpdate, slug, values, editCtx, extra) {
-    // restBase comes from PHP `rest_url('datamaker/v1')` on the mount —
+    // restBase comes from PHP `rest_url('fobo-data-maker/v1')` on the mount —
     // it already respects the site's permalink setting (plain vs pretty),
     // so we never hardcode `/wp-json/...` which breaks when the site
     // hasn't enabled pretty permalinks and WP routes the URL to the
     // homepage instead of the REST handler.
-    // Plain-permalinks mode → restBase is `…/index.php?rest_route=/datamaker/v1`
+    // Plain-permalinks mode → restBase is `…/index.php?rest_route=/fobo-data-maker/v1`
     // and the endpoint name extends the rest_route query value: append
     // `/submit` to the end of the string (query-string land — no '&').
-    // Pretty-permalinks mode → restBase is `…/wp-json/datamaker/v1` and the
+    // Pretty-permalinks mode → restBase is `…/wp-json/fobo-data-maker/v1` and the
     // endpoint joins with a path separator.
     const ep  = isUpdate ? 'update' : 'submit';
     const url = restBase.indexOf('?rest_route=') >= 0

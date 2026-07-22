@@ -43,7 +43,7 @@ namespace {
 // Lightweight FormStore stub. BundleBuilder calls these two helpers;
 // returning empty arrays keeps the BundleBuilder code path live without
 // pulling in the wpdb-dependent production class.
-namespace DataMaker\Forms\Renderer\WordPress {
+namespace Fobo\DataMakerForms {
     if (!class_exists(__NAMESPACE__ . '\\FormStore')) {
         final class FormStore {
             public static function get_hidden_elements(array $row): array { return []; }

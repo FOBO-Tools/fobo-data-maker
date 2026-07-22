@@ -1,7 +1,7 @@
 <?php
-namespace DataMaker\Forms\Renderer\WordPress\Tests;
+namespace Fobo\DataMakerForms\Tests;
 
-use DataMaker\Forms\Renderer\WordPress\BundleBuilder;
+use Fobo\DataMakerForms\BundleBuilder;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 

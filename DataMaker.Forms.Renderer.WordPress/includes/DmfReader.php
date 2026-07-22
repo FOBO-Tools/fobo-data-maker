@@ -1,5 +1,5 @@
 <?php
-namespace DataMaker\Forms\Renderer\WordPress;
+namespace Fobo\DataMakerForms;
 
 if (!defined('ABSPATH')) exit;
 

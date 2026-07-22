@@ -33,6 +33,9 @@ internal sealed class RichTextBinding : FieldBinding
             Width  = Dim.Fill(),
             Height = DefaultRows,
             Text   = State.Get(definition.Name)?.ToString() ?? "",
+            // Tab moves to the next field instead of inserting a tab char —
+            // Enter still inserts newlines (multi-line markdown body).
+            AllowsTab = false,
         };
 
         _field.ContentsChanged += _ =>

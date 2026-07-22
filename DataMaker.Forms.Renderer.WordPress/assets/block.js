@@ -15,9 +15,9 @@
   const useState  = element.useState;
   const __      = i18n.__;
 
-  blocks.registerBlockType('datamaker/form', {
-    title:       __('Data Maker Form', 'datamaker-renderer'),
-    description: __('Render a form uploaded under Data Maker Forms → Upload .dmf.', 'datamaker-renderer'),
+  blocks.registerBlockType('fobo/data-maker-form', {
+    title:       __('FOBO Data Maker Form', 'fobo-data-maker-forms'),
+    description: __('Render a form uploaded under FOBO Data Maker Forms → Upload .dmf.', 'fobo-data-maker-forms'),
     icon:        'feedback',
     category:    'embed',
     attributes:  {
@@ -32,46 +32,46 @@
       const [error, setError]   = useState(null);
 
       useEffect(function () {
-        apiFetch({ path: '/datamaker/v1/forms' })
+        apiFetch({ path: '/fobo-data-maker/v1/forms' })
           .then(function (rows) { setForms(Array.isArray(rows) ? rows : []); })
-          .catch(function (e)   { setError(e && e.message ? e.message : __('Could not load forms.', 'datamaker-renderer')); });
+          .catch(function (e)   { setError(e && e.message ? e.message : __('Could not load forms.', 'fobo-data-maker-forms')); });
       }, []);
 
-      const options = [{ label: __('— Select a form —', 'datamaker-renderer'), value: '' }];
+      const options = [{ label: __('— Select a form —', 'fobo-data-maker-forms'), value: '' }];
       if (Array.isArray(forms)) {
         forms.forEach(function (f) { options.push({ label: f.label, value: f.slug }); });
       }
 
       const themeOptions = [
-        { label: __('Inherit form setting',                'datamaker-renderer'), value: ''    },
-        { label: __('Always apply designer styling',       'datamaker-renderer'), value: 'on'  },
-        { label: __('Always strip designer styling',       'datamaker-renderer'), value: 'off' },
+        { label: __('Inherit form setting',                'fobo-data-maker-forms'), value: ''    },
+        { label: __('Always apply designer styling',       'fobo-data-maker-forms'), value: 'on'  },
+        { label: __('Always strip designer styling',       'fobo-data-maker-forms'), value: 'off' },
       ];
 
       const sidebar = el(
         blockEditor.InspectorControls,
         {},
-        el(components.PanelBody, { title: __('Form', 'datamaker-renderer'), initialOpen: true },
+        el(components.PanelBody, { title: __('Form', 'fobo-data-maker-forms'), initialOpen: true },
           forms === null && !error
             ? el(components.Spinner)
             : error
               ? el(components.Notice, { status: 'error', isDismissible: false }, error)
               : el(components.SelectControl, {
-                  label:    __('Uploaded form', 'datamaker-renderer'),
+                  label:    __('Uploaded form', 'fobo-data-maker-forms'),
                   value:    slug,
                   options:  options,
                   onChange: function (v) { props.setAttributes({ slug: v }); },
-                  help:     __('Upload more forms under Data Maker Forms → Upload .dmf.', 'datamaker-renderer'),
+                  help:     __('Upload more forms under FOBO Data Maker Forms → Upload .dmf.', 'fobo-data-maker-forms'),
                 }),
           el(components.SelectControl, {
-            label:    __('Designer styling override', 'datamaker-renderer'),
+            label:    __('Designer styling override', 'fobo-data-maker-forms'),
             value:    props.attributes.theme || '',
             options:  themeOptions,
             onChange: function (v) { props.setAttributes({ theme: v }); },
-            help:     __('Layout always honors the form. This only flips colors / fonts / button styling from the Data Maker designer.', 'datamaker-renderer'),
+            help:     __('Layout always honors the form. This only flips colors / fonts / button styling from the Data Maker designer.', 'fobo-data-maker-forms'),
           }),
-          el(components.ExternalLink, { href: '/wp-admin/admin.php?page=datamaker-renderer' },
-             __('Upload a .dmf', 'datamaker-renderer'))
+          el(components.ExternalLink, { href: '/wp-admin/admin.php?page=fobo-data-maker-forms' },
+             __('Upload a .dmf', 'fobo-data-maker-forms'))
         )
       );
 
@@ -83,11 +83,11 @@
             background: '#fafafa', color: '#1d2327', textAlign: 'center',
           },
         }),
-        el('strong', {}, __('Data Maker Form', 'datamaker-renderer')),
+        el('strong', {}, __('FOBO Data Maker Form', 'fobo-data-maker-forms')),
         el('div', { style: { marginTop: '6px', fontSize: '13px', color: '#646970' } },
            slug
-             ? __('Slug: ', 'datamaker-renderer') + slug
-             : __('Pick a form from the sidebar.', 'datamaker-renderer'))
+             ? __('Slug: ', 'fobo-data-maker-forms') + slug
+             : __('Pick a form from the sidebar.', 'fobo-data-maker-forms'))
       );
 
       return el(element.Fragment, {}, sidebar, preview);

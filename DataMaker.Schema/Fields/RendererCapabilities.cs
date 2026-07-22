@@ -104,10 +104,9 @@ public static class RendererCapabilities
             },
 
             // ── PDF export. AcroForm widgets cover text/number/checkbox/
-            //    combo cleanly; uploads and pickers obviously can't work
-            //    on paper, so they ride along as read-only placeholder
-            //    text fields prompting the user to fill that value in
-            //    the app.
+            //    combo cleanly; uploads and pickers have no AcroForm
+            //    equivalent, so they ride along as read-only placeholder
+            //    text fields marking the value as unsupported in PDF.
             [RendererSurface.PdfExport] = new RendererCapability[]
             {
                 new(FieldTypes.Text,        FieldSupport.Native,      ""),
@@ -127,11 +126,11 @@ public static class RendererCapabilities
                 new(FieldTypes.Phone,       FieldSupport.Native,      ""),
                 new(FieldTypes.Url,         FieldSupport.Native,      ""),
                 new(FieldTypes.Geo,         FieldSupport.Limited,     "captured as a writable address line — the map / lat-lng pin can't render on the PDF"),
-                new(FieldTypes.Image,       FieldSupport.Placeholder, "image upload isn't possible on paper — fill in the app"),
-                new(FieldTypes.Attachment,  FieldSupport.Placeholder, "file attachments aren't possible on paper — fill in the app"),
+                new(FieldTypes.Image,       FieldSupport.Placeholder, "image upload isn't supported in a PDF"),
+                new(FieldTypes.Attachment,  FieldSupport.Placeholder, "file attachments aren't supported in a PDF"),
                 new(FieldTypes.Signature,   FieldSupport.Native,      ""),
                 new(FieldTypes.Initials,    FieldSupport.Native,      ""),
-                new(FieldTypes.Relation,    FieldSupport.Placeholder, "relation lookups aren't possible on paper — fill in the app"),
+                new(FieldTypes.Relation,    FieldSupport.Placeholder, "relation lookups aren't supported in a PDF"),
             },
 
             // ── Terminal (Terminal.Gui v1). Anything that needs a file

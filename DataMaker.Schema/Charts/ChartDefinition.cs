@@ -21,6 +21,12 @@ namespace DataMaker.Schema.Charts;
 ///   <item><b>Scatter</b> — exactly one numeric <see cref="Axis"/> field
 ///   (X), exactly one <see cref="Values"/> entry (Y, raw); optional
 ///   <see cref="SeriesSplit"/> for color-coding groups.</item>
+///   <item><b>Map</b> — plots every record's location fields as point
+///   markers on an OpenStreetMap base. Carries no pivot config: <see cref="Axis"/>,
+///   <see cref="SeriesSplit"/> and <see cref="Values"/> stay empty. The
+///   builder auto-collects all Geo fields on the form; a record with N
+///   location fields contributes N markers, one coloured per field index
+///   off the shared chart palette. <see cref="Filters"/> still apply.</item>
 /// </list>
 /// </para>
 /// </summary>
@@ -68,7 +74,7 @@ public sealed record ChartDefinition
     public DateTimeOffset UpdatedAt { get; init; }
 }
 
-public enum ChartKind { Line, Bar, Pie, Scatter }
+public enum ChartKind { Line, Bar, Pie, Scatter, Map }
 
 /// <summary>
 /// Warehouse-style date dimensions applied to a Date / DateTime field used

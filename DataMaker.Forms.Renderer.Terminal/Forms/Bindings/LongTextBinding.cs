@@ -22,6 +22,9 @@ internal sealed class LongTextBinding : FieldBinding
             Width  = Dim.Fill(),
             Height = DefaultRows,
             Text   = State.Get(definition.Name)?.ToString() ?? "",
+            // Tab moves to the next field instead of inserting a tab char —
+            // Enter still inserts newlines (this is a multi-line field).
+            AllowsTab = false,
         };
 
         // v1 gotcha: TextView.TextChanged fires only on programmatic setter.

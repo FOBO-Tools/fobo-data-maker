@@ -31,4 +31,8 @@ namespace DataMaker.Sdk;
 [JsonSerializable(typeof(decimal))]
 [JsonSerializable(typeof(string[]))]
 [JsonSerializable(typeof(List<string>))]
+// JsonElement lets callers pass an already-shaped value (e.g. a complex field
+// type the caller serialised with its own converter) straight through. Without
+// it, a JsonElement dictionary value throws "no metadata for JsonElement".
+[JsonSerializable(typeof(System.Text.Json.JsonElement))]
 internal sealed partial class DataMakerJsonContext : JsonSerializerContext;

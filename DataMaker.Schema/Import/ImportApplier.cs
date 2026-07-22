@@ -49,11 +49,56 @@ public static class ImportApplier
     }
 
     /// <summary>
+    /// Coerce exact-name imported values — the DataMaker-generated PDF fast path,
+    /// where the source field names already equal the form's field names, so there
+    /// is no mapping step. Every imported key that matches a form field is coerced
+    /// to its target CLR shape. Non-string values (booleans and choice arrays the
+    /// importer already shaped) pass through untouched; empty strings are skipped.
+    /// A value that can't be coerced is omitted from <see cref="ImportApplyResult.Values"/>
+    /// (never stored as raw text the record store would mis-read) and reported as a
+    /// failure so the caller can surface it.
+    /// </summary>
+    public static ImportApplyResult CoerceByFieldName(
+        Form form, IReadOnlyDictionary<string, object?> imported)
+    {
+        ArgumentNullException.ThrowIfNull(form);
+        ArgumentNullException.ThrowIfNull(imported);
+
+        var byName   = form.Fields.ToDictionary(f => f.Name, StringComparer.Ordinal);
+        var values   = new Dictionary<string, object?>(StringComparer.Ordinal);
+        var failures = new List<ImportFailure>();
+
+        foreach (var (name, raw) in imported)
+        {
+            if (!byName.TryGetValue(name, out var field)) continue;
+            if (raw is not string s) { values[name] = raw; continue; }
+            if (string.IsNullOrEmpty(s)) continue;
+
+            if (TryCoerce(s, field.Kind, out var coerced))
+                values[name] = coerced;
+            else
+                failures.Add(new ImportFailure(name, name, field.Kind, s));
+        }
+
+        return new ImportApplyResult(values, failures);
+    }
+
+    /// <summary>
     /// Coerce a flat string value to the CLR shape the record store expects for
     /// <paramref name="kind"/>. Number→long, Decimal/Money→decimal, Boolean→bool,
-    /// collections→list of string. Text-family, date and signature kinds keep the
-    /// string — RecordJson coerces a "data:" string for a signature into a
-    /// SignatureRef.
+    /// Date/DateTime→DateTimeOffset, collections→list of string. Other text-family
+    /// and signature kinds keep the string — RecordJson coerces a "data:" string
+    /// for a signature into a SignatureRef.
+    ///
+    /// <para>
+    /// Numbers and dates arrive as <b>human-typed, culture-formatted</b> strings:
+    /// a PDF/CSV field has no number or date picker, so a Dutch filler types
+    /// "22,34" (comma = decimal) and "24-05-1986" (dd-MM-yyyy). Parsing those with
+    /// the invariant culture silently mangles them ("22,34" → 2234; the date
+    /// fails outright). Parse in <see cref="CultureInfo.CurrentCulture"/> first —
+    /// the app sets it from the user's locale — then fall back to the invariant
+    /// culture for data authored elsewhere.
+    /// </para>
     /// </summary>
     public static bool TryCoerce(string raw, string kind, out object? value)
     {
@@ -64,41 +109,84 @@ public static class ImportApplier
         {
             case FieldTypes.Number:
             case FieldTypes.Scale:
-                if (long.TryParse(t, NumberStyles.Integer, CultureInfo.InvariantCulture, out var l))
+                foreach (var c in ParseCultures())
                 {
-                    value = l; return true;
-                }
-                if (decimal.TryParse(t, NumberStyles.Number, CultureInfo.InvariantCulture, out var dl)
-                    && decimal.Truncate(dl) == dl)
-                {
-                    value = (long)dl; return true;
+                    if (long.TryParse(t, IntStyles, c, out var l))
+                    {
+                        value = l; return true;
+                    }
+                    if (decimal.TryParse(t, DecimalStyles, c, out var dl)
+                        && decimal.Truncate(dl) == dl)
+                    {
+                        value = (long)dl; return true;
+                    }
                 }
                 return false;
 
             case FieldTypes.Decimal:
             case FieldTypes.Money:
-                if (decimal.TryParse(t, NumberStyles.Number, CultureInfo.InvariantCulture, out var d))
-                {
-                    value = d; return true;
-                }
+                foreach (var c in ParseCultures())
+                    if (decimal.TryParse(t, DecimalStyles | NumberStyles.AllowCurrencySymbol, c, out var d))
+                    {
+                        value = d; return true;
+                    }
                 return false;
 
             case FieldTypes.Boolean:
                 return TryCoerceBool(t, out value);
 
+            case FieldTypes.Date:
+            case FieldTypes.DateTime:
+                foreach (var c in ParseCultures())
+                    if (DateTimeOffset.TryParse(t, c, DateTimeStyles.AssumeLocal, out var dto))
+                    {
+                        value = dto; return true;
+                    }
+                return false;
+
             case FieldTypes.MultiChoice:
             case FieldTypes.List:
-                value = t.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                // Explode a delimited string into items. DataMaker's own export
+                // joins list values with newlines; a foreign/flat source typically
+                // comma-separates ("Test, Newline, Test2") — accept both so a
+                // comma-delimited text column maps cleanly onto a list.
+                value = t.Split(new[] { '\n', ',' },
+                             StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                          .ToList();
                 return true;
 
             default:
-                // text / long-text / rich-text / email / phone / url / choice /
-                // relation / date / datetime / signature / initials — keep as-is.
+                // long-text / rich-text / email / phone / url / choice /
+                // relation / signature / initials — keep as-is.
                 value = raw;
                 return true;
         }
     }
+
+    /// <summary>
+    /// Cultures to try when parsing a human-typed number or date, in order: the
+    /// caller's current culture (set by the app from the user's locale) first,
+    /// then the invariant culture for data authored on a differently-configured
+    /// machine. Computed per call so a mid-session locale switch is respected.
+    /// </summary>
+    private static IEnumerable<CultureInfo> ParseCultures()
+    {
+        yield return CultureInfo.CurrentCulture;
+        if (!CultureInfo.CurrentCulture.Equals(CultureInfo.InvariantCulture))
+            yield return CultureInfo.InvariantCulture;
+    }
+
+    // Deliberately NO AllowThousands. A grouping separator in one culture is the
+    // decimal separator in another ("." groups in nl-NL, decimal in en-US), so
+    // allowing it lets a comma-decimal "22,34" be silently read as 2234 — the
+    // exact corruption this coercion exists to prevent. We try the current
+    // culture then the invariant one instead; a single hand-typed field with a
+    // grouping separator is rare and inherently ambiguous, so we'd rather fail
+    // than 100× a value.
+    private const NumberStyles IntStyles =
+        NumberStyles.AllowLeadingSign | NumberStyles.AllowLeadingWhite | NumberStyles.AllowTrailingWhite;
+
+    private const NumberStyles DecimalStyles = IntStyles | NumberStyles.AllowDecimalPoint;
 
     /// <summary>
     /// Required fields that would land empty for the given resolved values —

@@ -1,20 +1,20 @@
 <?php
-namespace DataMaker\Forms\Renderer\WordPress\Admin;
+namespace Fobo\DataMakerForms\Admin;
 
 if (!defined('ABSPATH')) exit;
 
 /**
  * WP admin settings — Data Maker API URL, theme switch, edit-flow toggle,
  * optional .dmf signature verification. Stored under the single
- * `datamaker_renderer_settings` option.
+ * `fobo_data_maker_forms_settings` option.
  */
 final class SettingsPage
 {
-    private const OPTION = 'datamaker_renderer_settings';
+    private const OPTION = 'fobo_data_maker_forms_settings';
 
     public static function register_settings(): void
     {
-        register_setting('datamaker_renderer', self::OPTION, [
+        register_setting('fobo_data_maker_forms', self::OPTION, [
             'type'              => 'array',
             'sanitize_callback' => [self::class, 'sanitize'],
             'default'           => self::defaults(),
@@ -43,11 +43,11 @@ final class SettingsPage
         $opt = get_option(self::OPTION, []);
         $merged = array_merge(self::defaults(), is_array($opt) ? $opt : []);
         // Data Maker API URL resolves through the plugin helper so the
-        // `dm_renderer_sync_api_url` filter + wp-config override are
+        // `fobo_data_maker_forms_sync_api_url` filter + wp-config override are
         // honored for every consumer.
-        $merged['sync_lambda_url'] = function_exists('dm_renderer_sync_api_url')
-            ? \dm_renderer_sync_api_url()
-            : (defined('DM_RENDERER_SYNC_API_URL') ? DM_RENDERER_SYNC_API_URL : '');
+        $merged['sync_lambda_url'] = function_exists('fobo_data_maker_forms_sync_api_url')
+            ? \fobo_data_maker_forms_sync_api_url()
+            : (defined('FOBO_DATA_MAKER_FORMS_SYNC_API_URL') ? FOBO_DATA_MAKER_FORMS_SYNC_API_URL : '');
         return $merged;
     }
 
@@ -71,48 +71,48 @@ final class SettingsPage
         $s = self::get();
         ?>
         <div class="wrap">
-            <?php PageHeader::render(__('Data Maker Forms — Settings', 'datamaker-renderer')); ?>
+            <?php PageHeader::render(__('FOBO Data Maker Forms — Settings', 'fobo-data-maker-forms')); ?>
             <form method="post" action="options.php">
-                <?php settings_fields('datamaker_renderer'); ?>
+                <?php settings_fields('fobo_data_maker_forms'); ?>
                 <table class="form-table" role="presentation">
                     <tr>
-                        <th scope="row"><?php esc_html_e('Signature verification', 'datamaker-renderer'); ?></th>
+                        <th scope="row"><?php esc_html_e('Signature verification', 'fobo-data-maker-forms'); ?></th>
                         <td>
                             <label>
-                                <input type="checkbox" name="datamaker_renderer_settings[verify_signature]" value="1" <?php checked($s['verify_signature']); ?>>
-                                <?php esc_html_e('Require uploaded .dmf bundles to be Ed25519-signed', 'datamaker-renderer'); ?>
+                                <input type="checkbox" name="fobo_data_maker_forms_settings[verify_signature]" value="1" <?php checked($s['verify_signature']); ?>>
+                                <?php esc_html_e('Require uploaded .dmf bundles to be Ed25519-signed', 'fobo-data-maker-forms'); ?>
                             </label>
                             <br>
-                            <input type="text" class="regular-text" name="datamaker_renderer_settings[expected_signer_pubkey]"
-                                value="<?php echo esc_attr($s['expected_signer_pubkey']); ?>" placeholder="<?php esc_attr_e('base64-encoded signer pubkey (optional)', 'datamaker-renderer'); ?>">
-                            <p class="description"><?php esc_html_e('If set, the uploaded .dmf must be signed with exactly this pubkey. Leave blank to accept any signed bundle.', 'datamaker-renderer'); ?></p>
+                            <input type="text" class="regular-text" name="fobo_data_maker_forms_settings[expected_signer_pubkey]"
+                                value="<?php echo esc_attr($s['expected_signer_pubkey']); ?>" placeholder="<?php esc_attr_e('base64-encoded signer pubkey (optional)', 'fobo-data-maker-forms'); ?>">
+                            <p class="description"><?php esc_html_e('If set, the uploaded .dmf must be signed with exactly this pubkey. Leave blank to accept any signed bundle.', 'fobo-data-maker-forms'); ?></p>
                         </td>
                     </tr>
                 </table>
 
-                <h2 style="margin-top:32px;"><?php esc_html_e('Cloudflare Turnstile', 'datamaker-renderer'); ?></h2>
+                <h2 style="margin-top:32px;"><?php esc_html_e('Cloudflare Turnstile', 'fobo-data-maker-forms'); ?></h2>
                 <p class="description"><?php
                     printf(
                         /* translators: %s = link to cloudflare.com/turnstile */
-                        esc_html__('Privacy-friendly CAPTCHA challenge. Enroll for free at %s; paste the site & secret keys here. Each form chooses whether to require it via Form Settings.', 'datamaker-renderer'),
+                        esc_html__('Privacy-friendly CAPTCHA challenge. Enroll for free at %s; paste the site & secret keys here. Each form chooses whether to require it via Form Settings.', 'fobo-data-maker-forms'),
                         '<a href="https://www.cloudflare.com/products/turnstile/" target="_blank" rel="noopener noreferrer">cloudflare.com/turnstile</a>'
                     );
                 ?></p>
                 <table class="form-table" role="presentation">
                     <tr>
-                        <th scope="row"><?php esc_html_e('Site key', 'datamaker-renderer'); ?></th>
+                        <th scope="row"><?php esc_html_e('Site key', 'fobo-data-maker-forms'); ?></th>
                         <td>
-                            <input type="text" class="regular-text" name="datamaker_renderer_settings[turnstile_site_key]"
+                            <input type="text" class="regular-text" name="fobo_data_maker_forms_settings[turnstile_site_key]"
                                 value="<?php echo esc_attr($s['turnstile_site_key']); ?>" placeholder="0x4AAAAAAA…" autocomplete="off">
-                            <p class="description"><?php esc_html_e('Public key embedded in the form page (data-sitekey).', 'datamaker-renderer'); ?></p>
+                            <p class="description"><?php esc_html_e('Public key embedded in the form page (data-sitekey).', 'fobo-data-maker-forms'); ?></p>
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row"><?php esc_html_e('Secret key', 'datamaker-renderer'); ?></th>
+                        <th scope="row"><?php esc_html_e('Secret key', 'fobo-data-maker-forms'); ?></th>
                         <td>
-                            <input type="password" class="regular-text" name="datamaker_renderer_settings[turnstile_secret_key]"
+                            <input type="password" class="regular-text" name="fobo_data_maker_forms_settings[turnstile_secret_key]"
                                 value="<?php echo esc_attr($s['turnstile_secret_key']); ?>" placeholder="0x4AAAAAAA…" autocomplete="off">
-                            <p class="description"><?php esc_html_e('Used server-side to verify tokens with Cloudflare. Never sent to the browser.', 'datamaker-renderer'); ?></p>
+                            <p class="description"><?php esc_html_e('Used server-side to verify tokens with Cloudflare. Never sent to the browser.', 'fobo-data-maker-forms'); ?></p>
                         </td>
                     </tr>
                 </table>

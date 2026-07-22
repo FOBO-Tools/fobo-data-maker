@@ -440,7 +440,7 @@ function mount(rootArg, bundleArg, hooksArg) {
     submitBtn.type = 'button';
     submitBtn.textContent = t('submit', 'Submit');
     submitBtn.addEventListener('click', () => {
-      runSchemaAction('submit', null, submitStatus);
+      runSchemaAction('submit', null, submitStatus, submitBtn);
     });
     submitRow.appendChild(submitStatus);
     submitRow.appendChild(submitBtn);
@@ -621,7 +621,7 @@ function mount(rootArg, bundleArg, hooksArg) {
       evaluateAll();
       const firstInvalid = root.querySelector('.dm-field.dm-invalid');
       if (firstInvalid) showStepContaining(firstInvalid);
-      runSchemaAction('submit', null, wizardNavStatus);
+      runSchemaAction('submit', null, wizardNavStatus, wizardPrimaryBtn);
     } else {
       goToStep(wizardCurrent + 1);
     }
@@ -942,7 +942,7 @@ function mount(rootArg, bundleArg, hooksArg) {
 
       btn.addEventListener('click', () => {
         const action = (col.action || 'None').toLowerCase();
-        runSchemaAction(action, col, btn.querySelector('.dm-btn-status'));
+        runSchemaAction(action, col, btn.querySelector('.dm-btn-status'), btn);
       });
 
       colEl.appendChild(btn);
@@ -1642,9 +1642,14 @@ function mount(rootArg, bundleArg, hooksArg) {
         addrRow.appendChild(suggList);
         wrap.appendChild(addrRow);
 
-        // Lat / Lng row.
+        // Coordinates are the stored value but never shown — fillers pick a
+        // place from the autocomplete, they don't deal in lat/lng. The inputs
+        // stay in the DOM (readValue reads them); editing the address clears
+        // them so only a real suggestion pick yields a submittable value, which
+        // is exactly what a required geo field checks.
         const coords = document.createElement('div');
         coords.className = 'dm-geo-coords';
+        coords.style.display = 'none';
         const lat = document.createElement('input');
         lat.type = 'number';  lat.step = 'any';  lat.placeholder = 'Latitude';
         const lng = document.createElement('input');
@@ -1663,11 +1668,12 @@ function mount(rootArg, bundleArg, hooksArg) {
           }
         }
 
-        // Manual edit of the address box (without picking a suggestion)
-        // counts as the user setting a free-text label — keep it.
-        addr.addEventListener('change', () => {
-          wrap._dmFormattedAddress = addr.value.trim() || null;
-        });
+        // Fire the form's value pipeline. 'input' = live (calc/visibility) and
+        // does NOT mark the field touched; 'change' marks it touched so a valid
+        // pick clears any error and an emptied field can surface "Required".
+        function geoChanged(touch) {
+          wrap.dispatchEvent(new Event(touch ? 'change' : 'input', { bubbles: true }));
+        }
 
         // Debounced Nominatim autocomplete. 350ms debounce + min 3 chars.
         // Browser can't set User-Agent (forbidden header) — Nominatim
@@ -1676,6 +1682,15 @@ function mount(rootArg, bundleArg, hooksArg) {
         let debounce = null;
         let lastQuery = '';
         addr.addEventListener('input', () => {
+          // Typing invalidates any prior pick — coordinates only come from a
+          // chosen suggestion. Clearing them makes readValue return null until
+          // the user actually selects, so required validation distinguishes a
+          // typed string from a real selection.
+          lat.value = '';
+          lng.value = '';
+          wrap._dmFormattedAddress = null;
+          geoChanged(false);
+
           const q = addr.value.trim();
           if (q === lastQuery) return;
           lastQuery = q;
@@ -1717,8 +1732,10 @@ function mount(rootArg, bundleArg, hooksArg) {
               if (Number.isFinite(ln)) lng.value = String(ln);
               addr.value = r.display_name || '';
               wrap._dmFormattedAddress = r.display_name || null;
+              lastQuery = addr.value.trim();
               suggList.hidden = true;
               suggList.innerHTML = '';
+              geoChanged(true);   // commit picked coords + mark touched
             });
             suggList.appendChild(item);
           }
@@ -2089,7 +2106,7 @@ function mount(rootArg, bundleArg, hooksArg) {
               typedName: name || null,
               signedAt,
             };
-            dateLine.textContent = t('signed', 'Signed') + ' ' + signedAt.slice(0, 10);
+            dateLine.textContent = (compact ? t('initialed', 'Initialed') : t('signed', 'Signed')) + ' ' + signedAt.slice(0, 10);
             dateLine.hidden = false;
           }
           wrap.dispatchEvent(new Event('change', { bubbles: false }));
@@ -2259,7 +2276,9 @@ function mount(rootArg, bundleArg, hooksArg) {
     wrap.appendChild(popup);
 
     buildCalendarPage(calPage, state, () => commit(), includeTime, () => wrap.classList.add('dm-show-time'));
-    if (timePage) buildTimePage(timePage, state, () => commit(), () => wrap.classList.remove('dm-show-time'));
+    if (timePage) buildTimePage(timePage, state, () => commit(),
+      () => wrap.classList.remove('dm-show-time'),
+      () => { commit(); wrap.classList.remove('dm-open'); });
 
     // Field click toggles the popup; clicks inside the popup don't bubble
     // (we stopPropagation on the popup wrapper).
@@ -2380,10 +2399,17 @@ function mount(rootArg, bundleArg, hooksArg) {
     const d = new Date(state.date);
     if (includeTime) d.setHours(state.hours, state.minutes, 0, 0);
     if (_datePattern) {
-      const pat = includeTime && _timePattern
-        ? _datePattern + ' ' + _timePattern
-        : _datePattern;
-      input.value = formatDateNet(d, pat);
+      // Date uses the detected/injected pattern; the time is appended from
+      // _timePattern when present, else from the locale. The hosted page bakes
+      // an empty time pattern (client-locale), so without this fallback a
+      // datetime field silently dropped the time from its display even though
+      // the stored value kept it.
+      let out = formatDateNet(d, _datePattern);
+      if (includeTime)
+        out += ' ' + (_timePattern
+          ? formatDateNet(d, _timePattern)
+          : d.toLocaleTimeString(_locale, { hour: '2-digit', minute: '2-digit' }));
+      input.value = out;
     } else {
       input.value = includeTime
         ? d.toLocaleString(_locale, { dateStyle: 'short', timeStyle: 'short' })
@@ -2716,7 +2742,7 @@ function mount(rootArg, bundleArg, hooksArg) {
   }
 
   // ── Time page ────────────────────────────────────────────────
-  function buildTimePage(host, state, onChange, onGoCal) {
+  function buildTimePage(host, state, onChange, onGoCal, onDone) {
     const goCal = document.createElement('button');
     goCal.className = 'dm-dt-go-cal';
     goCal.type = 'button';
@@ -2749,6 +2775,20 @@ function mount(rootArg, bundleArg, hooksArg) {
       cluster.appendChild(ampm);
     }
     host.appendChild(cluster);
+
+    // Explicit confirm. Spinners/typing already commit live, but a time typed
+    // and not yet blurred would be lost on an outside-click close — Done flushes
+    // the inputs, commits, and closes so the picked time always lands.
+    const done = document.createElement('button');
+    done.className = 'dm-dt-done';
+    done.type = 'button';
+    done.textContent = 'Done';
+    done.addEventListener('click', e => {
+      e.stopPropagation();
+      host.querySelectorAll('.dm-dt-time-input').forEach(i => i.dispatchEvent(new Event('change')));
+      onDone();
+    });
+    host.appendChild(done);
   }
 
   function makeTimeCol(kind, state, onChange) {
@@ -3062,7 +3102,8 @@ function mount(rootArg, bundleArg, hooksArg) {
   /// every schema-declared ButtonColumn. <paramref name="dm-col"/> is the
   /// schema record for schema buttons, null for the auto row. Status sink
   /// is optional — if present, a one-line status string is written to it.
-  function runSchemaAction(action, col, statusSink) {
+  let _dmSubmitting = false;
+  function runSchemaAction(action, col, statusSink, triggerBtn) {
     const a = (action || 'none').toLowerCase();
 
     // Wizard step navigation — author-placed Next/Prev buttons drive the same
@@ -3142,9 +3183,22 @@ function mount(rootArg, bundleArg, hooksArg) {
       return;
     }
     const payload = { form, col, values: { ...values } };
-    if      (a === 'submit') hooks.onSubmit(payload);
-    else if (a === 'save')   hooks.onSave(payload);
-    else                      hooks.onAction(Object.assign(payload, { name: col ? col.name : null }));
+    if (a === 'submit' || a === 'save') {
+      // Double-submit guard: ignore repeat clicks while the host's
+      // onSubmit/onSave round-trip (seal + POST) is in flight, and disable
+      // the triggering button for visual feedback. Both reset on settle so
+      // a failed submit can still be retried.
+      if (_dmSubmitting) return;
+      _dmSubmitting = true;
+      if (triggerBtn) triggerBtn.disabled = true;
+      const hook = a === 'submit' ? hooks.onSubmit : hooks.onSave;
+      Promise.resolve().then(() => hook(payload)).finally(() => {
+        _dmSubmitting = false;
+        if (triggerBtn) triggerBtn.disabled = false;
+      });
+    } else {
+      hooks.onAction(Object.assign(payload, { name: col ? col.name : null }));
+    }
     if (statusSink) statusSink.textContent = '';
   }
 

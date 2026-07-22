@@ -13,7 +13,9 @@ namespace DataMaker.Forms.Renderer.Terminal.Forms.Bindings;
 /// shape — only the renderer-side display differs (we don't show image
 /// previews in the terminal). One class, kind flag.
 ///
-/// <para>Editor row: filename label + "Pick…" button + status label.
+/// <para>Editor: filename label on its own row, a "Set" button a row
+/// below it (via the shared <see cref="ActionFieldRow"/>, lined up with
+/// the Geo/Date buttons), and a status line in the gap between.
 /// Pick opens a Terminal.Gui <see cref="FileDialog"/>, computes SHA-256
 /// of the bytes, POSTs <c>/submissions/upload-slot</c> on the sync
 /// Lambda to get a pre-signed PUT URL, uploads the bytes to S3, and
@@ -42,21 +44,20 @@ internal sealed class FileBinding : FieldBinding
         _isImage = definition.Kind == FieldTypes.Image;
         (_label, _asterisk) = RequiredLabel.Build(definition.Label, definition.Required);
 
-        _editor = new View { Width = Dim.Fill(), Height = 1 };
-        _nameLabel = new Label(RenderName(State.Get(definition.Name)))
-        {
-            X = 0, Y = 0, Width = Dim.Fill() - 28, Height = 1,
-        };
-        _pickBtn = new Button(_isImage ? "Set image" : "Set file")
-        {
-            X = Pos.Right(_nameLabel) + 1, Y = 0,
-        };
-        _pickBtn.Clicked += () => _ = PickAndUploadAsync();
+        // Filename label + "Set" button laid out through the shared ActionFieldRow
+        // so the button lines up in the same column as the Geo/Date/DateTime
+        // buttons — value on its own row, button a row below it (X=0).
+        (_editor, _nameLabel, _pickBtn) = ActionFieldRow.Build(
+            RenderName(State.Get(definition.Name)),
+            _isImage ? "Set image" : "Set file",
+            () => _ = PickAndUploadAsync());
+
+        // Upload status / error line sits in the gap row between value and button.
         _statusLabel = new Label("")
         {
             X = 0, Y = 1, Width = Dim.Fill(), Height = 0,
         };
-        _editor.Add(_nameLabel, _pickBtn, _statusLabel);
+        _editor.Add(_statusLabel);
 
         if (UploadContext.Current is null)
         {
@@ -233,7 +234,7 @@ internal sealed class FileBinding : FieldBinding
 
     public override View Label => _label;
     public override View Editor => _editor;
-    public override int EditorHeight => 2;   // row + optional status line
+    public override int EditorHeight => ActionFieldRow.Height;   // value + status gap + button row
     public override Label? RequiredAsterisk => _asterisk;
     public override Label? ErrorIndicator => _errorIndicator;
 }

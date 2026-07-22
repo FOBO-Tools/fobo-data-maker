@@ -131,6 +131,27 @@ internal sealed class FormRenderer
         return y;
     }
 
+    /// <summary>
+    /// Render a SINGLE step's sections into <paramref name="host"/> starting at
+    /// y=0, returning the rows consumed. The wizard (steps-as-screens) gives
+    /// each step its own host: every host still registers its fields with the
+    /// runtime — so cross-step calculated / visibility expressions keep working —
+    /// but the window shows one host at a time.
+    /// </summary>
+    public int RenderStepHost(View host, FormStep step)
+    {
+        if (_ignoreStyles)
+            host.ColorScheme = _fallback;
+        else if (_form.Style is not null)
+            host.ColorScheme = StyleToColorScheme.Build(_fallback, _form.Style);
+
+        var ancestor = _ignoreStyles ? null : _form.Style;
+        var y = 0;
+        foreach (var section in step.Sections)
+            y = RenderSection(host, section, y, ancestor);
+        return y;
+    }
+
     // Hierarchy rules — pre-sized long enough to fill any reasonable terminal
     // after Dim.Fill() clips the label to the viewport. Using the same Unicode
     // box-drawing characters the FrameView uses for groups so the whole screen
@@ -341,6 +362,9 @@ internal sealed class FormRenderer
     private int RenderRichTextColumn(View host, RichTextColumn column, int y, Style? ancestor)
     {
         var plain = DataMaker.Schema.Layout.Markdown.ToPlain(column.Markdown);
+        // Normalise line endings — a stray carriage return renders as a literal
+        // ␍ glyph in Terminal.Gui instead of breaking the line.
+        plain = plain.Replace("\r\n", "\n").Replace('\r', '\n');
         if (string.IsNullOrWhiteSpace(plain)) return y;
 
         var scheme = _ignoreStyles
@@ -375,10 +399,10 @@ internal sealed class FormRenderer
     /// </summary>
     private int RenderImageColumn(View host, ImageColumn column, int y, Style? ancestor)
     {
-        var alt = !string.IsNullOrWhiteSpace(column.AltText)
-            ? column.AltText
-            : SourceFileName(column.Source);
-        return AddLabel(host, $"[image: {alt}]", y, Compose(ancestor, column.Style));
+        // Images don't render in the terminal — a "[image: …]" placeholder
+        // added nothing but visual noise, so the column is skipped entirely
+        // and consumes no rows.
+        return y;
     }
 
     /// <summary>
@@ -465,7 +489,10 @@ internal sealed class FormRenderer
         // — labels are user-provided and may already contain underscores.
         var btn = new Button(column.Label ?? column.Name ?? "Button")
         {
-            X = 0, Y = y,
+            // Centre the button in its host — a form-level action button (Join /
+            // Submit) reads as deliberately centred, and X=0 left it stranded
+            // off to one side of the row.
+            X = Pos.Center(), Y = y,
             ColorScheme = _ignoreStyles
                 ? _fallback
                 : StyleToColorScheme.Build(_fallback, ancestor, column.Style),
@@ -475,16 +502,12 @@ internal sealed class FormRenderer
         return y + 2;   // 1 row for the button + 1 for breathing room
     }
 
-    private static string SourceFileName(string source)
-    {
-        if (string.IsNullOrWhiteSpace(source)) return "untitled";
-        if (source.StartsWith("data:", StringComparison.OrdinalIgnoreCase)) return "embedded";
-        var slash = source.LastIndexOf('/');
-        return slash >= 0 && slash < source.Length - 1 ? source[(slash + 1)..] : source;
-    }
-
     private int AddLabel(View host, string text, int y, Style? ancestor)
     {
+        // Single-line label — collapse any line breaks (a literal \r would
+        // otherwise render as a ␍ glyph) to spaces.
+        text = text.Replace("\r\n", " ").Replace('\r', ' ').Replace('\n', ' ');
+
         // AutoSize = false is required so Dim.Fill() clips the 200-char
         // rule strings at the viewport. Terminal.Gui v1's default (AutoSize
         // true) would let the text dictate width and blow out ContentSize.

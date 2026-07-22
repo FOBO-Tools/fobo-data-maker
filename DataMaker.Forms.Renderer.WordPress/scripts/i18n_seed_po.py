@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Seed languages/datamaker-renderer-<locale>.po from the extracted .pot.
+Seed languages/fobo-data-maker-forms-<locale>.po from the extracted .pot.
 
 Not a machine-translation pass — the strings below are hand-written
 translations of the plugin's user-facing copy (admin UI + front-end
@@ -20,7 +20,7 @@ de_DE, zh_CN) because WP resolves <textdomain>-<get_locale()>.mo.
 import os, re, datetime
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-POT  = os.path.join(HERE, '..', 'languages', 'datamaker-renderer.pot')
+POT  = os.path.join(HERE, '..', 'languages', 'fobo-data-maker-forms.pot')
 
 # WP locale code, Plural-Forms header, and the per-string table.
 LOCALES = {
@@ -33,7 +33,7 @@ LOCALES = {
 # msgid -> {locale: translation}. Plural entries map to {locale: (one, other)}
 # (zh_CN gives a single string). Anything absent = English fallback.
 T = {
- "Data Maker Forms": {
+ "FOBO Data Maker Forms": {
    'fr_FR':"Formulaires Data Maker", 'es_ES':"Formularios Data Maker",
    'de_DE':"Data Maker Formulare", 'zh_CN':"Data Maker 表单"},
  "Renders Data Maker forms from signed .dmf uploads. POSTs sealed submissions to the Data Maker API; supports the localStorage-backed edit flow.": {
@@ -153,7 +153,7 @@ T = {
    'es_ES':"Claves de Turnstile no configuradas. Defínalas primero en %s.",
    'de_DE':"Turnstile-Schlüssel nicht konfiguriert. Legen Sie sie zuerst unter %s fest.",
    'zh_CN':"未配置 Turnstile 密钥。请先在 %s 中设置。"},
- "Data Maker Forms → Settings": {'fr_FR':"Formulaires Data Maker → Réglages", 'es_ES':"Formularios Data Maker → Ajustes", 'de_DE':"Data Maker Formulare → Einstellungen", 'zh_CN':"Data Maker 表单 → 设置"},
+ "FOBO Data Maker Forms → Settings": {'fr_FR':"Formulaires Data Maker → Réglages", 'es_ES':"Formularios Data Maker → Ajustes", 'de_DE':"Data Maker Formulare → Einstellungen", 'zh_CN':"Data Maker 表单 → 设置"},
  "Server verifies each token with Cloudflare before sealing the submission. Honeypot + rate limit still apply.": {
    'fr_FR':"Le serveur vérifie chaque jeton auprès de Cloudflare avant de sceller la soumission. Le pot de miel et la limite de débit s’appliquent toujours.",
    'es_ES':"El servidor verifica cada token con Cloudflare antes de sellar el envío. El honeypot y el límite de tasa siguen aplicándose.",
@@ -223,7 +223,7 @@ T = {
    'es_ES':"Los envíos de la vista previa pasan por el mismo flujo que el sitio en producción (POST sellado → API). Use una bandeja de destinatario de prueba antes de compartir el formulario públicamente.",
    'de_DE':"Vorschau-Übermittlungen durchlaufen dieselbe Pipeline wie die Live-Website (versiegelter POST → API). Verwenden Sie ein Test-Empfängerpostfach, bevor Sie das Formular öffentlich teilen.",
    'zh_CN':"预览提交与正式网站走相同的流程（密封 POST → API）。在公开分享表单前，请使用测试收件箱。"},
- "Data Maker Forms — Settings": {'fr_FR':"Formulaires Data Maker — Réglages", 'es_ES':"Formularios Data Maker — Ajustes", 'de_DE':"Data Maker Formulare — Einstellungen", 'zh_CN':"Data Maker 表单 — 设置"},
+ "FOBO Data Maker Forms — Settings": {'fr_FR':"Formulaires Data Maker — Réglages", 'es_ES':"Formularios Data Maker — Ajustes", 'de_DE':"Data Maker Formulare — Einstellungen", 'zh_CN':"Data Maker 表单 — 设置"},
  "Signature verification": {'fr_FR':"Vérification de signature", 'es_ES':"Verificación de firma", 'de_DE':"Signaturprüfung", 'zh_CN':"签名验证"},
  "Require uploaded .dmf bundles to be Ed25519-signed": {'fr_FR':"Exiger que les fichiers .dmf téléversés soient signés en Ed25519", 'es_ES':"Exigir que los paquetes .dmf subidos estén firmados con Ed25519", 'de_DE':"Hochgeladene .dmf-Bundles müssen Ed25519-signiert sein", 'zh_CN':"要求上传的 .dmf 包使用 Ed25519 签名"},
  "base64-encoded signer pubkey (optional)": {'fr_FR':"clé publique du signataire encodée en base64 (facultatif)", 'es_ES':"clave pública del firmante codificada en base64 (opcional)", 'de_DE':"Base64-codierter öffentlicher Signaturschlüssel (optional)", 'zh_CN':"base64 编码的签名者公钥（可选）"},
@@ -246,7 +246,7 @@ T = {
    'de_DE':"Wird serverseitig verwendet, um Tokens bei Cloudflare zu überprüfen. Wird nie an den Browser gesendet.",
    'zh_CN':"在服务器端用于通过 Cloudflare 验证令牌。绝不会发送到浏览器。"},
  "Forms": {'fr_FR':"Formulaires", 'es_ES':"Formularios", 'de_DE':"Formulare", 'zh_CN':"表单"},
- "Data Maker Forms — Upload .dmf": {'fr_FR':"Formulaires Data Maker — Téléverser un .dmf", 'es_ES':"Formularios Data Maker — Subir .dmf", 'de_DE':"Data Maker Formulare — .dmf hochladen", 'zh_CN':"Data Maker 表单 — 上传 .dmf"},
+ "FOBO Data Maker Forms — Upload .dmf": {'fr_FR':"Formulaires Data Maker — Téléverser un .dmf", 'es_ES':"Formularios Data Maker — Subir .dmf", 'de_DE':"Data Maker Formulare — .dmf hochladen", 'zh_CN':"Data Maker 表单 — 上传 .dmf"},
  "Shortcode slug": {'fr_FR':"Slug du shortcode", 'es_ES':"Slug del shortcode", 'de_DE':"Shortcode-Slug", 'zh_CN':"短代码 slug"},
  "Used in the shortcode: %s. Re-uploading the same slug overwrites the form in place.": {
    'fr_FR':"Utilisé dans le shortcode : %s. Re-téléverser le même slug remplace le formulaire sur place.",
@@ -286,8 +286,8 @@ T = {
    'es_ES':"Formulario guardado (id n.º %1$d). Insértelo con: %2$s",
    'de_DE':"Formular gespeichert (ID #%1$d). Betten Sie es ein mit: %2$s",
    'zh_CN':"表单已保存（id #%1$d）。使用以下方式嵌入：%2$s"},
- "Data Maker Form": {'fr_FR':"Formulaire Data Maker", 'es_ES':"Formulario Data Maker", 'de_DE':"Data Maker Formular", 'zh_CN':"Data Maker 表单"},
- "Render a Data Maker form uploaded under Data Maker Forms → Upload .dmf.": {
+ "FOBO Data Maker Form": {'fr_FR':"Formulaire Data Maker", 'es_ES':"Formulario Data Maker", 'de_DE':"Data Maker Formular", 'zh_CN':"Data Maker 表单"},
+ "Render a Data Maker form uploaded under FOBO Data Maker Forms → Upload .dmf.": {
    'fr_FR':"Affiche un formulaire Data Maker téléversé dans Formulaires Data Maker → Téléverser un .dmf.",
    'es_ES':"Muestra un formulario Data Maker subido en Formularios Data Maker → Subir .dmf.",
    'de_DE':"Stellt ein Data-Maker-Formular dar, das unter Data Maker Formulare → .dmf hochladen hochgeladen wurde.",
@@ -396,7 +396,7 @@ T = {
  "Too many submissions. Please wait a moment.": {'fr_FR':"Trop de soumissions. Veuillez patienter un instant.", 'es_ES':"Demasiados envíos. Espere un momento.", 'de_DE':"Zu viele Übermittlungen. Bitte warten Sie einen Moment.", 'zh_CN':"提交次数过多。请稍候。"},
  "Data Maker API URL is not allowed.": {'fr_FR':"L’URL de l’API Data Maker n’est pas autorisée.", 'es_ES':"La URL de la API de Data Maker no está permitida.", 'de_DE':"Die Data-Maker-API-URL ist nicht zulässig.", 'zh_CN':"不允许的 Data Maker API URL。"},
  # ── Block editor (assets/block.js) ──
- "Render a form uploaded under Data Maker Forms → Upload .dmf.": {
+ "Render a form uploaded under FOBO Data Maker Forms → Upload .dmf.": {
    'fr_FR':"Affiche un formulaire téléversé dans Formulaires Data Maker → Téléverser un .dmf.",
    'es_ES':"Muestra un formulario subido en Formularios Data Maker → Subir .dmf.",
    'de_DE':"Stellt ein Formular dar, das unter Data Maker Formulare → .dmf hochladen hochgeladen wurde.",
@@ -408,7 +408,7 @@ T = {
  "Always strip designer styling": {'fr_FR':"Toujours supprimer le style du concepteur", 'es_ES':"Eliminar siempre el estilo del diseñador", 'de_DE':"Designer-Styling immer entfernen", 'zh_CN':"始终去除设计器样式"},
  "Form": {'fr_FR':"Formulaire", 'es_ES':"Formulario", 'de_DE':"Formular", 'zh_CN':"表单"},
  "Uploaded form": {'fr_FR':"Formulaire téléversé", 'es_ES':"Formulario subido", 'de_DE':"Hochgeladenes Formular", 'zh_CN':"已上传的表单"},
- "Upload more forms under Data Maker Forms → Upload .dmf.": {
+ "Upload more forms under FOBO Data Maker Forms → Upload .dmf.": {
    'fr_FR':"Téléversez d’autres formulaires dans Formulaires Data Maker → Téléverser un .dmf.",
    'es_ES':"Suba más formularios en Formularios Data Maker → Subir .dmf.",
    'de_DE':"Laden Sie weitere Formulare unter Data Maker Formulare → .dmf hochladen hoch.",
@@ -470,7 +470,7 @@ def header(locale, lang, plural):
     return (
         'msgid ""\n'
         'msgstr ""\n'
-        '"Project-Id-Version: Data Maker Forms 0.1.0\\n"\n'
+        '"Project-Id-Version: FOBO Data Maker Forms 0.1.0\\n"\n'
         '"Report-Msgid-Bugs-To: https://fobo-tools.com/\\n"\n'
         '"PO-Revision-Date: 2026-05-30 00:00+0000\\n"\n'
         f'"Last-Translator: FOBO <support@fobo-tools.com>\\n"\n'
@@ -480,7 +480,7 @@ def header(locale, lang, plural):
         '"Content-Type: text/plain; charset=UTF-8\\n"\n'
         '"Content-Transfer-Encoding: 8bit\\n"\n'
         f'"Plural-Forms: {plural}\\n"\n'
-        '"X-Domain: datamaker-renderer\\n"\n'
+        '"X-Domain: fobo-data-maker-forms\\n"\n'
     )
 
 def main():
@@ -517,7 +517,7 @@ def main():
                 lines.append(f'msgstr "{escape(tr)}"')
             chunks.append('\n'.join(lines))
         po = '\n\n'.join(chunks) + '\n'
-        path = os.path.join(HERE, '..', 'languages', f'datamaker-renderer-{locale}.po')
+        path = os.path.join(HERE, '..', 'languages', f'fobo-data-maker-forms-{locale}.po')
         open(path, 'w', encoding='utf-8').write(po)
         # quick coverage stat
         total = sum(1 for b in blocks if b['mid'] not in (None,''))

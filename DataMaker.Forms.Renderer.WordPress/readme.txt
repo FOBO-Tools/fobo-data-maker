@@ -1,10 +1,10 @@
-=== Data Maker Forms ===
-Contributors: fobo
+=== FOBO Data Maker Forms ===
+Contributors: chivantiebosch
 Tags: forms, datamaker, renderer
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 0.1.0
+Stable tag: 1.0.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -12,7 +12,7 @@ Render Data Maker forms on a WordPress site from signed .dmf bundles.
 
 == Description ==
 
-The Data Maker Forms plugin lets you host Data Maker forms on a WordPress site. Upload a signed `.dmf` bundle, paste the shortcode onto any page, and submissions are sealed against the form's recipient pubkey and forwarded to the Data Maker API.
+The FOBO Data Maker Forms plugin lets you host Data Maker forms on a WordPress site. Upload a signed `.dmf` bundle, paste the shortcode onto any page, and submissions are sealed against the form's recipient pubkey and forwarded to the Data Maker API.
 
 Features:
 
@@ -26,11 +26,11 @@ Out of scope for v1: multi-step (Steps), signature/initials fields, relation fie
 
 == Installation ==
 
-1. Upload the `datamaker-renderer` folder to `/wp-content/plugins/`.
+1. Upload the `fobo-data-maker-forms` folder to `/wp-content/plugins/`.
 2. Activate the plugin under **Plugins**.
-3. Configure the **Data Maker API URL** under **Data Maker Forms → Settings**.
-4. Upload a `.dmf` bundle under **Data Maker Forms → Upload .dmf** with a slug.
-5. Embed in a page: `[datamaker_form id="your-slug"]`.
+3. Configure the **Data Maker API URL** under **FOBO Data Maker Forms → Settings**.
+4. Upload a `.dmf` bundle under **FOBO Data Maker Forms → Upload .dmf** with a slug.
+5. Embed in a page: `[fobo_data_maker_form id="your-slug"]`.
 
 == Requirements ==
 
@@ -63,9 +63,26 @@ If the host site ships a CSP header, allow:
 
 Sites that cannot grant `'unsafe-eval'` can still upload forms with no VisibleWhen / Calculated / per-field Validation expressions; static layouts work without the expression evaluator running.
 
+== Source code and build ==
+
+This plugin ships its complete, human-readable source. The minified files under `assets/dist/` are build artifacts only — their unminified sources sit beside them and are what you edit:
+
+* `assets/renderer.js` builds `assets/dist/renderer.min.js`
+* `assets/fn.js` builds `assets/dist/fn.min.js`
+* `assets/wp-bridge.js` builds `assets/dist/wp-bridge.min.js`
+* `assets/styles.css` builds `assets/dist/styles.min.css`
+* `assets/layout.css` builds `assets/dist/layout.min.css`
+
+Regenerate them with `make minify`, which runs Terser 5.36.0 and csso-cli 4.0.2 — both versions pinned in the bundled `Makefile`.
+
+== Third-party libraries ==
+
+* **Font Awesome 5 Free (Solid)** — `assets/fa-solid-900.ttf`, drives the glyph controls. Font licensed under SIL OFL 1.1; icons and CSS under MIT. https://fontawesome.com — source: https://github.com/FortAwesome/Font-Awesome
+* **libsodium** — used through PHP's bundled `sodium` extension (PHP 7.2+). No library code is shipped with the plugin.
+
 == Local development ==
 
-A Docker harness ships in `docker-compose.yml` (WordPress 6.7 + PHP 8.2 + MariaDB 11) with the plugin folder bind-mounted into `wp-content/plugins/datamaker-renderer/`.
+A Docker harness ships in `docker-compose.yml` (WordPress 6.7 + PHP 8.2 + MariaDB 11) with the plugin folder bind-mounted into `wp-content/plugins/fobo-data-maker-forms/`.
 
     make up           # start WP on http://localhost:8089
     make wp-install   # one-shot scripted install + activate (admin/admin)
@@ -77,5 +94,5 @@ PHP edits are picked up immediately. JS/CSS edits to assets/ are too — refresh
 
 == Changelog ==
 
-= 0.1.0 =
-* Initial release. Reads .dmf envelope v3 (compiled.json + elementCss.json + palette.css extras). Sealed POST/PUT submissions. localStorage edit flow.
+= 1.0.0 =
+* Initial public release. Reads .dmf envelope v3 (compiled.json + elementCss.json + palette.css extras). Sealed POST/PUT submissions. localStorage edit flow.

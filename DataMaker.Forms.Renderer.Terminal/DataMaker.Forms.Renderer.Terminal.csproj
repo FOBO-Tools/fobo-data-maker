@@ -30,6 +30,12 @@
     <PackageReference Include="Terminal.Gui" />
   </ItemGroup>
 
+  <!-- ASCII logo shown as the startup splash. Embedded (not Content) so it
+       survives single-file + trimmed publish with no sidecar file. -->
+  <ItemGroup>
+    <EmbeddedResource Include="Assets/logo.txt" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\FOBO.Auth\FOBO.Auth.csproj" />
     <ProjectReference Include="..\DataMaker.Expressions\DataMaker.Expressions.csproj" />

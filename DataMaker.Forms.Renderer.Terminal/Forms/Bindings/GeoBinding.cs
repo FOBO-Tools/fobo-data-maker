@@ -40,22 +40,11 @@ internal sealed class GeoBinding : FieldBinding
     {
         (_label, _asterisk) = RequiredLabel.Build(definition.Label, definition.Required);
 
-        // Editor row: address-text label + Search button. The label sizes
-        // to fill the remaining width so the button stays right-aligned.
-        _editor = new View { Width = Dim.Fill(), Height = 1 };
-        _display = new Label(RenderDisplay(State.Get(definition.Name)))
-        {
-            Width  = Dim.Fill() - 12,
-            Height = 1,
-        };
-        var search = new Button("Search…")
-        {
-            X        = Pos.Right(_display) + 1,
-            Y        = 0,
-            Height   = 1,
-        };
-        search.Clicked += OpenPicker;
-        _editor.Add(_display, search);
+        // Address-text label + Search button — laid out through the shared
+        // ActionFieldRow so the button lines up with the Date/DateTime "Set"
+        // buttons in the same column.
+        (_editor, _display, _) = ActionFieldRow.Build(
+            RenderDisplay(State.Get(definition.Name)), "Search…", OpenPicker);
     }
 
     private void OpenPicker()
@@ -79,7 +68,7 @@ internal sealed class GeoBinding : FieldBinding
 
     public override View Label => _label;
     public override View Editor => _editor;
-    public override int EditorHeight => 1;
+    public override int EditorHeight => ActionFieldRow.Height;
     public override Label? RequiredAsterisk => _asterisk;
     public override Label? ErrorIndicator => _errorIndicator;
 }

@@ -75,10 +75,11 @@ html.dm-preview body {
   transition: background .15s ease, color .15s ease;
 }
 
-/* Font Awesome 5 Pro Solid — same .ttf the desktop app and the WASM
-   renderer ship. Drives the glyph-bearing controls (date/time picker icons,
-   submit-button glyphs, etc.). Loaded with font-display:block so buttons
-   don't briefly show garbage characters before the font arrives.
+/* Font Awesome 5 Free Solid (SIL OFL 1.1) — the WordPress plugin ships the
+   free webfont so it stays GPL-compatible. Drives the glyph-bearing controls
+   (date/time picker icons, submit-button glyphs, etc.). Loaded with
+   font-display:block so buttons don't briefly show garbage characters before
+   the font arrives.
    The src is a placeholder filled by WebRenderer.Render — the .ttf bytes
    get base64-encoded into a data URI so this stylesheet stays self-
    contained when fed to WebView2.NavigateToString (no base URL → no
@@ -1024,6 +1025,14 @@ h3.section-title { margin: var(--dm-section-spacing, var(--spacing-section)) 0 6
   margin-bottom: 8px; border-bottom: 1px solid var(--dm-divider);
   border-radius: 0; padding: 6px;
 }
+/* Confirm button — sticks to the bottom of the time page. */
+.dm-dt-done {
+  margin-top: auto; border: 0; border-top: 1px solid var(--dm-divider);
+  background: var(--dm-field-focus); color: #fff;
+  cursor: pointer; font-family: inherit; font-size: 12px; font-weight: 600;
+  padding: 8px; border-radius: 0;
+}
+.dm-dt-done:hover { filter: brightness(1.08); }
 .dm-dt-time-cluster {
   display: flex; align-items: center; justify-content: center;
   gap: 4px; margin: auto 0;

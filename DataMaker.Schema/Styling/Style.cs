@@ -140,9 +140,34 @@ public sealed class StyleFontWeightConverter : JsonConverter<StyleFontWeight>
 /// Same typed-record + converter pattern as <c>Geo</c>: ensures future
 /// migration paths (e.g. BLOB-referencing source) don't break existing data.
 /// </summary>
-public sealed record StyleImage(string Source, StyleImageFit Fit = StyleImageFit.UniformToFill);
+public sealed record StyleImage(
+    string             Source,
+    StyleImageFit      Fit     = StyleImageFit.UniformToFill,
+    StyleImageOverlay? Overlay = null);
 
 public enum StyleImageFit { None, Fill, Uniform, UniformToFill }
+
+/// <summary>
+/// Optional legibility scrim painted OVER a <see cref="StyleImage"/> and UNDER
+/// the element's own content, so text stays readable on a busy photo.
+/// <see cref="Color"/> is the tint (hex; <c>#RRGGBB</c> or <c>#AARRGGBB</c>),
+/// <see cref="Strength"/> its peak alpha (0..1 — multiplied onto the colour's
+/// own alpha), and <see cref="Shape"/> picks a flat wash or a top/bottom fade
+/// (a fade lets you darken only the band that sits behind the text).
+/// Added as an optional positional param on <see cref="StyleImage"/> so older
+/// JSON (no overlay) still deserializes to null.
+/// </summary>
+public sealed record StyleImageOverlay(
+    string            Color,
+    double            Strength = 0.4,
+    StyleOverlayShape Shape    = StyleOverlayShape.Solid);
+
+/// <summary>
+/// Solid = uniform wash. FadeFromTop = tint strongest at the top edge, fading
+/// to clear at the bottom. FadeFromBottom = strongest at the bottom (the usual
+/// "dark band under a caption" look).
+/// </summary>
+public enum StyleOverlayShape { Solid, FadeFromTop, FadeFromBottom }
 
 public sealed record StyleGradient(
     GradientDirection Direction,

@@ -20,16 +20,38 @@ namespace DataMaker.Forms.Renderer.Terminal.Forms;
 /// </summary>
 internal static class Templates
 {
-    public static readonly IReadOnlyDictionary<string, ColorScheme> Presets = Build();
-
-    private static Dictionary<string, ColorScheme> Build()
-    {
-        return new(StringComparer.OrdinalIgnoreCase)
+    // Plain colour pairs — NO Terminal.Gui.Attribute here. Attributes are made
+    // by the driver (Attribute.Make returns an uninitialized value when
+    // Application.Driver is null), so building a ColorScheme before
+    // Application.Init() poisons it: any later redraw throws "Attributes must be
+    // initialized by a driver". The ComboBox dropdown was the first view to hit
+    // it. So this table stays attribute-free and is safe to touch pre-Init for
+    // name validation; the scheme itself is built on demand in TryResolve, which
+    // the caller must invoke AFTER Application.Init().
+    private static readonly IReadOnlyDictionary<string, (Color Fg, Color Bg, Color DisabledFg)> Palettes =
+        new Dictionary<string, (Color, Color, Color)>(StringComparer.OrdinalIgnoreCase)
         {
-            ["dark"]  = MakeScheme(fg: Color.White,        bg: Color.Black, disabledFg: Color.DarkGray),
-            ["green"] = MakeScheme(fg: Color.BrightGreen,  bg: Color.Black, disabledFg: Color.Green),
-            ["light"] = MakeScheme(fg: Color.Black,        bg: Color.White, disabledFg: Color.DarkGray),
+            ["dark"]  = (Color.White,       Color.Black, Color.DarkGray),
+            ["green"] = (Color.BrightGreen, Color.Black, Color.Green),
+            ["light"] = (Color.Black,       Color.White, Color.DarkGray),
         };
+
+    /// <summary>True if <paramref name="name"/> is a known template. Safe to call before Application.Init() — touches no Attributes.</summary>
+    public static bool IsKnown(string name) => Palettes.ContainsKey(name);
+
+    /// <summary>
+    /// Build the ColorScheme for <paramref name="name"/>. MUST run after
+    /// <see cref="Application.Init()"/> — it makes driver attributes.
+    /// </summary>
+    public static bool TryResolve(string name, out ColorScheme scheme)
+    {
+        if (!Palettes.TryGetValue(name, out var p))
+        {
+            scheme = null!;
+            return false;
+        }
+        scheme = MakeScheme(p.Fg, p.Bg, p.DisabledFg);
+        return true;
     }
 
     /// <summary>
@@ -51,8 +73,5 @@ internal static class Templates
         };
     }
 
-    public static bool TryResolve(string name, out ColorScheme scheme) =>
-        Presets.TryGetValue(name, out scheme!);
-
-    public static string Known => string.Join(", ", Presets.Keys);
+    public static string Known => string.Join(", ", Palettes.Keys);
 }

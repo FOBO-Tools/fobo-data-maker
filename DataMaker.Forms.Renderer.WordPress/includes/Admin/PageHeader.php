@@ -1,5 +1,5 @@
 <?php
-namespace DataMaker\Forms\Renderer\WordPress\Admin;
+namespace Fobo\DataMakerForms\Admin;
 
 if (!defined('ABSPATH')) exit;
 
@@ -12,7 +12,7 @@ final class PageHeader
 {
     public static function render(string $title): void
     {
-        $logo = DM_RENDERER_URL . 'assets/fobo_logo.svg';
+        $logo = FOBO_DATA_MAKER_FORMS_URL . 'assets/fobo_logo.svg';
         ?>
         <h1 style="display:flex;align-items:center;gap:14px;margin:12px 0 20px">
             <img src="<?php echo esc_url($logo); ?>" alt="FOBO" height="44" style="height:44px;width:auto;display:block">

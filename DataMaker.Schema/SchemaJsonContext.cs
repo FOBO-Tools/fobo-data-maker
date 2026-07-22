@@ -79,6 +79,8 @@ namespace DataMaker.Schema;
 [JsonSerializable(typeof(CloudBackupDownloadResponse))]
 [JsonSerializable(typeof(AgentSettings))]
 [JsonSerializable(typeof(CoachmarkSettings))]
+[JsonSerializable(typeof(DataMaker.Schema.Recovery.PendingAccountSwitch))]
+[JsonSerializable(typeof(DataMaker.Schema.Identity.AccountBinding))]
 [JsonSerializable(typeof(ValidationRule))]
 [JsonSerializable(typeof(Choice))]
 [JsonSerializable(typeof(Geo))]

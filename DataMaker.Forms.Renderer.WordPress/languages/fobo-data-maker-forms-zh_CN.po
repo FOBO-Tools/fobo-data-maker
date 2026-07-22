@@ -1,38 +1,38 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: Data Maker Forms 0.1.0\n"
+"Project-Id-Version: FOBO Data Maker Forms 0.1.0\n"
 "Report-Msgid-Bugs-To: https://fobo-tools.com/\n"
 "PO-Revision-Date: 2026-05-30 00:00+0000\n"
 "Last-Translator: FOBO <support@fobo-tools.com>\n"
-"Language-Team: Deutsch\n"
-"Language: de_DE\n"
+"Language-Team: 简体中文\n"
+"Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Domain: datamaker-renderer\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Domain: fobo-data-maker-forms\n"
 
 
 #. Plugin Name of the plugin
-#: datamaker-renderer.php
+#: fobo-data-maker-forms.php
 #: includes/Admin/FormsListPage.php:34
 #: includes/Admin/UploadPage.php:19
 #: includes/Admin/UploadPage.php:20
-msgid "Data Maker Forms"
-msgstr "Data Maker Formulare"
+msgid "FOBO Data Maker Forms"
+msgstr "Data Maker 表单"
 
 #. Plugin URI of the plugin
-#: datamaker-renderer.php
+#: fobo-data-maker-forms.php
 msgid "https://fobo-tools.com/"
 msgstr ""
 
 #. Description of the plugin
-#: datamaker-renderer.php
+#: fobo-data-maker-forms.php
 msgid "Renders Data Maker forms from signed .dmf uploads. POSTs sealed submissions to the Data Maker API; supports the localStorage-backed edit flow."
-msgstr "Stellt Data-Maker-Formulare aus signierten .dmf-Uploads dar. Sendet versiegelte Übermittlungen an die Data-Maker-API; unterstützt den auf localStorage basierenden Bearbeitungsablauf."
+msgstr "从已签名的 .dmf 上传渲染 Data Maker 表单。将密封的提交内容发送到 Data Maker API；支持基于 localStorage 的编辑流程。"
 
 #. Author of the plugin
-#: datamaker-renderer.php
+#: fobo-data-maker-forms.php
 msgid "FOBO"
 msgstr ""
 
@@ -41,230 +41,230 @@ msgstr ""
 #: includes/Admin/FormSettingsPage.php:54
 #: includes/Admin/PreviewPage.php:124
 msgid "Form settings"
-msgstr "Formulareinstellungen"
+msgstr "表单设置"
 
 #: includes/Admin/FormSettingsPage.php:46
 #: includes/Admin/PreviewPage.php:93
 msgid "Missing or invalid form id."
-msgstr "Formular-ID fehlt oder ist ungültig."
+msgstr "缺少表单 id 或无效。"
 
 #: includes/Admin/FormSettingsPage.php:54
 #: includes/Admin/PreviewPage.php:100
 msgid "Form not found."
-msgstr "Formular nicht gefunden."
+msgstr "未找到表单。"
 
 #: includes/Admin/FormSettingsPage.php:128
 msgid "Saved."
-msgstr "Gespeichert."
+msgstr "已保存。"
 
 #. translators: %s = form name or slug
 #: includes/Admin/FormSettingsPage.php:153
 #, php-format
 msgid "Form settings — %s"
-msgstr "Formulareinstellungen — %s"
+msgstr "表单设置 — %s"
 
 #: includes/Admin/FormSettingsPage.php:155
 #: includes/Admin/PreviewPage.php:122
 msgid "Back to forms"
-msgstr "Zurück zu den Formularen"
+msgstr "返回表单列表"
 
 #: includes/Admin/FormSettingsPage.php:164
 msgid "Behaviour"
-msgstr "Verhalten"
+msgstr "行为"
 
 #: includes/Admin/FormSettingsPage.php:167
 #: includes/Admin/UploadPage.php:80
 msgid "Designer styling"
-msgstr "Designer-Styling"
+msgstr "设计器样式"
 
 #: includes/Admin/FormSettingsPage.php:171
 #: includes/Admin/UploadPage.php:84
 msgid "Apply Theme/Styling"
-msgstr "Theme/Styling anwenden"
+msgstr "应用主题/样式"
 
 #: includes/Admin/FormSettingsPage.php:173
 msgid "On = render the form the way it looks in the desktop designer (palette, fonts, button variants, heading styles, per-element overrides). Off = strip all of that and let the active WordPress theme drive the look. Layout (rows, columns, spacing) is honored in both modes."
-msgstr "Ein = stellt das Formular so dar, wie es im Desktop-Designer aussieht (Palette, Schriften, Button-Varianten, Überschriftenstile, Überschreibungen pro Element). Aus = entfernt all das und überlässt das Aussehen dem aktiven WordPress-Theme. Das Layout (Zeilen, Spalten, Abstände) wird in beiden Modi beibehalten."
+msgstr "开启 = 按桌面设计器中的样子渲染表单（调色板、字体、按钮变体、标题样式、按元素覆盖）。关闭 = 去除全部这些，由当前 WordPress 主题决定外观。两种模式下都保留布局（行、列、间距）。"
 
 #: includes/Admin/FormSettingsPage.php:177
 msgid "Edit flow"
-msgstr "Bearbeitungsablauf"
+msgstr "编辑流程"
 
 #: includes/Admin/FormSettingsPage.php:181
 msgid "Let submitters edit their submission later (browser localStorage)"
-msgstr "Einsendern erlauben, ihre Übermittlung später zu bearbeiten (Browser-localStorage)"
+msgstr "允许提交者稍后编辑其提交（浏览器 localStorage）"
 
 #: includes/Admin/FormSettingsPage.php:183
 msgid "When on, a submitter returning to the same form on the same browser sees \"Continue editing?\" before a fresh start."
-msgstr "Wenn aktiviert, sieht ein Einsender, der dasselbe Formular im selben Browser erneut aufruft, „Bearbeitung fortsetzen?“, bevor er neu beginnt."
+msgstr "开启时，在同一浏览器中再次打开同一表单的提交者会先看到“继续编辑？”，然后才重新开始。"
 
 #: includes/Admin/FormSettingsPage.php:187
 msgid "After submit"
-msgstr "Nach dem Absenden"
+msgstr "提交后"
 
 #: includes/Admin/FormSettingsPage.php:198
 msgid "Stay on page (default)"
-msgstr "Auf der Seite bleiben (Standard)"
+msgstr "停留在页面（默认）"
 
 #: includes/Admin/FormSettingsPage.php:202
 msgid "Redirect to a WordPress page:"
-msgstr "Auf eine WordPress-Seite weiterleiten:"
+msgstr "重定向到 WordPress 页面："
 
 #: includes/Admin/FormSettingsPage.php:204
 #: includes/Admin/FormSettingsPage.php:330
 msgid "select a page"
-msgstr "Seite auswählen"
+msgstr "选择页面"
 
 #: includes/Admin/FormSettingsPage.php:214
 msgid "Redirect to a URL:"
-msgstr "Auf eine URL weiterleiten:"
+msgstr "重定向到 URL："
 
 #: includes/Admin/FormSettingsPage.php:217
 msgid "Browser navigates to the chosen target after a successful submission. \"Stay on page\" replaces the form with the success message below."
-msgstr "Der Browser navigiert nach einer erfolgreichen Übermittlung zum gewählten Ziel. „Auf der Seite bleiben“ ersetzt das Formular durch die untenstehende Erfolgsmeldung."
+msgstr "提交成功后浏览器会跳转到所选目标。“停留在页面”会用下方的成功消息替换表单。"
 
 #: includes/Admin/FormSettingsPage.php:221
 msgid "Success message"
-msgstr "Erfolgsmeldung"
+msgstr "成功消息"
 
 #: includes/Admin/FormSettingsPage.php:225
 #: includes/FormStore.php:228
 msgid "## Thanks for your submission."
-msgstr "## Danke für Ihre Übermittlung."
+msgstr "## 感谢您的提交。"
 
 #. translators: %1$s-%5$s = Markdown syntax examples wrapped in <code>; %6$s = "Stay on page" wrapped in <em>
 #: includes/Admin/FormSettingsPage.php:233
 #, php-format
 msgid "Markdown allowed (%1$s, %2$s, %3$s, %4$s, %5$s). Rendered inside the form's container after a successful submit when \"After submit\" is set to %6$s; ignored for redirect modes. Leave blank for the default."
-msgstr "Markdown erlaubt (%1$s, %2$s, %3$s, %4$s, %5$s). Wird nach einer erfolgreichen Übermittlung im Formularcontainer angezeigt, wenn „Nach dem Absenden“ auf %6$s gesetzt ist; bei Weiterleitungsmodi ignoriert. Für den Standard leer lassen."
+msgstr "允许使用 Markdown（%1$s、%2$s、%3$s、%4$s、%5$s）。当“提交后”设置为 %6$s 时，提交成功后会在表单容器内渲染；重定向模式下忽略。留空则使用默认值。"
 
 #: includes/Admin/FormSettingsPage.php:241
 msgid "Stay on page"
-msgstr "Auf der Seite bleiben"
+msgstr "停留在页面"
 
 #: includes/Admin/FormSettingsPage.php:248
 msgid "Visibility"
-msgstr "Sichtbarkeit"
+msgstr "可见性"
 
 #: includes/Admin/FormSettingsPage.php:249
 msgid "Uncheck any item to hide it from this form on the WordPress site. Filtering happens server-side, before the renderer reads the form, so the layout grid auto-flows around the gaps."
-msgstr "Deaktivieren Sie ein Element, um es in diesem Formular auf der WordPress-Website auszublenden. Die Filterung erfolgt serverseitig, bevor der Renderer das Formular liest, sodass das Layout-Raster automatisch um die Lücken herum umfließt."
+msgstr "取消勾选任意项即可在 WordPress 网站上将其从此表单中隐藏。过滤在服务器端进行，在渲染器读取表单之前完成，因此布局网格会自动围绕空缺重新排列。"
 
 #: includes/Admin/FormSettingsPage.php:255
 msgid "Show or hide every non-required item at once"
-msgstr "Alle nicht erforderlichen Elemente auf einmal ein- oder ausblenden"
+msgstr "一次显示或隐藏所有非必填项"
 
 #: includes/Admin/FormSettingsPage.php:256
 msgid "all"
-msgstr "alle"
+msgstr "全部"
 
 #: includes/Admin/FormSettingsPage.php:259
 msgid "Item"
-msgstr "Element"
+msgstr "项目"
 
 #: includes/Admin/FormSettingsPage.php:260
 msgid "Kind"
-msgstr "Art"
+msgstr "种类"
 
 #: includes/Admin/FormSettingsPage.php:261
 msgid "Where"
-msgstr "Wo"
+msgstr "位置"
 
 #: includes/Admin/FormSettingsPage.php:266
 msgid "No layout elements found."
-msgstr "Keine Layout-Elemente gefunden."
+msgstr "未找到布局元素。"
 
 #: includes/Admin/FormSettingsPage.php:288
 msgid "Required fields can't be hidden"
-msgstr "Pflichtfelder können nicht ausgeblendet werden"
+msgstr "必填字段无法隐藏"
 
 #: includes/Admin/FormSettingsPage.php:288
 msgid "required"
-msgstr "erforderlich"
+msgstr "必填"
 
 #. translators: %1$s = "visible" wrapped in <strong>; %2$s = hidden[] wrapped in <code>
 #: includes/Admin/FormSettingsPage.php:301
 #, php-format
 msgid "A checked box = %1$s. The form posts the inverted set as %2$s so legacy fields not yet in the form definition aren't accidentally hidden when added later."
-msgstr "Ein angekreuztes Kästchen = %1$s. Das Formular sendet die umgekehrte Menge als %2$s, damit ältere Felder, die noch nicht in der Formulardefinition enthalten sind, beim späteren Hinzufügen nicht versehentlich ausgeblendet werden."
+msgstr "勾选的复选框 = %1$s。表单以 %2$s 提交反向集合，这样以后新增的、尚未在表单定义中的旧字段不会被意外隐藏。"
 
 #: includes/Admin/FormSettingsPage.php:304
 msgid "visible"
-msgstr "sichtbar"
+msgstr "可见"
 
 #: includes/Admin/FormSettingsPage.php:309
 msgid "Privacy &amp; consent"
-msgstr "Datenschutz &amp; Einwilligung"
+msgstr "隐私与同意"
 
 #: includes/Admin/FormSettingsPage.php:312
 msgid "Privacy policy target"
-msgstr "Ziel der Datenschutzerklärung"
+msgstr "隐私政策目标"
 
 #: includes/Admin/FormSettingsPage.php:324
 msgid "Not set"
-msgstr "Nicht festgelegt"
+msgstr "未设置"
 
 #: includes/Admin/FormSettingsPage.php:328
 msgid "WordPress page:"
-msgstr "WordPress-Seite:"
+msgstr "WordPress 页面："
 
 #: includes/Admin/FormSettingsPage.php:340
 msgid "External URL:"
-msgstr "Externe URL:"
+msgstr "外部 URL："
 
 #: includes/Admin/FormSettingsPage.php:346
 msgid "Linked from the consent label below when set."
-msgstr "Wird, sofern festgelegt, aus dem untenstehenden Einwilligungstext verlinkt."
+msgstr "设置后，将从下方的同意标签处链接。"
 
 #: includes/Admin/FormSettingsPage.php:350
 msgid "Privacy link text"
-msgstr "Linktext für den Datenschutz"
+msgstr "隐私链接文字"
 
 #: includes/Admin/FormSettingsPage.php:356
 #: includes/Shortcode.php:203
 msgid "privacy policy"
-msgstr "Datenschutzerklärung"
+msgstr "隐私政策"
 
 #: includes/Admin/FormSettingsPage.php:357
 msgid "Text shown as the link to the privacy target. Empty = \"privacy policy\"."
-msgstr "Text, der als Link zum Datenschutzziel angezeigt wird. Leer = „Datenschutzerklärung“."
+msgstr "显示为隐私目标链接的文字。留空 = “隐私政策”。"
 
 #: includes/Admin/FormSettingsPage.php:361
 msgid "Require consent before submit"
-msgstr "Einwilligung vor dem Absenden verlangen"
+msgstr "提交前需要同意"
 
 #: includes/Admin/FormSettingsPage.php:366
 msgid "Show a consent checkbox above the submit button; block POST until ticked."
-msgstr "Ein Einwilligungskästchen über der Senden-Schaltfläche anzeigen; das Absenden blockieren, bis es angekreuzt ist."
+msgstr "在提交按钮上方显示同意复选框；在勾选前阻止提交。"
 
 #: includes/Admin/FormSettingsPage.php:373
 #: includes/Shortcode.php:271
 msgid "I agree to the privacy policy."
-msgstr "Ich stimme der Datenschutzerklärung zu."
+msgstr "我同意隐私政策。"
 
 #: includes/Admin/FormSettingsPage.php:375
 msgid "Use {privacy} as a placeholder to insert a link to the URL above."
-msgstr "Verwenden Sie {privacy} als Platzhalter, um einen Link zur obigen URL einzufügen."
+msgstr "使用 {privacy} 作为占位符，以插入指向上方 URL 的链接。"
 
 #: includes/Admin/FormSettingsPage.php:380
 msgid "Anti-abuse"
-msgstr "Missbrauchsschutz"
+msgstr "防滥用"
 
 #: includes/Admin/FormSettingsPage.php:383
 msgid "Honeypot field"
-msgstr "Honeypot-Feld"
+msgstr "蜜罐字段"
 
 #: includes/Admin/FormSettingsPage.php:388
 msgid "Render a hidden field; reject submissions that fill it. Recommended."
-msgstr "Ein verstecktes Feld einfügen; Übermittlungen ablehnen, die es ausfüllen. Empfohlen."
+msgstr "渲染一个隐藏字段；拒绝填写了该字段的提交。建议启用。"
 
 #: includes/Admin/FormSettingsPage.php:393
 msgid "Rate limit (per minute, per IP)"
-msgstr "Ratenbegrenzung (pro Minute, pro IP)"
+msgstr "速率限制（每分钟，每个 IP）"
 
 #: includes/Admin/FormSettingsPage.php:398
 msgid "0 = no limit (a plugin-wide default still applies). Soft throttle enforced via WP transients."
-msgstr "0 = kein Limit (ein pluginweiter Standard gilt dennoch). Sanfte Drosselung über WP-Transients durchgesetzt."
+msgstr "0 = 无限制（仍会应用插件级别的默认值）。通过 WP transient 实施软性限流。"
 
 #: includes/Admin/FormSettingsPage.php:402
 #: includes/Admin/SettingsPage.php:93
@@ -273,714 +273,712 @@ msgstr "Cloudflare Turnstile"
 
 #: includes/Admin/FormSettingsPage.php:408
 msgid "Require visitors to pass a Turnstile challenge before submitting."
-msgstr "Von Besuchern verlangen, vor dem Absenden eine Turnstile-Aufgabe zu bestehen."
+msgstr "要求访问者在提交前通过 Turnstile 验证。"
 
 #. translators: %s = link to plugin settings
 #: includes/Admin/FormSettingsPage.php:415
 #, php-format
 msgid "Turnstile keys not configured. Set them in %s first."
-msgstr "Turnstile-Schlüssel nicht konfiguriert. Legen Sie sie zuerst unter %s fest."
+msgstr "未配置 Turnstile 密钥。请先在 %s 中设置。"
 
 #: includes/Admin/FormSettingsPage.php:416
-msgid "Data Maker Forms → Settings"
-msgstr "Data Maker Formulare → Einstellungen"
+msgid "FOBO Data Maker Forms → Settings"
+msgstr "Data Maker 表单 → 设置"
 
 #: includes/Admin/FormSettingsPage.php:421
 msgid "Server verifies each token with Cloudflare before sealing the submission. Honeypot + rate limit still apply."
-msgstr "Der Server überprüft jedes Token bei Cloudflare, bevor die Übermittlung versiegelt wird. Honeypot und Ratenbegrenzung gelten weiterhin."
+msgstr "服务器在密封提交前会通过 Cloudflare 验证每个令牌。蜜罐和速率限制仍然有效。"
 
 #: includes/Admin/FormSettingsPage.php:427
 msgid "Integrations"
-msgstr "Integrationen"
+msgstr "集成"
 
 #: includes/Admin/FormSettingsPage.php:430
 msgid "Webhook URL"
-msgstr "Webhook-URL"
+msgstr "Webhook URL"
 
 #. translators: %s = action hook name
 #: includes/Admin/FormSettingsPage.php:440
 #, php-format
 msgid "POSTed with submission metadata (no plaintext field values) after a successful sealed submit. For full notification flows use the WP action hook %s — works with Post SMTP, Mailpoet, WPForms add-ons, Zapier, custom code."
-msgstr "Wird nach einer erfolgreichen versiegelten Übermittlung mit den Übermittlungs-Metadaten (keine Feldwerte im Klartext) per POST gesendet. Für vollständige Benachrichtigungsabläufe verwenden Sie den WP-Action-Hook %s — funktioniert mit Post SMTP, Mailpoet, WPForms-Erweiterungen, Zapier und eigenem Code."
+msgstr "在密封提交成功后，以 POST 方式发送提交元数据（不含明文字段值）。如需完整的通知流程，请使用 WP 动作钩子 %s — 可配合 Post SMTP、Mailpoet、WPForms 附加组件、Zapier 及自定义代码。"
 
 #: includes/Admin/FormSettingsPage.php:448
 msgid "Form-wide messages"
-msgstr "Formularweite Meldungen"
+msgstr "表单级消息"
 
 #: includes/Admin/FormSettingsPage.php:449
 msgid "Form-level text the renderer shows, independent of any single field. Empty box = use the form's default (set in the designer) or, failing that, the engine's English fallback."
-msgstr "Text auf Formularebene, den der Renderer anzeigt, unabhängig von einzelnen Feldern. Leeres Feld = Standard des Formulars verwenden (im Designer festgelegt) oder andernfalls den englischen Rückfallwert der Engine."
+msgstr "渲染器显示的表单级文本，与任何单个字段无关。留空 = 使用表单的默认值（在设计器中设置），否则使用引擎的英文回退值。"
 
 #: includes/Admin/FormSettingsPage.php:478
 msgid "Field error messages"
-msgstr "Feld-Fehlermeldungen"
+msgstr "字段错误消息"
 
 #: includes/Admin/FormSettingsPage.php:479
 msgid "Override the validation error text shown next to each field. Empty box = use the form's default (set in the designer) or, failing that, the engine's English fallback. Both are shown as placeholder text inside each box."
-msgstr "Überschreiben Sie den Validierungs-Fehlertext, der neben jedem Feld angezeigt wird. Leeres Feld = Standard des Formulars verwenden (im Designer festgelegt) oder andernfalls den englischen Rückfallwert der Engine. Beide werden als Platzhaltertext in jedem Feld angezeigt."
+msgstr "覆盖每个字段旁显示的验证错误文本。留空 = 使用表单的默认值（在设计器中设置），否则使用引擎的英文回退值。两者都会作为占位文本显示在各输入框内。"
 
 #: includes/Admin/FormSettingsPage.php:490
 msgid "No fields in this form expose customizable message slots. Toggle Required, set field options (min/max length, allowed extensions, etc.) in the designer to enable per-check overrides."
-msgstr "Kein Feld in diesem Formular stellt anpassbare Meldungs-Slots bereit. Aktivieren Sie „Erforderlich“ oder legen Sie Feldoptionen (Min./Max.-Länge, erlaubte Erweiterungen usw.) im Designer fest, um Überschreibungen pro Prüfung zu ermöglichen."
+msgstr "此表单中没有字段暴露可自定义的消息槽。请在设计器中切换“必填”、设置字段选项（最小/最大长度、允许的扩展名等），以启用按校验项的覆盖。"
 
 #: includes/Admin/FormSettingsPage.php:536
 msgid "Save form settings"
-msgstr "Formulareinstellungen speichern"
+msgstr "保存表单设置"
 
 #. translators: %d = step number
 #: includes/Admin/FormSettingsPage.php:616
 #, php-format
 msgid "Step %d"
-msgstr "Schritt %d"
+msgstr "第 %d 步"
 
 #. translators: %d = section number
 #: includes/Admin/FormSettingsPage.php:619
 #, php-format
 msgid "Section %d"
-msgstr "Abschnitt %d"
+msgstr "第 %d 节"
 
 #: includes/Admin/FormSettingsPage.php:681
 msgid "(group)"
-msgstr "(Gruppe)"
+msgstr "（组）"
 
 #: includes/Admin/FormSettingsPage.php:693
 msgid "(heading)"
-msgstr "(Überschrift)"
+msgstr "（标题）"
 
 #: includes/Admin/FormSettingsPage.php:698
 msgid "(rich text)"
-msgstr "(Rich-Text)"
+msgstr "（富文本）"
 
 #: includes/Admin/FormSettingsPage.php:703
 msgid "(image)"
-msgstr "(Bild)"
+msgstr "（图片）"
 
 #: includes/Admin/FormSettingsPage.php:706
 msgid "(divider)"
-msgstr "(Trennlinie)"
+msgstr "（分隔线）"
 
 #: includes/Admin/FormSettingsPage.php:709
 msgid "(spacer)"
-msgstr "(Abstand)"
+msgstr "（间隔）"
 
 #: includes/Admin/FormSettingsPage.php:712
 msgid "(button)"
-msgstr "(Schaltfläche)"
+msgstr "（按钮）"
 
 #: includes/Admin/FormsListPage.php:25
 msgid "Form deleted."
-msgstr "Formular gelöscht."
+msgstr "表单已删除。"
 
 #: includes/Admin/FormsListPage.php:27
 msgid "Forbidden — nonce check failed."
-msgstr "Verboten — Nonce-Prüfung fehlgeschlagen."
+msgstr "禁止访问 — nonce 校验失败。"
 
 #: includes/Admin/FormsListPage.php:35
 #: includes/Admin/UploadPage.php:27
 msgid "Upload .dmf"
-msgstr ".dmf hochladen"
+msgstr "上传 .dmf"
 
 #: includes/Admin/FormsListPage.php:39
 msgid "Slug (shortcode id)"
-msgstr "Slug (Shortcode-ID)"
+msgstr "Slug（短代码 id）"
 
 #: includes/Admin/FormsListPage.php:40
 msgid "Form id"
-msgstr "Formular-ID"
+msgstr "表单 id"
 
 #: includes/Admin/FormsListPage.php:41
 msgid "Schema"
-msgstr "Schema"
+msgstr "架构"
 
 #: includes/Admin/FormsListPage.php:42
 msgid "Signed"
-msgstr "Signiert"
+msgstr "已签名"
 
 #: includes/Admin/FormsListPage.php:43
 msgid "Uploaded"
-msgstr "Hochgeladen"
+msgstr "已上传"
 
 #: includes/Admin/FormsListPage.php:49
 msgid "No forms uploaded yet."
-msgstr "Noch keine Formulare hochgeladen."
+msgstr "尚未上传任何表单。"
 
 #: includes/Admin/FormsListPage.php:58
 msgid "yes"
-msgstr "ja"
+msgstr "是"
 
 #: includes/Admin/FormsListPage.php:58
 msgid "no"
-msgstr "nein"
+msgstr "否"
 
 #: includes/Admin/FormsListPage.php:61
 #: includes/Shortcode.php:361
 msgid "Preview"
-msgstr "Vorschau"
+msgstr "预览"
 
 #: includes/Admin/FormsListPage.php:62
 #: includes/Admin/UploadPage.php:29
 msgid "Settings"
-msgstr "Einstellungen"
+msgstr "设置"
 
 #: includes/Admin/FormsListPage.php:63
 msgid "Delete this form?"
-msgstr "Dieses Formular löschen?"
+msgstr "删除此表单？"
 
 #: includes/Admin/FormsListPage.php:66
 msgid "Delete"
-msgstr "Löschen"
+msgstr "删除"
 
 #: includes/Admin/PreviewPage.php:27
 msgid "Preview form"
-msgstr "Formularvorschau"
+msgstr "预览表单"
 
 #. translators: %s = form slug
 #: includes/Admin/PreviewPage.php:72
 #, php-format
 msgid "Preview — %s"
-msgstr "Vorschau — %s"
+msgstr "预览 — %s"
 
 #: includes/Admin/PreviewPage.php:93
 #: includes/Admin/PreviewPage.php:100
 #: includes/Admin/PreviewPage.php:139
 msgid "Form preview"
-msgstr "Formularvorschau"
+msgstr "表单预览"
 
 #. translators: %s = form slug
 #: includes/Admin/PreviewPage.php:119
 #, php-format
 msgid "Form preview — %s"
-msgstr "Formularvorschau — %s"
+msgstr "表单预览 — %s"
 
 #: includes/Admin/PreviewPage.php:126
 msgid "Open in new tab"
-msgstr "In neuem Tab öffnen"
+msgstr "在新标签页中打开"
 
 #. translators: %s = shortcode
 #: includes/Admin/PreviewPage.php:131
 #, php-format
 msgid "Shortcode: %s — paste this anywhere on the site to embed the form."
-msgstr "Shortcode: %s — fügen Sie ihn an beliebiger Stelle der Website ein, um das Formular einzubetten."
+msgstr "短代码：%s — 将其粘贴到网站任意位置即可嵌入表单。"
 
 #: includes/Admin/PreviewPage.php:140
 msgid "Preview submits go through the same pipeline as the live site (sealed POST → API). Use a test recipient inbox before sharing the form publicly."
-msgstr "Vorschau-Übermittlungen durchlaufen dieselbe Pipeline wie die Live-Website (versiegelter POST → API). Verwenden Sie ein Test-Empfängerpostfach, bevor Sie das Formular öffentlich teilen."
+msgstr "预览提交与正式网站走相同的流程（密封 POST → API）。在公开分享表单前，请使用测试收件箱。"
 
 #: includes/Admin/SettingsPage.php:74
-msgid "Data Maker Forms — Settings"
-msgstr "Data Maker Formulare — Einstellungen"
+msgid "FOBO Data Maker Forms — Settings"
+msgstr "Data Maker 表单 — 设置"
 
 #: includes/Admin/SettingsPage.php:79
 msgid "Signature verification"
-msgstr "Signaturprüfung"
+msgstr "签名验证"
 
 #: includes/Admin/SettingsPage.php:83
 msgid "Require uploaded .dmf bundles to be Ed25519-signed"
-msgstr "Hochgeladene .dmf-Bundles müssen Ed25519-signiert sein"
+msgstr "要求上传的 .dmf 包使用 Ed25519 签名"
 
 #: includes/Admin/SettingsPage.php:87
 msgid "base64-encoded signer pubkey (optional)"
-msgstr "Base64-codierter öffentlicher Signaturschlüssel (optional)"
+msgstr "base64 编码的签名者公钥（可选）"
 
 #: includes/Admin/SettingsPage.php:88
 msgid "If set, the uploaded .dmf must be signed with exactly this pubkey. Leave blank to accept any signed bundle."
-msgstr "Wenn festgelegt, muss die hochgeladene .dmf genau mit diesem öffentlichen Schlüssel signiert sein. Leer lassen, um jedes signierte Bundle zu akzeptieren."
+msgstr "如果设置，上传的 .dmf 必须正好使用此公钥签名。留空则接受任何已签名的包。"
 
 #. translators: %s = link to cloudflare.com/turnstile
 #: includes/Admin/SettingsPage.php:97
 #, php-format
 msgid "Privacy-friendly CAPTCHA challenge. Enroll for free at %s; paste the site & secret keys here. Each form chooses whether to require it via Form Settings."
-msgstr "Datenschutzfreundliche CAPTCHA-Aufgabe. Melden Sie sich kostenlos bei %s an; fügen Sie hier den Site- und den geheimen Schlüssel ein. Jedes Formular entscheidet über seine Einstellungen, ob es erforderlich ist."
+msgstr "注重隐私的 CAPTCHA 验证。可在 %s 免费注册；将站点密钥和密钥粘贴到此处。每个表单可在表单设置中选择是否要求它。"
 
 #: includes/Admin/SettingsPage.php:103
 msgid "Site key"
-msgstr "Site-Schlüssel"
+msgstr "站点密钥"
 
 #: includes/Admin/SettingsPage.php:107
 msgid "Public key embedded in the form page (data-sitekey)."
-msgstr "Öffentlicher Schlüssel, der in die Formularseite eingebettet wird (data-sitekey)."
+msgstr "嵌入表单页面的公钥（data-sitekey）。"
 
 #: includes/Admin/SettingsPage.php:111
 msgid "Secret key"
-msgstr "Geheimer Schlüssel"
+msgstr "密钥"
 
 #: includes/Admin/SettingsPage.php:115
 msgid "Used server-side to verify tokens with Cloudflare. Never sent to the browser."
-msgstr "Wird serverseitig verwendet, um Tokens bei Cloudflare zu überprüfen. Wird nie an den Browser gesendet."
+msgstr "在服务器端用于通过 Cloudflare 验证令牌。绝不会发送到浏览器。"
 
 #: includes/Admin/UploadPage.php:28
 msgid "Forms"
-msgstr "Formulare"
+msgstr "表单"
 
 #: includes/Admin/UploadPage.php:43
-msgid "Data Maker Forms — Upload .dmf"
-msgstr "Data Maker Formulare — .dmf hochladen"
+msgid "FOBO Data Maker Forms — Upload .dmf"
+msgstr "Data Maker 表单 — 上传 .dmf"
 
 #: includes/Admin/UploadPage.php:52
 msgid "Shortcode slug"
-msgstr "Shortcode-Slug"
+msgstr "短代码 slug"
 
 #. translators: %s = example shortcode
 #: includes/Admin/UploadPage.php:58
 #, php-format
 msgid "Used in the shortcode: %s. Re-uploading the same slug overwrites the form in place."
-msgstr "Wird im Shortcode verwendet: %s. Ein erneutes Hochladen desselben Slugs überschreibt das Formular an Ort und Stelle."
+msgstr "用于短代码：%s。重新上传相同的 slug 会就地覆盖该表单。"
 
 #: includes/Admin/UploadPage.php:65
 msgid ".dmf bundle"
-msgstr ".dmf-Bundle"
+msgstr ".dmf 包"
 
 #. translators: %s = ON or OFF
 #: includes/Admin/UploadPage.php:72
 #, php-format
 msgid "Signature verification is currently %s — change under Settings."
-msgstr "Die Signaturprüfung ist derzeit %s — änderbar unter Einstellungen."
+msgstr "签名验证当前为 %s — 可在“设置”中更改。"
 
 #: includes/Admin/UploadPage.php:73
 msgid "ON"
-msgstr "EIN"
+msgstr "开启"
 
 #: includes/Admin/UploadPage.php:73
 msgid "OFF"
-msgstr "AUS"
+msgstr "关闭"
 
 #: includes/Admin/UploadPage.php:86
 msgid "On = render the form the way it looks in the desktop designer (palette, fonts, button variants, heading styles, per-element overrides). Off = strip all of that and let the active WordPress theme drive the look. Per-form; you can flip it later under Forms → Settings."
-msgstr "Ein = stellt das Formular so dar, wie es im Desktop-Designer aussieht (Palette, Schriften, Button-Varianten, Überschriftenstile, Überschreibungen pro Element). Aus = entfernt all das und überlässt das Aussehen dem aktiven WordPress-Theme. Pro Formular; Sie können es später unter Formulare → Einstellungen umschalten."
+msgstr "开启 = 按桌面设计器中的样子渲染表单（调色板、字体、按钮变体、标题样式、按元素覆盖）。关闭 = 去除全部这些，由当前 WordPress 主题决定外观。按表单设置；之后可在“表单 → 设置”中切换。"
 
 #: includes/Admin/UploadPage.php:90
 msgid "Upload form"
-msgstr "Formular hochladen"
+msgstr "上传表单"
 
 #: includes/Admin/UploadPage.php:107
 msgid "No file uploaded."
-msgstr "Keine Datei hochgeladen."
+msgstr "未上传文件。"
 
 #: includes/Admin/UploadPage.php:111
 msgid "Slug is required."
-msgstr "Der Slug ist erforderlich."
+msgstr "slug 为必填项。"
 
 #. translators: %s = human-readable size
 #: includes/Admin/UploadPage.php:121
 #, php-format
 msgid "Uploaded .dmf is larger than the %s limit."
-msgstr "Die hochgeladene .dmf ist größer als das Limit von %s."
+msgstr "上传的 .dmf 超过了 %s 的上限。"
 
 #: includes/Admin/UploadPage.php:129
 msgid "Could not read the uploaded file."
-msgstr "Die hochgeladene Datei konnte nicht gelesen werden."
+msgstr "无法读取上传的文件。"
 
 #: includes/Admin/UploadPage.php:143
 msgid "Could not parse the .dmf bundle (signature, format, or signing-key mismatch)."
-msgstr "Das .dmf-Bundle konnte nicht ausgewertet werden (Signatur, Format oder Signaturschlüssel stimmen nicht überein)."
+msgstr "无法解析 .dmf 包（签名、格式或签名密钥不匹配）。"
 
 #: includes/Admin/UploadPage.php:158
 msgid "This .dmf was exported in share-only mode (no recipient block). Submissions can't route back to a publisher, so the plugin won't accept it. Sign in to FOBO in the Data Maker desktop app, re-export the form, and try again."
-msgstr "Diese .dmf wurde im Nur-Teilen-Modus exportiert (kein Empfängerblock). Übermittlungen können nicht an einen Herausgeber zurückgeleitet werden, daher akzeptiert das Plugin sie nicht. Melden Sie sich in der Data-Maker-Desktop-App bei FOBO an, exportieren Sie das Formular erneut und versuchen Sie es noch einmal."
+msgstr "此 .dmf 是以仅分享模式导出的（没有收件人块）。提交内容无法回送给发布者，因此插件不会接受它。请在 Data Maker 桌面应用中登录 FOBO，重新导出该表单，然后再试。"
 
 #. translators: 1: numeric form id, 2: shortcode
 #: includes/Admin/UploadPage.php:169
 #, php-format
 msgid "Form saved (id #%1$d). Embed it with: %2$s"
-msgstr "Formular gespeichert (ID #%1$d). Betten Sie es ein mit: %2$s"
+msgstr "表单已保存（id #%1$d）。使用以下方式嵌入：%2$s"
 
 #: includes/Block.php:22
 #: assets/block.js:19
 #: assets/block.js:86
-msgid "Data Maker Form"
-msgstr "Data Maker Formular"
+msgid "FOBO Data Maker Form"
+msgstr "Data Maker 表单"
 
 #: includes/Block.php:25
-msgid "Render a Data Maker form uploaded under Data Maker Forms → Upload .dmf."
-msgstr "Stellt ein Data-Maker-Formular dar, das unter Data Maker Formulare → .dmf hochladen hochgeladen wurde."
+msgid "Render a Data Maker form uploaded under FOBO Data Maker Forms → Upload .dmf."
+msgstr "渲染在“Data Maker 表单 → 上传 .dmf”中上传的 Data Maker 表单。"
 
 #: includes/Block.php:87
 msgid "Pick a form in the block sidebar."
-msgstr "Wählen Sie ein Formular in der Block-Seitenleiste aus."
+msgstr "在区块侧边栏中选择一个表单。"
 
 #: includes/MessageCatalog.php:31
 msgid "Required"
-msgstr "Erforderlich"
+msgstr "必填"
 
 #. translators: %d = minimum character count
 #: includes/MessageCatalog.php:43
 #, php-format
 msgid "Minimum length (%d)"
-msgstr "Mindestlänge (%d)"
+msgstr "最小长度（%d）"
 
 #. translators: %d = minimum character count
 #: includes/MessageCatalog.php:45
 #, php-format
 msgid "Must be at least %d character."
 msgid_plural "Must be at least %d characters."
-msgstr[0] "Muss mindestens %d Zeichen lang sein."
-msgstr[1] "Muss mindestens %d Zeichen lang sein."
+msgstr[0] "长度至少为 %d 个字符。"
 
 #. translators: %d = maximum character count
 #: includes/MessageCatalog.php:53
 #, php-format
 msgid "Maximum length (%d)"
-msgstr "Maximale Länge (%d)"
+msgstr "最大长度（%d）"
 
 #. translators: %d = maximum character count
 #: includes/MessageCatalog.php:55
 #, php-format
 msgid "Must be at most %d character."
 msgid_plural "Must be at most %d characters."
-msgstr[0] "Darf höchstens %d Zeichen lang sein."
-msgstr[1] "Darf höchstens %d Zeichen lang sein."
+msgstr[0] "长度最多为 %d 个字符。"
 
 #: includes/MessageCatalog.php:59
 msgid "Pattern match"
-msgstr "Musterabgleich"
+msgstr "模式匹配"
 
 #: includes/MessageCatalog.php:59
 msgid "Value does not match the required pattern."
-msgstr "Der Wert entspricht nicht dem erforderlichen Muster."
+msgstr "值与所需的模式不匹配。"
 
 #: includes/MessageCatalog.php:65
 msgid "Email format"
-msgstr "E-Mail-Format"
+msgstr "电子邮件格式"
 
 #: includes/MessageCatalog.php:65
 msgid "Not a valid email address."
-msgstr "Keine gültige E-Mail-Adresse."
+msgstr "不是有效的电子邮件地址。"
 
 #: includes/MessageCatalog.php:66
 msgid "URL format"
-msgstr "URL-Format"
+msgstr "URL 格式"
 
 #: includes/MessageCatalog.php:66
 msgid "Not a valid URL."
-msgstr "Keine gültige URL."
+msgstr "不是有效的 URL。"
 
 #: includes/MessageCatalog.php:67
 msgid "Phone format"
-msgstr "Telefonformat"
+msgstr "电话格式"
 
 #: includes/MessageCatalog.php:67
 msgid "Not a valid phone number."
-msgstr "Keine gültige Telefonnummer."
+msgstr "不是有效的电话号码。"
 
 #: includes/MessageCatalog.php:68
 msgid "Whole number"
-msgstr "Ganze Zahl"
+msgstr "整数"
 
 #: includes/MessageCatalog.php:68
 msgid "Not a whole number."
-msgstr "Keine ganze Zahl."
+msgstr "不是整数。"
 
 #: includes/MessageCatalog.php:69
 msgid "Decimal number"
-msgstr "Dezimalzahl"
+msgstr "小数"
 
 #: includes/MessageCatalog.php:69
 msgid "Not a valid decimal number."
-msgstr "Keine gültige Dezimalzahl."
+msgstr "不是有效的小数。"
 
 #: includes/MessageCatalog.php:70
 msgid "Monetary amount"
-msgstr "Geldbetrag"
+msgstr "货币金额"
 
 #: includes/MessageCatalog.php:70
 msgid "Not a valid monetary amount."
-msgstr "Kein gültiger Geldbetrag."
+msgstr "不是有效的货币金额。"
 
 #: includes/MessageCatalog.php:71
 msgid "Date"
-msgstr "Datum"
+msgstr "日期"
 
 #: includes/MessageCatalog.php:71
 msgid "Not a valid date."
-msgstr "Kein gültiges Datum."
+msgstr "不是有效的日期。"
 
 #: includes/MessageCatalog.php:72
 msgid "Date-time"
-msgstr "Datum-Zeit"
+msgstr "日期时间"
 
 #: includes/MessageCatalog.php:72
 msgid "Not a valid date-time."
-msgstr "Kein gültiges Datum-Zeit."
+msgstr "不是有效的日期时间。"
 
 #: includes/MessageCatalog.php:73
 msgid "Boolean"
-msgstr "Boolesch"
+msgstr "布尔值"
 
 #: includes/MessageCatalog.php:73
 msgid "Not a boolean."
-msgstr "Kein boolescher Wert."
+msgstr "不是布尔值。"
 
 #: includes/MessageCatalog.php:77
 msgid "Allowed choice"
-msgstr "Zulässige Auswahl"
+msgstr "允许的选项"
 
 #: includes/MessageCatalog.php:77
 msgid "Value is not in the allowed list."
-msgstr "Der Wert ist nicht in der zulässigen Liste enthalten."
+msgstr "值不在允许的列表中。"
 
 #: includes/MessageCatalog.php:83
 msgid "Allowed choices"
-msgstr "Zulässige Auswahlen"
+msgstr "允许的多个选项"
 
 #: includes/MessageCatalog.php:83
 msgid "Some items are not in the allowed list."
-msgstr "Einige Einträge sind nicht in der zulässigen Liste enthalten."
+msgstr "部分项不在允许的列表中。"
 
 #: includes/MessageCatalog.php:86
 msgid "Latitude range"
-msgstr "Breitengradbereich"
+msgstr "纬度范围"
 
 #: includes/MessageCatalog.php:86
 msgid "Latitude must be between -90 and 90."
-msgstr "Der Breitengrad muss zwischen -90 und 90 liegen."
+msgstr "纬度必须介于 -90 和 90 之间。"
 
 #: includes/MessageCatalog.php:87
 msgid "Longitude range"
-msgstr "Längengradbereich"
+msgstr "经度范围"
 
 #: includes/MessageCatalog.php:87
 msgid "Longitude must be between -180 and 180."
-msgstr "Der Längengrad muss zwischen -180 und 180 liegen."
+msgstr "经度必须介于 -180 和 180 之间。"
 
 #: includes/MessageCatalog.php:88
 msgid "Geo point"
-msgstr "Geopunkt"
+msgstr "地理坐标点"
 
 #: includes/MessageCatalog.php:88
 msgid "Not a valid geo point."
-msgstr "Kein gültiger Geopunkt."
+msgstr "不是有效的地理坐标点。"
 
 #: includes/MessageCatalog.php:92
 msgid "File extension"
-msgstr "Dateierweiterung"
+msgstr "文件扩展名"
 
 #: includes/MessageCatalog.php:92
 msgid "File extension not allowed."
-msgstr "Dateierweiterung nicht erlaubt."
+msgstr "不允许的文件扩展名。"
 
 #: includes/MessageCatalog.php:107
 msgid "Validation banner"
-msgstr "Validierungsbanner"
+msgstr "验证提示横幅"
 
 #: includes/MessageCatalog.php:108
 #: includes/Shortcode.php:370
 msgid "Please fix the highlighted fields before submitting."
-msgstr "Bitte korrigieren Sie die hervorgehobenen Felder vor dem Absenden."
+msgstr "请在提交前更正高亮显示的字段。"
 
 #: includes/Shortcode.php:360
 msgid "Submit"
-msgstr "Absenden"
+msgstr "提交"
 
 #: includes/Shortcode.php:362
 msgid "Edit"
-msgstr "Bearbeiten"
+msgstr "编辑"
 
 #: includes/Shortcode.php:363
 msgid "No items"
-msgstr "Keine Einträge"
+msgstr "无项目"
 
 #: includes/Shortcode.php:364
 msgid "Add and press Enter"
-msgstr "Hinzufügen und Eingabetaste drücken"
+msgstr "添加并按回车"
 
 #: includes/Shortcode.php:365
 msgid "Click to upload"
-msgstr "Zum Hochladen klicken"
+msgstr "点击上传"
 
 #: includes/Shortcode.php:366
 msgid "No file selected"
-msgstr "Keine Datei ausgewählt"
+msgstr "未选择文件"
 
 #: includes/Shortcode.php:367
 msgid "Browse…"
-msgstr "Durchsuchen…"
+msgstr "浏览…"
 
 #: includes/Shortcode.php:368
 msgid "Clear"
-msgstr "Löschen"
+msgstr "清除"
 
 #: includes/Shortcode.php:369
 msgid "Please fix the highlighted fields."
-msgstr "Bitte korrigieren Sie die hervorgehobenen Felder."
+msgstr "请更正高亮显示的字段。"
 
 #: includes/Shortcode.php:372
 msgid "Please tick the consent box to submit."
-msgstr "Bitte kreuzen Sie das Einwilligungskästchen an, um abzusenden."
+msgstr "请勾选同意框后再提交。"
 
 #: includes/Shortcode.php:373
 msgid "Please complete the challenge to submit."
-msgstr "Bitte schließen Sie die Aufgabe ab, um abzusenden."
+msgstr "请完成验证后再提交。"
 
 #: includes/Shortcode.php:374
 msgid "Submitted. Redirecting…"
-msgstr "Gesendet. Weiterleitung…"
+msgstr "已提交。正在跳转…"
 
 #: includes/Shortcode.php:375
 msgid "Continue editing"
-msgstr "Bearbeitung fortsetzen"
+msgstr "继续编辑"
 
 #: includes/Shortcode.php:376
 msgid "Start over"
-msgstr "Neu beginnen"
+msgstr "重新开始"
 
 #: includes/Shortcode.php:377
 msgid "You started this form earlier on this browser. Continue editing your previous submission?"
-msgstr "Sie haben dieses Formular zuvor in diesem Browser begonnen. Möchten Sie Ihre vorherige Übermittlung weiter bearbeiten?"
+msgstr "您之前在此浏览器上已开始填写此表单。是否继续编辑您之前的提交？"
 
 #: includes/Shortcode.php:378
 msgid "This submission is too large to send. Try shrinking large images or removing big attachments, then submit again."
-msgstr "Diese Übermittlung ist zu groß zum Senden. Versuchen Sie, große Bilder zu verkleinern oder große Anhänge zu entfernen, und senden Sie dann erneut."
+msgstr "此提交内容过大，无法发送。请尝试缩小大图片或移除大附件，然后重新提交。"
 
 #: includes/Shortcode.php:379
 msgid "Network error — please check your connection and try submitting again."
-msgstr "Netzwerkfehler — bitte überprüfen Sie Ihre Verbindung und versuchen Sie es erneut."
+msgstr "网络错误 — 请检查您的连接，然后重试提交。"
 
 #: includes/Shortcode.php:380
 msgid "This form is no longer available. Please contact the form owner."
-msgstr "Dieses Formular ist nicht mehr verfügbar. Bitte wenden Sie sich an den Formularinhaber."
+msgstr "此表单已不再可用。请联系表单所有者。"
 
 #: includes/Shortcode.php:381
 msgid "This form is not accepting submissions right now."
-msgstr "Dieses Formular nimmt derzeit keine Übermittlungen an."
+msgstr "此表单目前不接受提交。"
 
 #: includes/Shortcode.php:382
 msgid "The form server is unreachable right now. Please try again in a moment."
-msgstr "Der Formularserver ist derzeit nicht erreichbar. Bitte versuchen Sie es gleich noch einmal."
+msgstr "表单服务器当前无法访问。请稍后重试。"
 
 #: includes/Shortcode.php:383
 msgid "Something went wrong sending your submission. Please try again — if it keeps happening, contact the form owner."
-msgstr "Beim Senden Ihrer Übermittlung ist etwas schiefgelaufen. Bitte versuchen Sie es erneut — wenn es weiterhin auftritt, wenden Sie sich an den Formularinhaber."
+msgstr "发送您的提交时出错。请重试 — 若持续出现，请联系表单所有者。"
 
 #: includes/Shortcode.php:384
 msgid "Submission failed"
-msgstr "Übermittlung fehlgeschlagen"
+msgstr "提交失败"
 
 #: includes/SubmitProxy.php:81
 msgid "slug + hash required."
-msgstr "slug + hash erforderlich."
+msgstr "需要 slug + hash。"
 
 #: includes/SubmitProxy.php:86
 msgid "hash must be 64-char lowercase hex SHA-256."
-msgstr "hash muss ein 64-stelliger SHA-256-Wert in Hex-Kleinbuchstaben sein."
+msgstr "hash 必须是 64 个字符的小写十六进制 SHA-256。"
 
 #: includes/SubmitProxy.php:91
 #: includes/SubmitProxy.php:174
 msgid "form not found."
-msgstr "Formular nicht gefunden."
+msgstr "未找到表单。"
 
 #: includes/SubmitProxy.php:94
 msgid "form has no recipient configured."
-msgstr "Für das Formular ist kein Empfänger konfiguriert."
+msgstr "表单未配置收件人。"
 
 #: includes/SubmitProxy.php:109
 msgid "Too many uploads. Please wait a moment."
-msgstr "Zu viele Uploads. Bitte warten Sie einen Moment."
+msgstr "上传次数过多。请稍候。"
 
 #: includes/SubmitProxy.php:116
 #: includes/SubmitProxy.php:236
 msgid "Data Maker API URL not configured."
-msgstr "Data-Maker-API-URL nicht konfiguriert."
+msgstr "未配置 Data Maker API URL。"
 
 #: includes/SubmitProxy.php:156
 msgid "libsodium PHP extension required."
-msgstr "PHP-Erweiterung libsodium erforderlich."
+msgstr "需要 libsodium PHP 扩展。"
 
 #: includes/SubmitProxy.php:162
 msgid "Submission too large."
-msgstr "Übermittlung zu groß."
+msgstr "提交内容过大。"
 
 #: includes/SubmitProxy.php:169
 msgid "slug + values required."
-msgstr "slug + values erforderlich."
+msgstr "需要 slug + values。"
 
 #: includes/SubmitProxy.php:177
 msgid "form has no recipient configured; submissions are not supported."
-msgstr "Für das Formular ist kein Empfänger konfiguriert; Übermittlungen werden nicht unterstützt."
+msgstr "表单未配置收件人；不支持提交。"
 
 #: includes/SubmitProxy.php:188
 msgid "Submission rejected."
-msgstr "Übermittlung abgelehnt."
+msgstr "提交被拒绝。"
 
 #: includes/SubmitProxy.php:195
 msgid "Consent is required before submitting."
-msgstr "Vor dem Absenden ist eine Einwilligung erforderlich."
+msgstr "提交前需要同意。"
 
 #: includes/SubmitProxy.php:209
 msgid "Challenge verification failed. Please try again."
-msgstr "Aufgabenprüfung fehlgeschlagen. Bitte versuchen Sie es erneut."
+msgstr "验证失败。请重试。"
 
 #: includes/SubmitProxy.php:229
 msgid "Too many submissions. Please wait a moment."
-msgstr "Zu viele Übermittlungen. Bitte warten Sie einen Moment."
+msgstr "提交次数过多。请稍候。"
 
 #: includes/SubmitProxy.php:239
 msgid "Data Maker API URL is not allowed."
-msgstr "Die Data-Maker-API-URL ist nicht zulässig."
+msgstr "不允许的 Data Maker API URL。"
 
 #: assets/block.js:20
-msgid "Render a form uploaded under Data Maker Forms → Upload .dmf."
-msgstr "Stellt ein Formular dar, das unter Data Maker Formulare → .dmf hochladen hochgeladen wurde."
+msgid "Render a form uploaded under FOBO Data Maker Forms → Upload .dmf."
+msgstr "渲染在“Data Maker 表单 → 上传 .dmf”中上传的表单。"
 
 #: assets/block.js:37
 msgid "Could not load forms."
-msgstr "Formulare konnten nicht geladen werden."
+msgstr "无法加载表单。"
 
 #: assets/block.js:40
 msgid "— Select a form —"
-msgstr "— Formular auswählen —"
+msgstr "— 选择表单 —"
 
 #: assets/block.js:46
 msgid "Inherit form setting"
-msgstr "Formulareinstellung übernehmen"
+msgstr "继承表单设置"
 
 #: assets/block.js:47
 msgid "Always apply designer styling"
-msgstr "Designer-Styling immer anwenden"
+msgstr "始终应用设计器样式"
 
 #: assets/block.js:48
 msgid "Always strip designer styling"
-msgstr "Designer-Styling immer entfernen"
+msgstr "始终去除设计器样式"
 
 #: assets/block.js:54
 msgid "Form"
-msgstr "Formular"
+msgstr "表单"
 
 #: assets/block.js:60
 msgid "Uploaded form"
-msgstr "Hochgeladenes Formular"
+msgstr "已上传的表单"
 
 #: assets/block.js:64
-msgid "Upload more forms under Data Maker Forms → Upload .dmf."
-msgstr "Laden Sie weitere Formulare unter Data Maker Formulare → .dmf hochladen hoch."
+msgid "Upload more forms under FOBO Data Maker Forms → Upload .dmf."
+msgstr "在“Data Maker 表单 → 上传 .dmf”中上传更多表单。"
 
 #: assets/block.js:67
 msgid "Designer styling override"
-msgstr "Designer-Styling überschreiben"
+msgstr "设计器样式覆盖"
 
 #: assets/block.js:71
 msgid "Layout always honors the form. This only flips colors / fonts / button styling from the Data Maker designer."
-msgstr "Das Layout richtet sich immer nach dem Formular. Dies ändert nur Farben / Schriften / Button-Styling aus dem Data-Maker-Designer."
+msgstr "布局始终遵循表单。此项仅切换来自 Data Maker 设计器的颜色／字体／按钮样式。"
 
 #: assets/block.js:74
 msgid "Upload a .dmf"
-msgstr "Eine .dmf hochladen"
+msgstr "上传 .dmf"
 
 #: assets/block.js:89
 msgid "Slug: "
-msgstr "Slug: "
+msgstr "Slug："
 
 #: assets/block.js:90
 msgid "Pick a form from the sidebar."
-msgstr "Wählen Sie ein Formular in der Seitenleiste aus."
+msgstr "从侧边栏选择一个表单。"
 
 #: includes/Shortcode.php
 msgid "Back"
-msgstr "Zurück"
+msgstr "上一步"
 
 #: includes/Shortcode.php
 msgid "Next"
-msgstr "Weiter"
+msgstr "下一步"
 
 #: includes/Shortcode.php
 msgid "Please complete the required fields on this step."
-msgstr "Bitte füllen Sie die Pflichtfelder dieses Schritts aus."
+msgstr "请填写此步骤的必填字段。"

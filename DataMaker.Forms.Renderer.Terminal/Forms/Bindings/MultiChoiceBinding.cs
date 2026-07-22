@@ -31,15 +31,19 @@ internal sealed class MultiChoiceBinding : FieldBinding
         };
         _checkBoxes = new List<CheckBox>(_choices.Count);
 
+        // Unique per-option hotkeys so duplicate first letters don't collide.
+        var labels = Keys.AssignUniqueHotkeys(_choices.Select(c => c.Label).ToList());
+
         for (var i = 0; i < _choices.Count; i++)
         {
             var choice = _choices[i];
-            var box = new CheckBox(choice.Label, _selected.Contains(choice.Value))
+            var box = new GroupScopedCheckBox(labels[i], _selected.Contains(choice.Value))
             {
                 X     = 0,
                 Y     = i,
                 Width = Dim.Fill(),
             };
+            box.WithStandardKeys(); // Enter toggles, like Space
             box.Toggled += _ =>
             {
                 if (box.Checked) _selected.Add(choice.Value);

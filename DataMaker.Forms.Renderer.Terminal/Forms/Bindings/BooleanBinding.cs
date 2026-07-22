@@ -19,11 +19,18 @@ internal sealed class BooleanBinding : FieldBinding
         // uncoloured. A rare loss of consistency for a rare case (required
         // booleans aren't common).
         var text = definition.Required ? $"{definition.Label} (*)" : definition.Label;
-        _field = new CheckBox(text, State.Get(definition.Name) is true)
+        _field = new GroupScopedCheckBox(text, State.Get(definition.Name) is true)
         {
             Width = Dim.Fill(),
         };
+        _field.WithStandardKeys(); // Enter toggles, like Space
         _field.Toggled += _ => State.Set(definition.Name, _field.Checked);
+
+        // Seed the state with the initial value (false unless a default set it
+        // true). A boolean always HAS an answer — "no" when untouched — so a
+        // required yes/no is satisfied without flipping it, matching the JS/Uno
+        // renderers where false is a valid value, not "empty".
+        State.Set(definition.Name, _field.Checked);
     }
 
     public override View? Label => null;

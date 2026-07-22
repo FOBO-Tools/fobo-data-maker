@@ -41,8 +41,12 @@ internal sealed class NumberBinding : FieldBinding
             {
                 State.Set(definition.Name, null);
             }
-            else if (decimal.TryParse(raw, NumberStyles.Any, CultureInfo.CurrentCulture, out var parsed)
-                  || decimal.TryParse(raw, NumberStyles.Any, CultureInfo.InvariantCulture, out parsed))
+            // NumberStyles.Float (NOT .Any) — no thousands-group separator. With
+            // .Any a nl user's "23.67" read the "." as a group sep and collapsed
+            // to 2367. Without group support the nl parse rejects "." (nl decimal
+            // is ","), then the invariant pass reads "." as the decimal point → 23.67.
+            else if (decimal.TryParse(raw, NumberStyles.Float, CultureInfo.CurrentCulture, out var parsed)
+                  || decimal.TryParse(raw, NumberStyles.Float, CultureInfo.InvariantCulture, out parsed))
             {
                 // Coerce per kind to match the evaluator's parameter
                 // type. Number = long?, Decimal/Money = decimal?. Without

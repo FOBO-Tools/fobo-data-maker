@@ -26,6 +26,9 @@ internal sealed class ListBinding : FieldBinding
             Width  = Dim.Fill(),
             Height = DefaultRows,
             Text   = JoinExisting(State.Get(definition.Name)),
+            // Tab moves to the next field instead of inserting a tab char —
+            // Enter still inserts newlines (one list item per line).
+            AllowsTab = false,
         };
 
         // v1 gotcha: TextView.TextChanged fires only on programmatic setter.

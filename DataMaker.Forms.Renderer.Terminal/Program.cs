@@ -29,15 +29,13 @@ catch (ArgumentException ex)
     return 1;
 }
 
-ColorScheme? templateScheme = null;
-if (options.TemplateName is not null)
+// Validate the template NAME now (fail fast with clean stderr before the TUI
+// grabs the screen), but DON'T build its ColorScheme yet — that makes driver
+// attributes and must wait until after Application.Init() below.
+if (options.TemplateName is not null && !Templates.IsKnown(options.TemplateName))
 {
-    if (!Templates.TryResolve(options.TemplateName, out var resolved))
-    {
-        Console.Error.WriteLine($"Unknown template '{options.TemplateName}'. Known: {Templates.Known}.");
-        return 1;
-    }
-    templateScheme = resolved;
+    Console.Error.WriteLine($"Unknown template '{options.TemplateName}'. Known: {Templates.Known}.");
+    return 1;
 }
 
 byte[] bundleBytes;
@@ -114,6 +112,17 @@ if (verified.Form.SubmitPolicy == SubmitPolicy.Authenticated)
 Application.Init();
 try
 {
+    // Now that a driver exists, build the template scheme (makes driver
+    // attributes — doing this before Init left them uninitialized).
+    ColorScheme? templateScheme = null;
+    if (options.TemplateName is not null)
+        Templates.TryResolve(options.TemplateName, out templateScheme);
+
+    // Brand splash — the embedded ASCII logo, dismissed on any key or after a
+    // short beat — before the form window takes over. Coloured by the active
+    // template so the logo is green in the green template, etc.
+    SplashScreen.Show(templateScheme);
+
     // Submit endpoint precedence:
     //   1. --submit-endpoint CLI flag (explicit override for this run)
     //   2. DATAMAKER_SYNC_API env var (dev / staging override)

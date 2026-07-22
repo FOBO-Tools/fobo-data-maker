@@ -249,6 +249,9 @@ public static class IntrinsicValidators
         (value, f) => value switch
         {
             null or "" => null,
+            // Inline-edit pickers (records grid) bind their native CLR type, not
+            // the stored "yyyy-MM-dd" string — a typed date is trivially valid.
+            DateOnly or DateTime or DateTimeOffset => null,
             string s when DateTime.TryParseExact(s, "yyyy-MM-dd",
                 CultureInfo.InvariantCulture, DateTimeStyles.None, out _) => null,
             _ => Msg(f, "date", IntrinsicMessages.Date),
@@ -259,6 +262,7 @@ public static class IntrinsicValidators
         (value, f) => value switch
         {
             null or "" => null,
+            DateOnly or DateTime or DateTimeOffset => null,
             string s when DateTime.TryParse(s, CultureInfo.InvariantCulture,
                 DateTimeStyles.RoundtripKind, out _) => null,
             _ => Msg(f, "datetime", IntrinsicMessages.DateTime),
