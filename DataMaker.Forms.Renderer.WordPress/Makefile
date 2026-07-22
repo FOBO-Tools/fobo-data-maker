@@ -82,7 +82,7 @@ package: minify
 	# Stage into a folder named after the plugin so WP installer unpacks
 	# into wp-content/plugins/fobo-data-maker-forms/.
 	@rm -rf $(DIST)/staging && mkdir -p $(DIST)/staging/$(PLUGIN)
-	@cp -R fobo-data-maker-forms.php includes assets languages readme.txt license.txt $(DIST)/staging/$(PLUGIN)/
+	@cp -R fobo-data-maker-forms.php uninstall.php includes assets languages readme.txt license.txt $(DIST)/staging/$(PLUGIN)/
 	cd $(DIST)/staging && zip -r ../../$(ZIP) $(PLUGIN) >/dev/null
 	@rm -rf $(DIST)/staging
 	@echo "Built $(ZIP)"
