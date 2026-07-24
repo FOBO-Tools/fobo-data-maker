@@ -342,73 +342,15 @@ final class Shortcode
                 . '</div>';
         }
 
-        // Delivery-cert footer: tells the filler where their submission goes.
-        // Only when the publisher is FOBO-verified AND the form is a sealed-box
-        // recipient — that pairing is what makes "only they can read it" honest.
-        $cert_html = self::delivery_cert_footer($row);
-
         return sprintf(
-            '<div %s><script type="application/json" id="%s">%s</script>%s%s%s<div class="dm-sheet" data-dm-form-root></div></div>%s',
+            '<div %s><script type="application/json" id="%s">%s</script>%s%s%s<div class="dm-sheet" data-dm-form-root></div></div>',
             $mount_attrs,
             esc_attr($bundle_id),
             $bundle_json,
             $honeypot_html,
             $consent_html,
-            $turnstile_html,
-            $cert_html
+            $turnstile_html
         );
-    }
-
-    /**
-     * Subtle "encrypted delivery" footer under a FOBO-verified, sealed-box form.
-     * Returns '' unless the publisher is verified and a recipient pubkey is
-     * present (a share-only / unverified form must not claim confidentiality).
-     * The lock is the Font Awesome fa-lock glyph inlined as SVG (currentColor),
-     * so it needs no FA library; colour follows the OS/browser scheme.
-     *
-     * @param array<string,mixed> $row
-     */
-    private static function delivery_cert_footer(array $row): string
-    {
-        if (empty($row['fobo_verified']) || empty($row['recipient_pubkey'])) {
-            return '';
-        }
-        $email = (string)($row['fobo_email'] ?? '');
-        if ($email === '') {
-            return '';
-        }
-        $who = '<strong>' . esc_html($email) . '</strong>';
-        $org = '';
-        if (!empty($row['fobo_company'])) {
-            $org = ' at <strong>' . esc_html((string)$row['fobo_company']) . '</strong>';
-        }
-
-        $lock = '<svg viewBox="0 0 448 512" fill="currentColor" aria-hidden="true" '
-            . 'style="width:13px;height:13px;flex:0 0 auto;">'
-            . '<path d="M144 144v48H304V144c0-44.2-35.8-80-80-80s-80 35.8-80 80zM80 192V144'
-            . 'C80 64.5 144.5 0 224 0s144 64.5 144 144v48h16c35.3 0 64 28.7 64 64V448c0 35.3'
-            . '-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V256c0-35.3 28.7-64 64-64H80z"/></svg>';
-
-        // Footer chrome CSS goes through the enqueue pipeline (attached to the
-        // always-enqueued layout handle), added once per request rather than
-        // echoed as an inline <style>.
-        static $css_added = false;
-        if (!$css_added) {
-            wp_add_inline_style(
-                'fobo-data-maker-forms-layout',
-                '.dm-deliv{max-width:680px;margin:18px auto 8px;padding:0 16px;'
-                . 'display:flex;align-items:center;justify-content:center;gap:8px;'
-                . 'font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;'
-                . 'font-size:13px;line-height:1.5;color:#000;text-align:center;}'
-                . '.dm-deliv .dm-deliv-by{opacity:.6;}'
-                . '@media(prefers-color-scheme:dark){.dm-deliv{color:#fff;}}'
-            );
-            $css_added = true;
-        }
-
-        return '<footer class="dm-deliv">' . $lock
-            . '<span>Encrypted — only ' . $who . $org
-            . ' can read your submission. <span class="dm-deliv-by">Verified by FOBO.</span></span></footer>';
     }
 
     /**
