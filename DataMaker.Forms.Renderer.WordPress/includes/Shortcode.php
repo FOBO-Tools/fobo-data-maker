@@ -173,23 +173,30 @@ final class Shortcode
         // it when the host wants the form's DataMaker theme. wp-bridge also
         // zeros out the palette CSS-vars + per-element brand overrides
         // baked into the bundle when theme is off.
-        $fonts_style_html = '';
         wp_enqueue_style('fobo-data-maker-forms-layout');
         if ($use_theme_brand) {
             wp_enqueue_style('fobo-data-maker-forms-styles');
             // Designer-selected fonts as data: URIs (baked into the .dmf as
-            // fonts.css). Emitted as a self-contained <style> inside the form
-            // markup rather than via wp_add_inline_style(): the styles handle
-            // prints in <head> (block themes render the_content before
-            // wp_head), so a late inline attach on that already-printed handle
-            // is silently dropped and the fonts never load. An inline <style>
-            // in the body always renders. sanitize_fonts_css() already escapes
-            // </ for safe <style> embedding. Only shipped with the DataMaker
-            // theme — otherwise the WP theme drives the look.
+            // fonts.css), carried on their own src-less handle — the
+            // WordPress-sanctioned carrier for inline CSS. Registered and
+            // enqueued here, at render time, so the inline attaches before
+            // the handle is printed. Attaching to the brand stylesheet
+            // instead silently drops it: that handle has already printed by
+            // the time a shortcode runs. Repeat forms on one page append to
+            // the same handle. Only shipped with the DataMaker theme —
+            // otherwise the WP theme drives the look.
             if (!empty($row['fonts_css'])) {
-                $fonts_style_html = '<style>'
-                    . self::sanitize_fonts_css((string)$row['fonts_css'])
-                    . '</style>';
+                wp_register_style(
+                    'fobo-data-maker-forms-fonts',
+                    false,
+                    ['fobo-data-maker-forms-styles'],
+                    FOBO_DATA_MAKER_FORMS_VERSION
+                );
+                wp_enqueue_style('fobo-data-maker-forms-fonts');
+                wp_add_inline_style(
+                    'fobo-data-maker-forms-fonts',
+                    self::sanitize_fonts_css((string)$row['fonts_css'])
+                );
             }
         }
         wp_enqueue_script('fobo-data-maker-forms-fn');
@@ -341,8 +348,7 @@ final class Shortcode
         $cert_html = self::delivery_cert_footer($row);
 
         return sprintf(
-            '%s<div %s><script type="application/json" id="%s">%s</script>%s%s%s<div class="dm-sheet" data-dm-form-root></div></div>%s',
-            $fonts_style_html,
+            '<div %s><script type="application/json" id="%s">%s</script>%s%s%s<div class="dm-sheet" data-dm-form-root></div></div>%s',
             $mount_attrs,
             esc_attr($bundle_id),
             $bundle_json,
