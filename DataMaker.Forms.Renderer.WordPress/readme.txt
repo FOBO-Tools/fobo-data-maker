@@ -92,6 +92,13 @@ A Docker harness ships in `docker-compose.yml` (WordPress 6.7 + PHP 8.2 + MariaD
 
 PHP edits are picked up immediately. JS/CSS edits to assets/ are too — refresh the page in the browser.
 
+== Screenshots ==
+
+1. A designer-themed RSVP form rendered on the front end, with a background image, custom fonts, and choice fields.
+2. A petition form with a signature pad and a Markdown-enabled comments field.
+3. The Forms admin screen: every uploaded .dmf listed with its shortcode, signing status, and upload date.
+4. Uploading a signed .dmf bundle and giving it a shortcode slug.
+
 == Changelog ==
 
 = 1.0.0 =
